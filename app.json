@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "fixorago-mobile",
-    "slug": "fixorago-mobile",
+    "name": "Fixorago",
+    "slug": "fixorago",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "fixorago",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
