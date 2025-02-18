@@ -1,4 +1,4 @@
-interface UserInterface {
+export interface UserInterface {
   createAt: string;
   deleteAt: string | null;
   email: string;
@@ -11,8 +11,4 @@ interface UserInterface {
   updateAt: string;
   userFolderId: string;
   username: string;
-}
-
-export {
-    UserInterface
 }
