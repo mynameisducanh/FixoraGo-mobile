@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-const Search = () => {
+const HomeUser = () => {
   return (
     <View>
-      <Text>Search</Text>
+      <Text>HomeUser</Text>
     </View>
   )
 }
 
-export default Search
+export default HomeUser
 
 const styles = StyleSheet.create({})
