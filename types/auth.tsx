@@ -4,8 +4,6 @@ export interface SignInInterface {
 }
 
 export interface RegisterInterface {
-  lastName: string;
-  firstName: string;
   email: string;
   password: string;
   confirmPassword: string;

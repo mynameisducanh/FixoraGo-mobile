@@ -9,6 +9,5 @@ export interface UserInterface {
   lastName: string;
   roles: string;
   updateAt: string;
-  userFolderId: string;
   username: string;
 }
