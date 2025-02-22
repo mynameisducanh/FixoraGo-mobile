@@ -4,6 +4,9 @@ import AuthApi from "@/api/authApi";
 import { RegisterInterface } from "@/types/auth";
 import { useAppAlert } from "@/hooks/useAppAlert";
 import { validateRegisterForm } from "@/utils/validation";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { TEMP_EMAIL_REGISTER } from "@/constants";
+import { useRouter } from "expo-router";
 
 const Register = () => {
   const authApi = new AuthApi();
@@ -13,6 +16,7 @@ const Register = () => {
     password: "",
     confirmPassword: "",
   });
+  const router = useRouter();
 
   const handleChange = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -25,12 +29,11 @@ const Register = () => {
       return;
     }
     try {
-      console.log("Sign Up Data:", form);
       const res = await authApi.register(form);
-      console.log(res);
 
-      if (res.ok) {
-        console.log("vào đây");
+      if (res.statusCode === 200) {
+        await AsyncStorage.setItem(TEMP_EMAIL_REGISTER, form.email);
+        router.push("/(auth)/verifyOtp");
       } else {
         showAlert("Lỗi đăng ký", res.message);
       }

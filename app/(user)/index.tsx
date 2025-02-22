@@ -4,10 +4,10 @@ import { useUserStore } from "@/stores/user-store";
 
 const HomeUser = () => {
   const { user, isAuthenticated } = useUserStore();
-  console.log("a",user);
+  console.log("TT user : ",user);
   
   return (
-    <View>
+    <View className='flex-1 items-center justify-center'>
       {isAuthenticated ? (
         <Text>Xin chào, {user?.username}!</Text>
       ) : (
