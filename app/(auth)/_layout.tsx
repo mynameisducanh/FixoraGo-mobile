@@ -11,6 +11,10 @@ export default function AuthLayout() {
         name="register" 
         options={{ headerShown: false }} 
       />
+      <Stack.Screen 
+        name="verifyOtp" 
+        options={{ headerShown: false }} 
+      />
     </Stack>
   );
 }

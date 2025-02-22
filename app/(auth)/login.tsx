@@ -10,22 +10,20 @@ const Login = () => {
   const { login } = useUserStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const router = useRouter();
   const { showAlert } = useAppAlert();
 
   const handleLogin = async () => {
-    try {
+    // try {
       const errorMessage = validateLoginForm({ email, password });
       if (errorMessage) {
         showAlert("Lỗi đăng nhập", errorMessage);
         return;
       }
       await login({ email, password });
-    } catch (err) {
-      showAlert("Lỗi đăng nhập", "Mã lỗi #2");
-      setError("Login failed");
-    }
+    // } catch (err) {
+    //   showAlert("Lỗi đăng nhập", err.message);
+    // }
   };
 
   return (

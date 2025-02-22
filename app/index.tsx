@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 
-// Lấy thông tin kích thước màn hình
 const { width, height } = Dimensions.get("window");
 
 export default function Page() {
@@ -72,7 +71,7 @@ export default function Page() {
         <View className="mt-5 w-4/5">
           <Button
             title="Go to Home Page"
-            onPress={() => router.push("/(tabs)")}
+            onPress={() => router.push("/(auth)/verifyOtp")}
           />
           <Button
             title="Go to Sign in"

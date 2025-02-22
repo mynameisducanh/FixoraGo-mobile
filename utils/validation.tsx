@@ -19,7 +19,7 @@ export const validateLoginForm = (form: {
   password: string;
 }) => {
   const { email, password } = form;
-  
+
   if (!email || !password) return "Vui lòng điền đầy đủ thông tin.";
   if (!email.match(/^\S+@\S+\.\S+$/)) return "Email không hợp lệ.";
   if (password.length < 8) return "Mật khẩu phải có ít nhất 8 ký tự.";

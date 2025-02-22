@@ -55,7 +55,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
           },
         }
       );
-      if (response.data) {
+      if (response.data) {  
         await AsyncStorage.setItem(
           USER_STORAGE_KEY,
           JSON.stringify(response.data)
@@ -70,33 +70,24 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
 
   // Hàm đăng nhập
   const login = async (userSignIn: SignInInterface) => {
-    try {
-      const res = await authApi.login(userSignIn);
-      if (res.ok) {
-        const { refreshToken, accessToken } = res;
-        await AsyncStorage.setItem(REFRESH_TOKEN, refreshToken);
-        await AsyncStorage.setItem(ACCESS_TOKEN, accessToken);
-        console.log(userSignIn);
-        fetchUserData(accessToken);
-        return Promise.resolve(res);
-      }else{
-        // logout();
-        console.log("Login failed",res.message);
-        showAlert("Lỗi đăng nhập", res.message);
-        
-      }
-    } catch (error) {
-      return Promise.reject(error);
+    const res = await authApi.login(userSignIn);
+    if (res?.statusCode && res.statusCode !== 201) {
+      showAlert("Lỗi đăng nhập", res.message);
+      return;
+    } else {  
+      const { refreshToken, accessToken } = res;
+      await AsyncStorage.setItem(REFRESH_TOKEN, refreshToken);
+      await AsyncStorage.setItem(ACCESS_TOKEN, accessToken);
+      fetchUserData(accessToken);
     }
   };
   const handleRedirectUser = (user: UserInterface) => {
-    if(user.emailVerified === 0) {
-      console.log("Email not verified");
+    if (user.emailVerified === 0) {
       return;
     }
     if (user.roles === "system_user") {
       console.log("User");
-      // router.push("/(user)");
+      router.push("/(user)");
     } else if (user.roles === "system_staff") {
       console.log("Staff");
     } else {
@@ -108,7 +99,6 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
     await AsyncStorage.removeItem(USER_STORAGE_KEY);
     await AsyncStorage.removeItem(REFRESH_TOKEN);
     await AsyncStorage.removeItem(ACCESS_TOKEN);
-    router.push("/(tabs)");
   };
 
   const checkToken = async () => {
@@ -117,7 +107,6 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
       if (refreshToken) {
         const res = await tokenApi.isValid(refreshToken);
         if (res) {
-          console.log("Token is valid");
           const response = await tokenApi.accressToken(refreshToken);
           if (response) {
             await AsyncStorage.setItem(ACCESS_TOKEN, response.accessToken);
@@ -143,11 +132,8 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
       const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
       if (storedUser) {
         const parsedUser: UserInterface = JSON.parse(storedUser);
-        console.log(parsedUser);
         setUser(parsedUser);
         handleRedirectUser(parsedUser);
-      } else {
-        router.push("/(tabs)");
       }
     };
 
