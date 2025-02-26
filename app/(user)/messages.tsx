@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-const SignIn = () => {
+const Messages = () => {
   return (
-    <View>
-      <Text>SignIn</Text>
+    <View className='flex-1 items-center justify-center'>
+      <Text>Messages</Text>
     </View>
   )
 }
 
-export default SignIn
+export default Messages
 
 const styles = StyleSheet.create({})

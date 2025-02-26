@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-const Messages = () => {
+const HomeUser = () => {
   return (
-    <View className='flex-1 items-center justify-center'>
-      <Text>Messages</Text>
+    <View>
+      <Text>HomeStaff</Text>
     </View>
   )
 }
 
-export default Messages
+export default HomeUser
 
 const styles = StyleSheet.create({})
