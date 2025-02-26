@@ -4,7 +4,7 @@ import React from 'react'
 const Messages = () => {
   return (
     <View className='flex-1 items-center justify-center'>
-      <Text>Messages fgfgfgfg</Text>
+      <Text>Messages</Text>
     </View>
   )
 }

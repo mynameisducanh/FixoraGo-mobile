@@ -1,18 +1,36 @@
-import { StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import React from "react";
 import { useUserStore } from "@/stores/user-store";
-
+import { StatusBar } from "expo-status-bar";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Header from "@/components/default/header";
+import SearchBar from "@/components/default/searchBar";
 const HomeUser = () => {
   const { user, isAuthenticated } = useUserStore();
-  console.log("TT user : ",user);
-  
+  console.log("TT user : ", user);
+
   return (
-    <View className='flex-1 items-center justify-center'>
-      {isAuthenticated ? (
-        <Text>Xin chào, {user?.username}!</Text>
-      ) : (
-        <Text>Bạn chưa đăng nhập</Text>
-      )}
+    <View className="flex-1 bg-white">
+      <StatusBar style="dark" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 50 }}
+        className="space-y-6 pt-14"
+      >
+        <Header />
+        <SearchBar />
+      </ScrollView>
     </View>
   );
 };

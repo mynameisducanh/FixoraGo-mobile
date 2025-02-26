@@ -33,7 +33,7 @@ const Register = () => {
 
       if (res.statusCode === 200) {
         await AsyncStorage.setItem(TEMP_EMAIL_REGISTER, form.email);
-        router.push("/(auth)/verifyOtp");
+        router.push("/verifyOtp");
       } else {
         showAlert("Lỗi đăng ký", res.message);
       }
