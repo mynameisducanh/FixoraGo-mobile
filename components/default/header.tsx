@@ -20,7 +20,7 @@ const Header = () => {
       </View>
       <View className="mx-4 space-y-2 mb-2">
         <Text style={{ fontSize: hp(1.9) }} className="text-neutral-600">
-          Hello , {user?.username}
+          Hello , Nguyễn Đức Anh{user?.username}
         </Text>
         <View>
           <Text
