@@ -20,7 +20,7 @@ const NewsRow = () => {
           </Text>
         </View>
         <TouchableOpacity>
-          <Text className="font-semibold text-blue-400">Xem tất cả</Text>
+          <Text className="font-semibold text-textBlue">Xem tất cả</Text>
         </TouchableOpacity>
       </View>
       <ScrollView

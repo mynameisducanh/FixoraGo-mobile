@@ -1,23 +1,23 @@
 export const categoryData = [
   {
     name: "Sửa điện",
-    image: "https://source.unsplash.com/400x300/?electrician,repair",
+    image: "C:/Users/ADMIN/.MyProject/fixorago-mobile/assets/icons/car-icon.json",
   },
   {
     name: "Sửa ống nước",
-    image: "https://source.unsplash.com/400x300/?plumbing,repair",
+    image: "../../assets/icons/plumbing-icon.json",
   },
   {
     name: "Sơn sửa nhà",
-    image: "https://source.unsplash.com/400x300/?painting,house",
+    image: "../../assets/icons/painting-icon.json",
   },
   {
-    name: "Sửa đồ gia dụng",
-    image: "https://source.unsplash.com/400x300/?appliance,repair",
+    name: "Sửa đồ điện tử",
+    image: "../../assets/icons/electronics-icon.json",
   },
   {
     name: "Dọn dẹp nhà cửa",
-    image: "https://source.unsplash.com/400x300/?cleaning,house",
+    image: "../../assets/icons/cleaning-icon.json",
   },
 ];
 

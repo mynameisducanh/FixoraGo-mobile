@@ -13,12 +13,14 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import LottieView from "lottie-react-native";
+import splashIcon from "../../assets/icons/plumbing-icon.json";
 const ListService = ({ activeCategory, setActiveCategory }) => {
   return (
     <Animated.View entering={FadeInDown.duration(500).springify()}>
       <View className="flex flex-row justify-between items-center m-5">
         <Text className="text-lg font-bold">Dịch vụ</Text>
-        <Text className="text-blue-400">Xem tất cả</Text>
+        <Text className="text-textBlue font-semibold">Xem tất cả</Text>
       </View>
       <ScrollView
         horizontal
@@ -28,7 +30,7 @@ const ListService = ({ activeCategory, setActiveCategory }) => {
       >
         {categoryData.map((cat, index) => {
           let isActive = cat.name == activeCategory;
-          let activeButtonClass = isActive ? "bg-amber-400" : "bg-black/10";
+          let activeButtonClass = isActive ? "bg-primary" : "bg-black/10";
           return (
             <TouchableOpacity
               key={index}
@@ -36,10 +38,11 @@ const ListService = ({ activeCategory, setActiveCategory }) => {
               className="flex items-center space-y-1 mr-3"
             >
               <View className={"rounded-full p-[6px] " + activeButtonClass}>
-                <Image
-                  source={{ uri: cat.image }}
+                <LottieView
+                  source={cat.image}
+                  autoPlay
+                  loop
                   style={{ width: hp(6), height: hp(6) }}
-                  className="rounded-full"
                 />
               </View>
               <Text className="text-neutral-600" style={{ fontSize: hp(1.6) }}>

@@ -22,7 +22,7 @@ import NewsRow from "@/components/news/newsRow";
 export default function HomeScreen() {
   const [activeCategory, setActiveCategory] = useState("Sửa điện");
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       <StatusBar style="dark" />
       <ScrollView
         showsVerticalScrollIndicator={false}
