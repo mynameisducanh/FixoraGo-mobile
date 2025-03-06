@@ -14,36 +14,49 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-
-const { width, height } = Dimensions.get("window");
+import LottieView from "lottie-react-native";
+import Animated, { useSharedValue, withSpring } from "react-native-reanimated";
 
 export default function Page() {
   const navigation = useNavigation();
+  const ring1padding = useSharedValue(0);
+  const ring2padding = useSharedValue(0);
+  const [play, setPlay] = useState(false);
   useEffect(() => {
-    setTimeout(() => navigation.navigate("(tabs)"), 2500);
+    ring1padding.value = 0;
+    ring2padding.value = 0;
+
+    setTimeout(
+      () => (ring1padding.value = withSpring(ring1padding.value + hp(4.5))),
+      100
+    );
+    setTimeout(
+      () => (ring2padding.value = withSpring(ring2padding.value + hp(5))),
+      100
+    );
+
+    setTimeout(() => navigation.navigate("(tabs)"), 0);
   }, []);
- 
+
   return (
-    <View
-      style={{ width: width, height: height }}
-      className="flex-1 justify-center items-center bg-amber-500"
-    >
+    <View className="flex-1 justify-center items-center bg-primary">
       <StatusBar style="light" />
-      <View
+      <Animated.View
         className="bg-white/20 rounded-full"
-        style={{ padding: hp(5.5) }}
+        style={{ padding: ring2padding }}
       >
-        <View
+        <Animated.View
           className="bg-white/20 rounded-full"
-          style={{ padding: hp(5) }}
+          style={{ padding: ring1padding }}
         >
-          <Image
-            source={require("../assets/images/splash-icon.png")}
-            className="rounded-full"
+          <LottieView
+            source={require("../assets/icons/icon-welcome-screen.json")}
+            autoPlay
+            loop
             style={{ height: hp(20), width: hp(20) }}
           />
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
 
       <View className="flex items-center space-y-2">
         <Text
@@ -56,7 +69,7 @@ export default function Page() {
           style={{ fontSize: hp(3) }}
           className="font-medium text-white tracking-widest"
         >
-          Lorem ipsum dolor sit,
+          Tiện ích gia đình
         </Text>
       </View>
     </View>

@@ -10,31 +10,31 @@ const Header = () => {
   const { user, isAuthenticated } = useUserStore();
   return (
     <>
-      <View className="mx-4 flex-row justify-between items-center mb-2">
+      <View className="mx-4 flex-row justify-between items-center mb-6">
         <Image
-          source={require("../../assets/images/splash-icon.png")}
+          source={require("../../assets/images/avatar-default.png")}
           className="rounded-full"
-          style={{ height: hp(5), width: hp(5.5) }}
+          style={{ height: hp(5), width: hp(5) }}
         />
-        <FontAwesome name="bell-o" size={24} color="gray" />
+        <FontAwesome name="bell-o" size={24} color="#FFC107" />
       </View>
-      <View className="mx-4 space-y-2 mb-2">
-        <Text style={{ fontSize: hp(1.9) }} className="text-neutral-600">
-          Hello , {user?.username}
+      <View className="mx-4 mb-2">
+        <Text style={{ fontSize: hp(2.0) }} className="text-neutral-600">
+          Xin chào , Nguyễn Đức Anh{user?.username}
         </Text>
         <View>
           <Text
             style={{ fontSize: hp(3.8) }}
             className="font-semibold text-neutral-600"
           >
-            Lorem ipsum dolor sit,
+            Có vấn đề cần sửa chữa ,
           </Text>
         </View>
         <Text
           style={{ fontSize: hp(3.8) }}
           className="font-semibold text-neutral-600"
         >
-          stay at <Text className="text-amber-400">home</Text>
+          đặt ngay <Text className="text-primary">Fixorago</Text>
         </Text>
       </View>
     </>
