@@ -50,6 +50,8 @@ export default function RootLayout() {
                 name="search/[query]"
                 options={{ headerShown: false }}
               />
+              <Stack.Screen name="service/detailService" options={{ headerShown: false }} />
+              <Stack.Screen name="news/detailNews" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" />
             </Stack>
             <StatusBar style="auto" />
