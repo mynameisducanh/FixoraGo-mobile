@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./app/**/*.{js,jsx,ts,tsx}","./components/**/*.{js,jsx,ts,tsx}"],
+  content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
@@ -13,12 +13,12 @@ module.exports = {
         success: "#28A745",
         textPrimary: "#343A40",
         textSecondary: "#6C757D",
-        highlight : "#fbbf24",
-        textBlue:"#60a5fa",
+        highlight: "#fbbf24",
+        textBlue: "#60a5fa",
         background: "#FFF",
+        bgBlueButtonHover: "ebf0f4",
       },
     },
   },
   plugins: [],
-}
-
+};
