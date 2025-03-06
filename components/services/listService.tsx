@@ -15,13 +15,18 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import LottieView from "lottie-react-native";
 import ApiIconsLottie from "@/api/iconsLottie";
 import { IconLottieInterface } from "@/types";
+import { useRouter } from "expo-router";
 
 const ListService = () => {
   const [animations, setAnimations] = useState({});
-  const [activeCategory, setActiveCategory] = useState<string | null>("Dọn dẹp");
-  const [activeCategory2, setActiveCategory2] = useState<IconLottieInterface[]>([]);
-
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    "Dọn dẹp"
+  );
+  const [activeCategory2, setActiveCategory2] = useState<IconLottieInterface[]>(
+    []
+  );
   const api = new ApiIconsLottie();
+  const router = useRouter();
   useEffect(() => {
     const fetchAnimations = async () => {
       try {
@@ -69,7 +74,10 @@ const ListService = () => {
           return (
             <TouchableOpacity
               key={index}
-              onPress={() => setActiveCategory(cat.name)}
+              onPress={() => {
+                setActiveCategory(cat.name);
+                router.push("/service/detailService");
+              }}
               className="flex items-center space-y-1 mr-3"
             >
               <View className={"rounded-full p-[6px] " + activeButtonClass}>
