@@ -13,25 +13,25 @@ import {
 } from "react-native-responsive-screen";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import LottieView from "lottie-react-native";
-import ApiIconsLottie from "@/api/iconsLottie";
 import { IconLottieInterface } from "@/types";
 import { useRouter } from "expo-router";
+import IconServiceApi from "@/api/iconService";
 
 const ListService = () => {
   const [animations, setAnimations] = useState({});
   const [activeCategory, setActiveCategory] = useState<string | null>(
-    "Dọn dẹp"
+    "Điện"
   );
-  const [activeCategory2, setActiveCategory2] = useState<IconLottieInterface[]>(
+  const [listIcons, setlistIcons] = useState<IconLottieInterface[]>(
     []
   );
-  const api = new ApiIconsLottie();
+  const api = new IconServiceApi();
   const router = useRouter();
   useEffect(() => {
     const fetchAnimations = async () => {
       try {
-        const res = await api.getLottie();
-        setActiveCategory2(res);
+        const res = await api.getAll();
+        setlistIcons(res);
 
         const results = await Promise.allSettled(
           res.map(async (cat: any) => {
@@ -68,7 +68,7 @@ const ListService = () => {
         className="space-x-4"
         contentContainerStyle={{ paddingHorizontal: 15 }}
       >
-        {activeCategory2.map((cat, index) => {
+        {listIcons.map((cat, index) => {
           let isActive = cat.name == activeCategory;
           let activeButtonClass = isActive ? "bg-primary" : "bg-black/10";
           return (
@@ -76,7 +76,10 @@ const ListService = () => {
               key={index}
               onPress={() => {
                 setActiveCategory(cat.name);
-                router.push("/service/detailService");
+                router.push({
+                  pathname: "/service/detailService",
+                  params: { idService: cat.idService },
+                });
               }}
               className="flex items-center space-y-1 mr-3"
             >
