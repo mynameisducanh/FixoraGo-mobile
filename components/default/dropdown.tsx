@@ -14,7 +14,7 @@ const DropdownComponent = ({ data, onSelect }) => {
             isFocus ? "text-blue-500" : "text-gray-500"
           } bg-white`}
         >
-          Tôi đang cần sửa
+          Tôi đang cần 
         </Text>
       );
     }
@@ -39,9 +39,9 @@ const DropdownComponent = ({ data, onSelect }) => {
         data={data}
         search
         maxHeight={300}
-        labelField="label"
+        labelField="name"
         valueField="id"
-        placeholder={!isFocus ? "Bạn đang cần sửa gì ..." : "..."}
+        placeholder={!isFocus ? "Bạn đang cần hỗ trợ gì ..." : "..."}
         searchPlaceholder="Tìm kiếm nhanh"
         value={value}
         onFocus={() => setIsFocus(true)}
