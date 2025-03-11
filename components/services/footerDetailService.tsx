@@ -5,7 +5,9 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-const FooterDetailService = () => {
+const FooterDetailService = ({ priceId, unit, serviceId, isActive }) => {
+  console.log(priceId, serviceId, unit);
+
   return (
     <View
       className="px-6 bg-background absolute w-full z-50"
@@ -14,7 +16,8 @@ const FooterDetailService = () => {
       <View className="flex-row items-center justify-between my-3">
         <AntDesign name="hearto" size={24} color="black" />
         <TouchableOpacity
-          style={{ width: wp(70), height: hp(6) }}
+          disabled={!isActive}
+          style={{ width: wp(70), height: hp(6), opacity: isActive ? 1 : 0.5 }}
           className="flex justify-center items-center bg-primary rounded-md"
         >
           <Text className="text-white font-bold">Tiếp theo</Text>
