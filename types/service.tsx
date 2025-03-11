@@ -13,3 +13,13 @@ export interface ListDetailServiceInterface {
   unit: string;
   type: string;
 }
+
+export interface PricesServiceInterface {
+  id: string;
+  ServiceId: number;
+  name: string;
+  UnitService: string;
+  price: string;
+  min_price: string;
+  max_price: string;
+}
