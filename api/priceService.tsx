@@ -9,6 +9,9 @@ class PriceServiceApi extends Api {
     return this.request("get", `/${unit}`);
   }
 
+  async getOneByUnit(unit: string) {
+    return this.request("get", `/unit/${unit}`);
+  }
 }
 
 export default PriceServiceApi;
