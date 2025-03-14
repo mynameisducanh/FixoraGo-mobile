@@ -55,8 +55,8 @@ const DetailService = () => {
   }, [selectedValue]);
 
   useEffect(() => {
-    if (option) {
-      setRadio(option[0].id); 
+    if (option && option.length > 0) {
+      setRadio(option[0].id);
       setActive(true);
     }
   }, [option]);
@@ -95,7 +95,12 @@ const DetailService = () => {
           </View>
         </ScrollView>
       )}
-      <FooterDetailService priceId={radio} unit={selectedValue} serviceId={idService} isActive={active}/>
+
+      <FooterDetailService
+        unit={selectedValue}
+        serviceId={idService}
+        isActive={active}
+      />
     </View>
   );
 };

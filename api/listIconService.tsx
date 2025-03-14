@@ -8,6 +8,10 @@ class ListDetailServiceApi extends Api {
   async getListService(id: number) {
     return this.request("GET", `/${id}`);
   }
+
+  async getOneByUnit(unit: string) {
+    return this.request("GET", `/unit/${unit}`);
+  }
 }
 
 export default ListDetailServiceApi;
