@@ -35,28 +35,41 @@ export default function RootLayout() {
 
   return (
     <UserStoreProviderProps>
-        <PaperProvider>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <CustomAlertProvider />
-            <Stack>
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(user)" options={{ headerShown: false }} />
-              <Stack.Screen name="(staff)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="search/[query]"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen name="service/detailService" options={{ headerShown: false }} />
-              <Stack.Screen name="news/detailNews" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </PaperProvider>
+      <PaperProvider>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <CustomAlertProvider />
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(user)" options={{ headerShown: false }} />
+            <Stack.Screen name="(staff)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="search/[query]"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="service/detailService"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="service/verifyService"
+              options={{
+                headerTitle: "Xác nhận dịch vụ",
+                headerBackTitle: "Trở lại",
+              }}
+            />
+            <Stack.Screen
+              name="news/detailNews"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </PaperProvider>
     </UserStoreProviderProps>
   );
 }

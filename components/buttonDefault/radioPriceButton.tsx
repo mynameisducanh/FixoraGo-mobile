@@ -25,9 +25,9 @@ const RadioPriceButton = ({ options, checkedValue, onChange }) => {
                 size={15}
                 color={active ? "#06b6b4" : "#64748b"}
               />
-              <Text className={"text-lg font-semibold"}>{option.label}</Text>
+              <Text className={"text-lg font-semibold"}>{option.name}</Text>
             </View>
-            <Text>{option.value}</Text>
+            <Text>{option.price}</Text>
           </TouchableOpacity>
         );
       })}

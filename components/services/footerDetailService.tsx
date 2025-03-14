@@ -5,7 +5,10 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-const FooterDetailService = () => {
+import { useRouter } from "expo-router";
+const FooterDetailService = ({ unit, serviceId, isActive }) => {
+  const router = useRouter();
+
   return (
     <View
       className="px-6 bg-background absolute w-full z-50"
@@ -14,8 +17,15 @@ const FooterDetailService = () => {
       <View className="flex-row items-center justify-between my-3">
         <AntDesign name="hearto" size={24} color="black" />
         <TouchableOpacity
-          style={{ width: wp(70), height: hp(6) }}
+          disabled={!isActive}
+          style={{ width: wp(70), height: hp(6), opacity: isActive ? 1 : 0.5 }}
           className="flex justify-center items-center bg-primary rounded-md"
+          onPress={() => {
+            router.push({
+              pathname: "/service/verifyService",
+              params: { unit: unit, serviceId: serviceId },
+            });
+          }}
         >
           <Text className="text-white font-bold">Tiếp theo</Text>
         </TouchableOpacity>
@@ -25,14 +35,3 @@ const FooterDetailService = () => {
 };
 
 export default FooterDetailService;
-
-const styles = StyleSheet.create({
-  actions: {
-    flexDirection: "column",
-    justifyContent: "space-between",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-});
