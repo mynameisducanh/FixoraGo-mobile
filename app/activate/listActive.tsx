@@ -1,11 +1,6 @@
-import { Text, View, FlatList, TouchableOpacity, Image } from "react-native";
+import { Text, View, FlatList, TouchableOpacity } from "react-native";
 import React from "react";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
 import { formatTimestamp } from "@/utils/dateFormat";
-import { useRouter } from "expo-router";
 
 const historyData = [
   {
@@ -32,17 +27,14 @@ const historyData = [
   },
 ];
 
-const Activate = () => {
-  const router = useRouter();
-
+const ListActive = () => {
   const handleReorder = (item) => {
     console.log("đã chọn ", item.id);
   };
-
   const renderItem = ({ item }) => (
     <TouchableOpacity
       onPress={() => handleReorder(item)}
-      className="rounded-lg mb-3 p-2"
+      className="rounded-xl mb-3 p-3 bg-white"
     >
       <View className="flex-row items-center gap-1">
         <View className="flex-1">
@@ -65,42 +57,23 @@ const Activate = () => {
         </Text>
       </View>
       {/* <TouchableOpacity  className="mt-2">
-        <Text className="text-blue-500 text-lg font-semibold">Xem thêm thông tin</Text>
-      </TouchableOpacity> */}
+         <Text className="text-blue-500 text-lg font-semibold">Xem thêm thông tin</Text>
+       </TouchableOpacity> */}
     </TouchableOpacity>
   );
-
   return (
-    <View className="h-full bg-white">
-      <View className="">
-        <Image
-          style={{ height: hp(32), width: wp(100) }}
-          source={require("../../assets/images/hero-detail-test.jpg")}
-        />
+    <View className="h-full bg-gray-100 p-5">
+      <View>
+        {/* tạo bộ lọc */}
       </View>
-      <View className="px-5 -mt-12 pt-6 bg-background rounded-t-3xl">
-        <Text className="text-xl font-bold mb-3">Hoạt động gần đây</Text>
-        <FlatList
-          data={historyData.slice(0, 3)}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
-      <TouchableOpacity className="w-full mt-4">
-        <Text
-          onPress={() => {
-            router.push({
-              pathname: "/activate/listActive",
-            });
-          }}
-          className="text-blue-500 text-lg font-semibold text-center "
-        >
-          Xem thêm lịch sử hoạt động
-        </Text>
-      </TouchableOpacity>
+      <FlatList
+        data={historyData}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 };
 
-export default Activate;
+export default ListActive;

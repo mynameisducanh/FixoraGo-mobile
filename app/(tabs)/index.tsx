@@ -20,7 +20,6 @@ import { useState } from "react";
 import NewsRow from "@/components/news/newsRow";
 
 export default function HomeScreen() {
-  const [activeCategory, setActiveCategory] = useState("Sửa điện");
   return (
     <View className="flex-1 bg-background">
       <StatusBar style="dark" />
@@ -32,10 +31,7 @@ export default function HomeScreen() {
         <Header />
         <SearchBar />
         <View>
-          <ListService
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-          />
+          <ListService/>
         </View>
         <View className="mt-5">
           <NewsRow />
