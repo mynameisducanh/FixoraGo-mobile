@@ -63,7 +63,7 @@ const VerifyService = () => {
       </Text>
       <TextArea placeholder="Nhập mô tả ..." onChangeText={setText} />
       <Text className="py-3 font-bold text-lg">Thông tin dịch vụ</Text>
-      <View className="border border-gray-300 rounded-lg p-4 bg-gray-100 w-1/2">
+      <View className="border border-gray-300 rounded-lg p-4 bg-gray-100 w-100">
         <View className="flex-row justify-between mt-2">
           <Text className="text-gray-600">Tên dịch vụ:</Text>
           <Text
