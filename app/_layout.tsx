@@ -65,6 +65,13 @@ export default function RootLayout() {
               name="news/detailNews"
               options={{ headerShown: false }}
             />
+             <Stack.Screen
+              name="activate/listActive"
+              options={{
+                headerTitle: "Lịch sử hoạt động",
+                headerBackTitle: "Trở lại",
+              }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />
