@@ -65,10 +65,24 @@ export default function RootLayout() {
               name="news/detailNews"
               options={{ headerShown: false }}
             />
-             <Stack.Screen
+            <Stack.Screen
               name="activate/listActive"
               options={{
                 headerTitle: "Lịch sử hoạt động",
+                headerBackTitle: "Trở lại",
+              }}
+            />
+            <Stack.Screen
+              name="(other)/policy"
+              options={{
+                headerTitle: "Chính sách của chúng tôi",
+                headerBackTitle: "Trở lại",
+              }}
+            />
+            <Stack.Screen
+              name="(other)/support"
+              options={{
+                headerTitle: "Hỗ trợ",
                 headerBackTitle: "Trở lại",
               }}
             />
