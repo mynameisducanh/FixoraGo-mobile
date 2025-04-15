@@ -18,8 +18,10 @@ import {
 import ListService from "@/components/services/listService";
 import { useState } from "react";
 import NewsRow from "@/components/news/newsRow";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
+  const router = useRouter();
   return (
     <View className="flex-1 bg-background">
       <StatusBar style="dark" />
@@ -31,11 +33,14 @@ export default function HomeScreen() {
         <Header />
         <SearchBar />
         <View>
-          <ListService/>
+          <ListService />
         </View>
         <View className="mt-5">
           <NewsRow />
         </View>
+        <TouchableOpacity onPress={() => router.push("/(staff)")}>
+          <Text>Staff</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
