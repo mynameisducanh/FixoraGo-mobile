@@ -86,6 +86,10 @@ export default function RootLayout() {
                 headerBackTitle: "Trở lại",
               }}
             />
+            <Stack.Screen
+              name="post/ListPost"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />

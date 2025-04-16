@@ -72,7 +72,6 @@ const DetailService = () => {
               source={{ uri: service.imageUrl }}
             />
           </View>
-
           <View className="rounded-t-3xl bg-white -mt-12 pt-6">
             <View className="px-5">
               <Text className="text-3xl font-bold mb-4">{service.name}</Text>
