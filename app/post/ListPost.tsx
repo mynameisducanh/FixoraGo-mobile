@@ -4,43 +4,29 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { StatusBar } from "expo-status-bar";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
-import Overview from "@/components/staff/overview";
 import Categories from "@/components/staff/Categories";
 import PostCard from "@/components/staff/PostCard";
-import { useRouter } from "expo-router";
+import BackButton from "@/components/buttonDefault/backButton";
+import InfoButton from "@/components/buttonDefault/infoButton";
 
-const HomeStaff = () => {
+const ListPost = () => {
   const onCatChanged = (category: string) => {
     console.log(category);
   };
-  const router = useRouter();
   return (
     <View className="flex-1 bg-background">
-      <StatusBar style="dark" />
+      <BackButton />
+      <InfoButton />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 50 }}
-        className="space-y-6 pt-14"
+        className="space-y-6 pt-24"
       >
-        <Overview />
-        <View className="flex-row justify-between px-3 mt-2 items-center">
-          <Text className="text-lg font-bold">Danh sách yêu cầu</Text>
-          <TouchableOpacity
-            onPress={() => {
-              router.push({
-                pathname: "/post/ListPost",
-              });
-            }}
-          >
-            <Text className="text-blue-500 text-base font-semibold">
-              Xem thêm
-            </Text>
-          </TouchableOpacity>
-        </View>
         <Categories onCategoryChanged={onCatChanged} />
-        <View className="mt-3">
+        <View className="mt-3 mb-10">
+          <PostCard />
+          <PostCard />
           <PostCard />
           <PostCard />
           <PostCard />
@@ -50,4 +36,4 @@ const HomeStaff = () => {
   );
 };
 
-export default HomeStaff;
+export default ListPost;
