@@ -35,7 +35,7 @@ export default function Page() {
       100
     );
 
-    setTimeout(() => navigation.navigate("(tabs)"), 4000);
+    setTimeout(() => navigation.navigate("(tabs)"), 1000);
   }, []);
 
   return (
