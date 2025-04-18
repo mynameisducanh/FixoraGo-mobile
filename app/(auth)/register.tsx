@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
 import React, { useState } from "react";
 import AuthApi from "@/api/authApi";
 import { RegisterInterface } from "@/types/auth";
@@ -7,11 +7,18 @@ import { validateRegisterForm } from "@/utils/validation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TEMP_EMAIL_REGISTER } from "@/constants";
 import { useRouter } from "expo-router";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+import { Ionicons } from "@expo/vector-icons";
 
 const Register = () => {
   const authApi = new AuthApi();
   const { showAlert } = useAppAlert();
+  const [secure, setSecure] = useState(true);
   const [form, setForm] = useState<RegisterInterface>({
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -43,38 +50,99 @@ const Register = () => {
   };
 
   return (
-    <View className="flex-1 justify-center items-center bg-white p-4">
-      <Text className="text-2xl font-bold text-blue-600 mb-4">Đăng ký</Text>
-      <TextInput
-        className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-        placeholder="Email"
-        keyboardType="email-address"
-        value={form.email}
-        onChangeText={(text) => handleChange("email", text)}
+    <View
+      style={{ height: hp(100), width: wp(100) }}
+      className="flex-1 justify-center items-center bg-white p-4"
+    >
+      <Image
+        source={require("@/assets/images/auth-screen.png")}
+        className="w-[80%] h-[30%] object-contain"
       />
 
-      <TextInput
-        className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-        placeholder="Mật khẩu"
-        secureTextEntry
-        value={form.password}
-        onChangeText={(text) => handleChange("password", text)}
-      />
+      <Text className="text-2xl font-bold text-gray-800 mt-5">
+        Chào mừng bạn đến với FixoraGo
+      </Text>
+      <Text className="text-base text-gray-500 mb-2">
+        Vui lòng đăng ký để tiếp tục
+      </Text>
+      <View className="w-full space-y-3 mt-4">
+        <View className="flex-row items-center border border-gray-300 rounded-full px-3 py-2 mt-3">
+          <Ionicons name="person-outline" size={20} color="#888" />
+          <TextInput
+            className="flex-1 ml-2 text-base"
+            placeholder="Tên đăng nhập"
+            keyboardType="email-address"
+            placeholderTextColor="#888"
+            value={form.username}
+            onChangeText={(text) => handleChange("username", text)}
+          />
+        </View>
+        <View className="flex-row items-center border border-gray-300 rounded-full px-3 py-2 mt-3">
+          <Ionicons name="mail-outline" size={20} color="#888" />
+          <TextInput
+            className="flex-1 ml-2 text-base"
+            placeholder="Email"
+            keyboardType="email-address"
+            placeholderTextColor="#888"
+            value={form.email}
+            onChangeText={(text) => handleChange("email", text)}
+          />
+        </View>
 
-      <TextInput
-        className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-        placeholder="Nhập lại mật khẩu"
-        secureTextEntry
-        value={form.confirmPassword}
-        onChangeText={(text) => handleChange("confirmPassword", text)}
-      />
+        <View className="flex-row items-center border border-gray-300 rounded-full px-3 py-2 mt-3">
+          <Ionicons name="lock-closed-outline" size={20} color="#888" />
+          <TextInput
+            className="flex-1 ml-2 text-base"
+            placeholder="Mật khẩu"
+            secureTextEntry={secure}
+            placeholderTextColor="#888"
+            value={form.password}
+            onChangeText={(text) => handleChange("password", text)}
+          />
+          <TouchableOpacity onPress={() => setSecure(!secure)}>
+            <Ionicons
+              name={secure ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View className="flex-row items-center border border-gray-300 rounded-full px-3 py-2 mt-3">
+          <Ionicons name="lock-closed-outline" size={20} color="#888" />
+          <TextInput
+            className="flex-1 ml-2 text-base"
+            placeholder="Nhập lại mật khẩu"
+            secureTextEntry={secure}
+            placeholderTextColor="#888"
+            value={form.confirmPassword}
+            onChangeText={(text) => handleChange("confirmPassword", text)}
+          />
+          <TouchableOpacity onPress={() => setSecure(!secure)}>
+            <Ionicons
+              name={secure ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <TouchableOpacity
-        className="bg-blue-600 w-full p-3 rounded-lg items-center"
+        className="bg-black w-full py-4 rounded-full items-center mt-5"
         onPress={handleRegister}
       >
-        <Text className="text-white text-lg font-semibold">Đăng ký</Text>
+        <Text className="text-white text-base font-semibold">Đăng ký</Text>
       </TouchableOpacity>
+
+      <View className="flex-row space-x-1 mt-4">
+        <Text className="text-sm text-blue">Đã có tài khoản?</Text>
+        <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+          <Text className="text-sm text-blue-600 font-medium">
+            Đăng nhập ngay
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

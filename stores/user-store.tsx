@@ -55,7 +55,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
           },
         }
       );
-      if (response.data) {  
+      if (response.data) {
         await AsyncStorage.setItem(
           USER_STORAGE_KEY,
           JSON.stringify(response.data)
@@ -74,7 +74,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
     if (res?.statusCode && res.statusCode !== 201) {
       showAlert("Lỗi đăng nhập", res.message);
       return;
-    } else {  
+    } else {
       const { refreshToken, accessToken } = res;
       await AsyncStorage.setItem(REFRESH_TOKEN, refreshToken);
       await AsyncStorage.setItem(ACCESS_TOKEN, accessToken);
@@ -90,6 +90,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
       router.push("/(user)");
     } else if (user.roles === "system_staff") {
       console.log("Staff");
+      router.push("/(staff)");
     } else {
       console.log("Admin");
     }

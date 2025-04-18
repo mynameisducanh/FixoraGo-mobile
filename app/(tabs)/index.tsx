@@ -38,9 +38,9 @@ export default function HomeScreen() {
         <View className="mt-5">
           <NewsRow />
         </View>
-        <TouchableOpacity onPress={() => router.push("/(staff)")}>
+        {/* <TouchableOpacity onPress={() => router.push("/(staff)")}>
           <Text>Staff</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
     </View>
   );

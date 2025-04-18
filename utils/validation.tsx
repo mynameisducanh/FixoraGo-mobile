@@ -1,28 +1,29 @@
 export const validateRegisterForm = (form: {
+  username: string;
   email: string;
   password: string;
   confirmPassword: string;
 }) => {
-  const { email, password, confirmPassword } = form;
+  const { username, email, password, confirmPassword } = form;
 
-  if (!email || !password || !confirmPassword)
+  if (!username || !email || !password || !confirmPassword)
     return "Vui lòng điền đầy đủ thông tin.";
   if (!email.match(/^\S+@\S+\.\S+$/)) return "Email không hợp lệ.";
-  if (password.length < 8) return "Mật khẩu phải có ít nhất 8 ký tự.";
+  if (username.length < 6) return "Mật khẩu phải có ít nhất 6 ký tự.";
+  if (password.length < 6) return "Mật khẩu phải có ít nhất 6 ký tự.";
   if (password !== confirmPassword) return "Mật khẩu xác nhận không khớp.";
 
   return null;
 };
 
 export const validateLoginForm = (form: {
-  email: string;
+  username: string;
   password: string;
 }) => {
-  const { email, password } = form;
+  const { username, password } = form;
 
-  if (!email || !password) return "Vui lòng điền đầy đủ thông tin.";
-  if (!email.match(/^\S+@\S+\.\S+$/)) return "Email không hợp lệ.";
-  if (password.length < 8) return "Mật khẩu phải có ít nhất 8 ký tự.";
+  if (!username || !password) return "Vui lòng điền đầy đủ thông tin.";
+  if (password.length < 6) return "Mật khẩu phải có ít nhất 6 ký tự.";
 
   return null;
 };
