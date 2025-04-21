@@ -61,7 +61,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
           JSON.stringify(response.data)
         );
         setUser(response.data);
-        handleRedirectUser(response.data);
+        router.push("/");
       }
     } catch (error) {
       console.error("Failed to fetch user data:", error);
@@ -81,20 +81,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
       fetchUserData(accessToken);
     }
   };
-  const handleRedirectUser = (user: UserInterface) => {
-    if (user.emailVerified === 0) {
-      return;
-    }
-    if (user.roles === "system_user") {
-      console.log("User");
-      router.push("/(user)");
-    } else if (user.roles === "system_staff") {
-      console.log("Staff");
-      router.push("/(staff)");
-    } else {
-      console.log("Admin");
-    }
-  };
+
   const logout = async () => {
     setUser(null);
     await AsyncStorage.removeItem(USER_STORAGE_KEY);
@@ -134,7 +121,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
       if (storedUser) {
         const parsedUser: UserInterface = JSON.parse(storedUser);
         setUser(parsedUser);
-        handleRedirectUser(parsedUser);
+        router.push("/");
       }
     };
 

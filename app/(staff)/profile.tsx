@@ -18,7 +18,7 @@ const menuItems: MenuItem[] = [
   {
     title: "Thông tin cá nhân",
     icon: "person-outline",
-    path: "/(tabs)",
+    path: "/(staff)",
   },
   {
     title: "Bảo mật thông tin",
