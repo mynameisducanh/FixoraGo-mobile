@@ -90,6 +90,10 @@ export default function RootLayout() {
               name="post/ListPost"
               options={{ headerShown: false }}
             />
+            <Stack.Screen
+              name="profile/detailProfile"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />

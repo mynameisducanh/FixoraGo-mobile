@@ -16,9 +16,12 @@ import {
 } from "react-native-responsive-screen";
 import LottieView from "lottie-react-native";
 import Animated, { useSharedValue, withSpring } from "react-native-reanimated";
+import { useUserStore } from "@/stores/user-store";
 
 export default function Page() {
   const navigation = useNavigation();
+  const router = useRouter();
+  const { user } = useUserStore();
   const ring1padding = useSharedValue(0);
   const ring2padding = useSharedValue(0);
   const [play, setPlay] = useState(false);
@@ -35,7 +38,17 @@ export default function Page() {
       100
     );
 
-    setTimeout(() => navigation.navigate("(tabs)"), 1000);
+    if (user?.roles === "system_user") {
+      // console.log("User");
+      // router.push("/(user)");
+      setTimeout(() => router.replace("/(user)"), 4000);
+    } else if (user?.roles === "system_staff") {
+      // console.log("Staff");
+      // router.push("/(staff)");
+      setTimeout(() => router.replace("/(staff)"), 4000);
+    } else {
+      setTimeout(() => router.replace("/(tabs)"), 4000);
+    }
   }, []);
 
   return (
