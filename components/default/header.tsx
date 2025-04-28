@@ -20,7 +20,10 @@ const Header = () => {
       </View>
       <View className="mx-4 mb-2">
         <Text style={{ fontSize: hp(2.0) }} className="text-neutral-600">
-          Xin chào , Nguyễn Đức Anh{user?.username}
+          {/* {user?.username
+            ? `Xin chào , ${user?.username}`
+            : "Chào mừng bạn đến với FixoraGo"} */}
+            Chào mừng bạn đến với FixoraGo
         </Text>
         <View>
           <Text

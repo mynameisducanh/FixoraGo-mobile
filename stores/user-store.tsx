@@ -55,13 +55,13 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
           },
         }
       );
-      if (response.data) {  
+      if (response.data) {
         await AsyncStorage.setItem(
           USER_STORAGE_KEY,
           JSON.stringify(response.data)
         );
         setUser(response.data);
-        handleRedirectUser(response.data);
+        router.push("/");
       }
     } catch (error) {
       console.error("Failed to fetch user data:", error);
@@ -74,26 +74,14 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
     if (res?.statusCode && res.statusCode !== 201) {
       showAlert("Lỗi đăng nhập", res.message);
       return;
-    } else {  
+    } else {
       const { refreshToken, accessToken } = res;
       await AsyncStorage.setItem(REFRESH_TOKEN, refreshToken);
       await AsyncStorage.setItem(ACCESS_TOKEN, accessToken);
       fetchUserData(accessToken);
     }
   };
-  const handleRedirectUser = (user: UserInterface) => {
-    if (user.emailVerified === 0) {
-      return;
-    }
-    if (user.roles === "system_user") {
-      console.log("User");
-      router.push("/(user)");
-    } else if (user.roles === "system_staff") {
-      console.log("Staff");
-    } else {
-      console.log("Admin");
-    }
-  };
+
   const logout = async () => {
     setUser(null);
     await AsyncStorage.removeItem(USER_STORAGE_KEY);
@@ -133,7 +121,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
       if (storedUser) {
         const parsedUser: UserInterface = JSON.parse(storedUser);
         setUser(parsedUser);
-        handleRedirectUser(parsedUser);
+        router.push("/");
       }
     };
 

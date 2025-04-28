@@ -6,6 +6,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import { useUserStore } from "@/stores/user-store";
 
 interface MenuItem {
   title: string;
@@ -17,7 +18,7 @@ const menuItems: MenuItem[] = [
   {
     title: "Thông tin cá nhân",
     icon: "person-outline",
-    path: "/(tabs)",
+    path: "/(staff)",
   },
   {
     title: "Bảo mật thông tin",
@@ -43,7 +44,11 @@ const menuItems: MenuItem[] = [
 
 const Profile = () => {
   const router = useRouter();
-
+  const { logout } = useUserStore();
+  const handleLogout = () => {
+    logout();
+    router.push("/(tabs)");
+  };
   return (
     <View className="flex-1 bg-white">
       <View>
@@ -68,7 +73,10 @@ const Profile = () => {
         ))}
       </View>
       <View className="p-4">
-        <TouchableOpacity className="flex-row items-center justify-center p-4 bg-white rounded-lg border border-red-200">
+        <TouchableOpacity
+          onPress={() => handleLogout()}
+          className="flex-row items-center justify-center p-4 bg-white rounded-lg border border-red-200"
+        >
           <Ionicons name="log-out-outline" size={24} color="#EF4444" />
           <Text className="ml-3 text-base text-red-500 font-medium">
             Đăng xuất

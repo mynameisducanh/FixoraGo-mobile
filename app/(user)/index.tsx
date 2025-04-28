@@ -16,9 +16,11 @@ import {
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Header from "@/components/default/header";
 import SearchBar from "@/components/default/searchBar";
+import ListService from "@/components/services/listService";
+import NewsRow from "@/components/news/newsRow";
 const HomeUser = () => {
-  const { user, isAuthenticated } = useUserStore();
-  console.log("TT user : ", user);
+  // const { user, isAuthenticated } = useUserStore();
+  // console.log("TT user : ", user);
 
   return (
     <View className="flex-1 bg-white">
@@ -30,6 +32,12 @@ const HomeUser = () => {
       >
         <Header />
         <SearchBar />
+        <View>
+          <ListService />
+        </View>
+        <View className="mt-5">
+          <NewsRow />
+        </View>
       </ScrollView>
     </View>
   );

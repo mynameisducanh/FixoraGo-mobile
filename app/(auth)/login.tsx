@@ -1,60 +1,141 @@
-import { View, Text, TextInput, Button, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import React, { useState } from "react";
 import { useUserStore } from "@/stores/user-store";
 import { useRouter } from "expo-router";
-import CustomAlert from "@/components/others/CustomAlertProvider";
-import { validateLoginForm } from "@/utils/validation";
 import { useAppAlert } from "@/hooks/useAppAlert";
+import { validateLoginForm } from "@/utils/validation";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+import BackButton from "@/components/buttonDefault/backButton";
 
 const Login = () => {
   const { login } = useUserStore();
-  const [email, setEmail] = useState("");
+  const [secure, setSecure] = useState(true);
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
   const { showAlert } = useAppAlert();
 
-  const handleLogin = async () => {
-    // try {
-      const errorMessage = validateLoginForm({ email, password });
-      if (errorMessage) {
-        showAlert("Lỗi đăng nhập", errorMessage);
-        return;
-      }
-      await login({ email, password });
-    // } catch (err) {
-    //   showAlert("Lỗi đăng nhập", err.message);
-    // }
+  const handleLogin = () => {
+    const errorMessage = validateLoginForm({ username, password });
+    if (errorMessage) {
+      showAlert("Lỗi đăng nhập", errorMessage);
+      return;
+    }
+    login({ username, password });
   };
 
   return (
-    <View className="flex-1 items-center justify-center bg-gray-100 p-6">
-      <Text className="text-xl font-bold text-gray-800 mb-4">Đăng nhập</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 24,
+          }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <BackButton />
+          <View
+            style={{ height: hp(100), width: wp(100) }}
+            className="flex-1 bg-white items-center justify-center px-6 space-y-6"
+          >
+            <Image
+              source={require("@/assets/images/auth-screen.png")}
+              className="w-[80%] h-[30%] object-contain"
+            />
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-      />
-      <TextInput
-        placeholder="Mật khẩu"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-      />
+            <Text className="text-2xl font-bold text-gray-800 mt-5">
+              Chào mừng trở lại!
+            </Text>
+            <Text className="text-base text-gray-500 mb-2">
+              Vui lòng đăng nhập để tiếp tục
+            </Text>
 
-      <TouchableOpacity
-        className="bg-blue-600 w-full p-3 rounded-lg items-center"
-        onPress={handleLogin}
-      >
-        <Text className="text-white text-lg font-semibold">Đăng nhập</Text>
-      </TouchableOpacity>
-      <Button
-        title="Go to Sign up"
-        onPress={() => router.push("/(auth)/register")}
-      />
-    </View>
+            <View className="w-full flex-row items-center border border-gray-300 rounded-full  p-2 mt-3">
+              <Ionicons name="person-outline" size={20} color="#888" />
+              <TextInput
+                placeholder="Tên đăng nhập"
+                value={username}
+                onChangeText={setUsername}
+                className="flex-1 ml-2 text-lg justify-center"
+                placeholderTextColor="#888"
+                style={{ height: 35, alignItems: "center", lineHeight: 19 }}
+              />
+            </View>
+
+            <View className="w-full flex-row items-center border border-gray-300 rounded-full p-2 mt-3">
+              <Ionicons name="lock-closed-outline" size={20} color="#888" />
+              <TextInput
+                placeholder="Mật khẩu"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={secure}
+                className="flex-1 ml-2 text-lg justify-center"
+                placeholderTextColor="#888"
+                style={{ height: 35, alignItems: "center", lineHeight: 19 }}
+              />
+              <TouchableOpacity onPress={() => setSecure(!secure)}>
+                <Ionicons
+                  name={secure ? "eye-off-outline" : "eye-outline"}
+                  size={22}
+                  color="#888"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              className="w-full bg-black py-4 rounded-full items-center mt-3"
+              onPress={handleLogin}
+            >
+              <Text className="text-white font-semibold text-base">
+                Đăng nhập
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() =>
+                showAlert(
+                  "Tính năng chưa hỗ trợ",
+                  "Vui lòng liên hệ quản trị viên."
+                )
+              }
+            >
+              <Text className="text-sm text-blue-600 mt-2">Quên mật khẩu?</Text>
+            </TouchableOpacity>
+
+            <View className="flex-row space-x-1 mt-6">
+              <Text className="text-sm text-gray-600">Chưa có tài khoản?</Text>
+              <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+                <Text className="text-sm text-blue-600 font-medium">
+                  Đăng ký ngay
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
