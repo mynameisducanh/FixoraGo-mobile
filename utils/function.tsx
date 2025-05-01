@@ -24,3 +24,4 @@ export const fetchLottieFile = async (data: any) => {
     return {};
   }
 };
+
