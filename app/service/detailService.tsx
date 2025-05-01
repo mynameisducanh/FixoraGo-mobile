@@ -37,18 +37,25 @@ const DetailService = () => {
       const dataListService = await listDetailServiceApi.getListService(
         Number(idService)
       );
-
-      setService(res);
-      setListDetailService(dataListService);
+      if (res) {
+        setService(res);
+      }
+      if (dataListService) {
+        setListDetailService(dataListService);
+      }
     };
     fetchDataService();
   }, [idService]);
 
   useEffect(() => {
     if (selectedValue) {
+      console.log(selectedValue);
       const fetchDataPackageSelect = async () => {
         const res = await priceServiceApi.getByUnit(selectedValue);
-        setOption(res);
+        if (res) {
+          console.log(res)
+          setOption(res);
+        }
       };
       fetchDataPackageSelect();
     }
@@ -65,7 +72,10 @@ const DetailService = () => {
       <BackButton />
       <InfoButton />
       {service && (
-        <ScrollView className="h-full bg-white">
+        <ScrollView
+          className="h-full bg-white"
+          contentContainerStyle={{ paddingBottom: 60 }}
+        >
           <View>
             <Image
               style={{ height: hp(32), width: wp(100) }}
@@ -81,7 +91,7 @@ const DetailService = () => {
                 onSelect={(unit: any) => setSelectedValue(unit)}
               />
               {option && (
-                <View className="mt-5">
+                <View className="mt-5 pb-10">
                   <Text>Hãy chọn các gói phù hợp với bạn </Text>
                   <RadioPriceButton
                     options={option}
@@ -98,6 +108,7 @@ const DetailService = () => {
       <FooterDetailService
         unit={selectedValue}
         serviceId={idService}
+        typeService={radio}
         isActive={active}
       />
     </View>

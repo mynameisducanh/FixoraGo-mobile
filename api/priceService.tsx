@@ -5,6 +5,10 @@ class PriceServiceApi extends Api {
     super("pricesService");
   }
 
+  async getById(id: string) {
+    return this.request("get", `/detail/${id}`);
+  }
+
   async getByUnit(unit: string) {
     return this.request("get", `/${unit}`);
   }

@@ -11,6 +11,9 @@ export default {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
+      infoPlist: {
+        NSPhotoLibraryUsageDescription: "Ứng dụng cần quyền truy cập thư viện ảnh để bạn có thể chọn ảnh gửi kèm dịch vụ."
+      }
     },
     android: {
       adaptiveIcon: {
