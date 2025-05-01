@@ -6,9 +6,9 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { useRouter } from "expo-router";
-const FooterDetailService = ({ unit, serviceId, isActive }) => {
+const FooterDetailService = ({ unit, serviceId, typeService, isActive }) => {
   const router = useRouter();
-
+  console.log(typeService);
   return (
     <View
       className="px-6 bg-background absolute w-full z-50"
@@ -23,7 +23,11 @@ const FooterDetailService = ({ unit, serviceId, isActive }) => {
           onPress={() => {
             router.push({
               pathname: "/service/verifyService",
-              params: { unit: unit, serviceId: serviceId },
+              params: {
+                unit: unit,
+                serviceId: serviceId,
+                typeServiceId: typeService,
+              },
             });
           }}
         >

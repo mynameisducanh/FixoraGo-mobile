@@ -11,7 +11,7 @@ const TextArea = ({ placeholder, onChangeText }) => {
   };
   return (
     <View
-      className={`w-full  p-3 rounded-xl border ${
+      className={`w-full p-3 rounded-xl border mt-3 ${
         isFocused ? "border-primary" : "border-gray-300"
       } bg-white`}
     >
@@ -28,7 +28,7 @@ const TextArea = ({ placeholder, onChangeText }) => {
       />
       <MaterialCommunityIcons
         name="pencil-outline"
-        size={20}
+        size={15}
         color={isFocused ? "#FFC107" : "#9CA3AF"}
         className="absolute right-5 bottom-3"
       />

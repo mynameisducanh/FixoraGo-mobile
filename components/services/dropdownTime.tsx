@@ -1,11 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import LottieView from "lottie-react-native";
 
-const DropdownComponent = ({ data, onSelect }) => {
+const DropdownTimeComponent = ({ data, onSelect }) => {
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
+  const [playIcon, setPlayIcon] = useState(false);
+  useEffect(() => {
+    setPlayIcon(true);
+
+    const timer = setTimeout(() => {
+      setPlayIcon(false);
+    }, 500);
+
+    return () => clearTimeout(timer); 
+  }, [value, isFocus]);
   const renderLabel = () => {
     if (value || isFocus) {
       return (
@@ -14,7 +24,7 @@ const DropdownComponent = ({ data, onSelect }) => {
             isFocus ? "text-blue-500" : "text-gray-500"
           } bg-white`}
         >
-          Tôi đang cần hỗ trợ
+          Thời điểm tôi lắp đặt thiết bị
         </Text>
       );
     }
@@ -37,26 +47,26 @@ const DropdownComponent = ({ data, onSelect }) => {
         inputSearchStyle={{ height: 40, fontSize: 16 }}
         iconStyle={{ width: 20, height: 20 }}
         data={data}
-        search
+        search={false}
         maxHeight={350}
-        labelField="name"
+        labelField="title"
         valueField="id"
-        placeholder={!isFocus ? "Bạn đang cần hỗ trợ gì ..." : "..."}
+        placeholder={!isFocus ? "Thời điểm bạn lắp đặt thiết bị" : "..."}
         searchPlaceholder="Tìm kiếm nhanh"
         value={value}
         onFocus={() => setIsFocus(true)}
         onBlur={() => setIsFocus(false)}
         onChange={(item) => {
-          onSelect(item.unit);
+          onSelect(item.title);
           setValue(item.id);
           setIsFocus(false);
         }}
         renderLeftIcon={() => (
           <LottieView
-            source={require("@/assets/icons/wrench-icon.json")}
-            autoPlay
-            loop
-            style={{ width: 50, height: 50 }}
+            source={require("@/assets/icons/clock-icon.json")}
+            autoPlay={playIcon}
+            loop={playIcon}
+            style={{ width: 20, height: 20, marginRight: 10 }}
           />
         )}
       />
@@ -64,4 +74,4 @@ const DropdownComponent = ({ data, onSelect }) => {
   );
 };
 
-export default DropdownComponent;
+export default DropdownTimeComponent;

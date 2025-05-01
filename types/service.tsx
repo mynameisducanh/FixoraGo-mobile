@@ -20,6 +20,14 @@ export interface PricesServiceInterface {
   name: string;
   UnitService: string;
   price: string;
-  min_price: string;
-  max_price: string;
+}
+
+export interface RequestServiceInterface {
+  userId: string;
+  typeService: string;
+  nameService: string;
+  listDetailService: string;
+  priceService: string;
+  calender: string;
+  note: string;
 }
