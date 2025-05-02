@@ -1,6 +1,6 @@
 import React from "react";
 import { TouchableOpacity, Text } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "expo-router";
 import AntDesign from "@expo/vector-icons/AntDesign";
 const InfoButton = () => {
   const navigation = useNavigation();
