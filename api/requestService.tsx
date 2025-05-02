@@ -6,8 +6,10 @@ class RequestServiceApi extends Api {
     super("requestService");
   }
 
-  async createRequestService(data: RequestServiceInterface) {
-    return this.request("POST", `/`, data);
+  async createRequestService(data: FormData) {
+    return this.request("POST", `/`, data, {
+      isFormData: "true", // báo hiệu trong base Api xử lý khác
+    });
   }
 
   async getListService(id: number) {
