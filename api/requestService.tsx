@@ -6,12 +6,18 @@ class RequestServiceApi extends Api {
     super("requestService");
   }
 
-  async createRequestService(data: RequestServiceInterface) {
-    return this.request("POST", `/`, data);
-  }
+  // async createRequestService(data: FormData) {
+  //   return this.request("POST", `/`, data, {
+  //     isFormData: "true",
+  //   });
+  // }
 
   async getListService(id: number) {
     return this.request("GET", `/${id}`);
+  }
+
+  async getListServiceByUserId(id: string) {
+    return this.request("GET", `/allbyuserid/${id}`)
   }
 
   async getOneByUnit(unit: string) {

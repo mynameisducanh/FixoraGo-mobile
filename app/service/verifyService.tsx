@@ -10,6 +10,9 @@ import {
   Platform,
   Alert,
   Image,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import TextArea from "@/components/default/textArea";
@@ -28,6 +31,16 @@ import timeCategoriesList from "@/constants/TimeCategoriesList";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { formatDate, formatDateWithDay, formatTime } from "@/utils/dateFormat";
 import * as ImagePicker from "expo-image-picker";
+import RequestServiceApi from "@/api/requestService";
+import axios from "axios";
+import Constants from "expo-constants";
+import { Ionicons } from "@expo/vector-icons";
+import LocationPicker from "@/components/default/locationPicker";
+
+interface Location {
+  code: string;
+  name: string;
+}
 
 const VerifyService = () => {
   const { unit, serviceId, typeServiceId } = useLocalSearchParams();
@@ -36,6 +49,16 @@ const VerifyService = () => {
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
+  const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
+  const [selectedProvince, setSelectedProvince] = useState<Location | null>(
+    null
+  );
+  const [selectedDistrict, setSelectedDistrict] = useState<Location | null>(
+    null
+  );
+  const [selectedWard, setSelectedWard] = useState<Location | null>(null);
+  const [detailAddress, setDetailAddress] = useState("");
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
 
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
@@ -45,6 +68,7 @@ const VerifyService = () => {
   const serviceApi = new ServiceApi();
   const priceServiceApi = new PriceServiceApi();
   const listDetailServiceApi = new ListDetailServiceApi();
+  const requestServiceApi = new RequestServiceApi();
   const [text, setText] = useState("");
   const router = useRouter();
   const [service, setService] = useState<ServiceInterface>();
@@ -52,7 +76,6 @@ const VerifyService = () => {
   const [listDetailService, setListDetailService] =
     useState<ListDetailServiceInterface>();
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const handleConfirmDate = (date: any) => {
     console.log(date, "  ");
     setSelectedDate(date);
@@ -74,7 +97,7 @@ const VerifyService = () => {
 
   //     return () => clearTimeout(timer);
   //   }, [value, isFocus]);
-  const selectImage = async () => {
+  const selectImage = async (index: number) => {
     try {
       const permissionResult =
         await ImagePicker.requestCameraPermissionsAsync();
@@ -88,25 +111,30 @@ const VerifyService = () => {
         quality: 1,
       });
 
-      if (!result.canceled && selectedIndex !== null) {
+      if (!result.canceled) {
         const newImage = {
           ...result.assets[0],
           name: `image.${result.assets[0].uri.split(".").pop()}`,
           type: `image/${result.assets[0].uri.split(".").pop()}`,
         };
 
-        // Cập nhật đúng vị trí trong mảng images
         setImages((prev) => {
           const updated = [...prev];
-          updated[selectedIndex] = newImage;
+          updated[index] = newImage;
           return updated;
         });
-
-        setSelectedIndex(null); // Reset lại index
       }
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => {
+      const updated = [...prev];
+      updated[index] = undefined as any;
+      return updated;
+    });
   };
 
   useEffect(() => {
@@ -127,184 +155,384 @@ const VerifyService = () => {
   }, [unit]);
 
   const requestService = async () => {
-    console.log(
-      "đã nhấn",
-      text,
-      service?.name,
-      listDetailService?.name,
-      priceService?.name,
-      selectedValue,
-      formatDateWithDay(selectedDate),
-      selectedTime,
-      images
-    );
-  };
-  return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView className="px-4 pt-3 bg-white ">
-          <Text className="pb-3 font-bold text-lg">
-            Mô tả thêm về vấn đề bạn đang gặp
-          </Text>
-          <DropdownTimeComponent
-            data={timeCategoriesList}
-            onSelect={(unit: any) => setSelectedValue(unit)}
-          />
-          <TextArea placeholder="Nhập mô tả ..." onChangeText={setText} />
-          <View className="mt-2 flex-row gap-3">
-            {[0, 1].map((index) => (
-              <TouchableOpacity
-                key={index}
-                className="border-dotted border w-20 h-20 border-gray-300 justify-center items-center rounded-lg overflow-hidden"
-                onPress={() => {
-                  setSelectedIndex(index); // lưu ô bấm
-                  selectImage(); // rồi mới chụp ảnh
-                }}
-              >
-                {images[index] ? (
-                  <Image
-                    source={{ uri: images[index].uri }}
-                    style={{ width: "100%", height: "100%" }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text>+</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Text className="py-2 font-bold text-lg">Thông tin dịch vụ</Text>
-          <View className="border border-gray-300 rounded-lg p-4 bg-gray-100 w-100">
-            <View className="flex-row justify-between mt-2">
-              <Text className="text-gray-600">Tên dịch vụ:</Text>
-              <Text
-                style={{ maxWidth: 215 }}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                className="font-bold"
-              >
-                {service?.name}
-              </Text>
-            </View>
-            <View className="flex-row justify-between mt-2">
-              <Text className="text-gray-600">Phân loại dịch vụ:</Text>
-              <Text
-                style={{ maxWidth: 200 }}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                className="font-bold"
-              >
-                {listDetailService?.name}
-              </Text>
-            </View>
-            <View className="flex-row justify-between mt-2">
-              <Text className="text-gray-600">Chi tiết thiết bị của bạn:</Text>
-              <Text className="font-bold">{priceService?.name}</Text>
-            </View>
-            {/* <View className="flex-row justify-between mt-2">
-          <Text className="text-gray-600">
-           
-          </Text>
-          <Text className="font-bold text-green-600">
- 
-          </Text>
-        </View> */}
-          </View>
-          <Text className="py-2 font-bold text-lg">Xác nhận lịch hẹn</Text>
-          <View className="flex-row gap-1">
-            <TouchableOpacity
-              className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-1/3 "
-              onPress={showTimePicker}
-            >
-              <Text numberOfLines={1} className="">
-                {selectedTime ? `${formatTime(selectedTime)}` : "Chọn giờ"}
-              </Text>
-              <LottieView
-                source={require("@/assets/icons/clock-icon.json")}
-                autoPlay={false}
-                loop={false}
-                style={{ width: 20, height: 20 }}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-2/3"
-              onPress={showDatePicker}
-            >
-              <Text numberOfLines={1} className="text-center w-100">
-                {selectedDate
-                  ? `${formatDateWithDay(selectedDate)}`
-                  : "Chọn ngày"}
-              </Text>
-              <LottieView
-                source={require("@/assets/icons/calendar-icon.json")}
-                autoPlay={false}
-                loop={false}
-                style={{ width: 20, height: 20 }}
-              />
-            </TouchableOpacity>
-          </View>
-          <Text className="py-2 font-bold text-lg">Xác nhận địa chỉ</Text>
-          <View className="">
-            <TouchableOpacity className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-full ">
-              <Text numberOfLines={1} className="">
-                K16/6 Ngô Sĩ Liên ,Hòa Khánh Bắc , Liên Chiểu , Đà Nẵng{" "}
-              </Text>
-              <LottieView
-                source={require("@/assets/icons/location-icon.json")}
-                autoPlay
-                loop
-                style={{ width: 20, height: 20 }}
-              />
-            </TouchableOpacity>
-          </View>
+    if (!selectedDate || !selectedTime) {
+      Alert.alert("Lỗi", "Vui lòng chọn ngày và giờ hẹn.");
+      return;
+    }
 
-          <View className="mt-6">
+    if (
+      !selectedProvince ||
+      !selectedDistrict ||
+      !selectedWard
+    ) {
+      Alert.alert(
+        "Lỗi",
+        "Vui lòng chọn đầy đủ địa chỉ và nhập địa chỉ chi tiết."
+      );
+      return;
+    }
+    const formData = new FormData();
+
+    // Append fields
+    formData.append("userId", "1231213");
+    formData.append("nameService", service?.name || "");
+    formData.append("listDetailService", listDetailService?.name || "");
+    formData.append("priceService", priceService?.name || "");
+    formData.append("typeEquipment", selectedValue || "");
+    formData.append(
+      "address",
+      `${detailAddress}, ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}` ||
+        ""
+    );
+    formData.append("calender", `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`);
+    formData.append("note", text || "");
+
+    // Append file(s)
+    images.forEach((image, index) => {
+      formData.append("file", {
+        uri: image.uri,
+        name: image.name || `photo_${index}.jpg`,
+        type: image.type || "image/jpeg",
+      });
+    });
+
+    try {
+      // const res = await requestServiceApi.createRequestService(formData);
+      const res = await axios.post(
+        `${Constants.expoConfig?.extra?.API_NETWORK}/requestService`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (res) {
+        console.log("Upload thành công", res.data);
+        router.replace("/service/requestSuccess")
+      }
+    } catch (err) {
+      console.error("Lỗi upload:", err);
+    }
+  };
+
+  const handleSelectCurrentLocation = () => {
+    // TODO: Implement current location selection
+    console.log("Selecting current location...");
+  };
+
+  const handleConfirmRequest = () => {
+    if (!selectedDate || !selectedTime) {
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng chọn ngày và giờ hẹn trước khi xác nhận."
+      );
+      return;
+    }
+
+    if (!selectedProvince || !selectedDistrict || !selectedWard) {
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng chọn địa chỉ đầy đủ trước khi xác nhận."
+      );
+      return;
+    }
+
+    setIsConfirmModalVisible(true);
+  };
+
+  const handleSubmitRequest = async () => {
+    setIsConfirmModalVisible(false);
+    await requestService();
+  };
+
+  return (
+    <View className="flex-1 bg-white">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView className="px-4 pt-3 bg-white ">
+            <Text className="pb-3 font-bold text-lg">
+              Mô tả thêm về vấn đề bạn đang gặp
+            </Text>
+            <DropdownTimeComponent
+              data={timeCategoriesList}
+              onSelect={(unit: any) => setSelectedValue(unit)}
+            />
+            <TextArea placeholder="Nhập mô tả ..." onChangeText={setText} />
+            <View className="flex-row mt-3 gap-3">
+              <View className="w-1/2">
+                <Text><Text className="font-bold">Gợi ý :</Text>Bạn có thể thêm hình ảnh để nhân viên có thể hỗ trợ cho bạn tốt hơn</Text>
+              </View>
+              <View className=" flex-row gap-3">
+                {[0, 1].map((index) => {
+                  const img = images[index];
+                  return (
+                    <View key={index} className="relative">
+                      <TouchableOpacity
+                        onPress={() => {
+                          selectImage(index);
+                        }}
+                        className="border-dotted border w-20 h-20 border-gray-300 justify-center items-center rounded-lg overflow-hidden"
+                      >
+                        {img ? (
+                          <Image
+                            source={{ uri: img.uri }}
+                            className="w-full h-full"
+                          />
+                        ) : (
+                          <Ionicons name="camera" size={24} color="#9CA3AF" />
+                        )}
+                      </TouchableOpacity>
+                      {img && (
+                        <TouchableOpacity
+                          onPress={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
+                        >
+                          <Ionicons name="close" size={12} color="white" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+            <Text className="py-2 font-bold text-lg">Thông tin dịch vụ</Text>
+            <View className="border border-gray-300 rounded-lg p-4 bg-gray-100 w-100">
+              <View className="flex-row justify-between">
+                <Text className="text-gray-600">Tên dịch vụ:</Text>
+                <Text
+                  style={{ maxWidth: 215 }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  className="font-bold"
+                >
+                  {service?.name}
+                </Text>
+              </View>
+              <View className="flex-row justify-between mt-2">
+                <Text className="text-gray-600">Phân loại dịch vụ:</Text>
+                <Text
+                  style={{ maxWidth: 200 }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  className="font-bold"
+                >
+                  {listDetailService?.name}
+                </Text>
+              </View>
+              <View className="flex-row justify-between mt-2">
+                <Text className="text-gray-600">
+                  Chi tiết thiết bị của bạn:
+                </Text>
+                <Text className="font-bold">{priceService?.name}</Text>
+              </View>
+              {/* <View className="flex-row justify-between mt-2">
+            <Text className="text-gray-600">
+             
+            </Text>
+            <Text className="font-bold text-green-600">
+     
+            </Text>
+          </View> */}
+            </View>
+            <Text className="py-2 font-bold text-lg">Xác nhận lịch hẹn</Text>
+            <View className="flex-row gap-1">
+              <TouchableOpacity
+                className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-1/3 "
+                onPress={showTimePicker}
+              >
+                <Text numberOfLines={1} className="">
+                  {selectedTime ? `${formatTime(selectedTime)}` : "Chọn giờ"}
+                </Text>
+                <LottieView
+                  source={require("@/assets/icons/clock-icon.json")}
+                  autoPlay={false}
+                  loop={false}
+                  style={{ width: 20, height: 20 }}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-2/3"
+                onPress={showDatePicker}
+              >
+                <Text numberOfLines={1} className="text-center w-100">
+                  {selectedDate
+                    ? `${formatDateWithDay(selectedDate)}`
+                    : "Chọn ngày"}
+                </Text>
+                <LottieView
+                  source={require("@/assets/icons/calendar-icon.json")}
+                  autoPlay={false}
+                  loop={false}
+                  style={{ width: 20, height: 20 }}
+                />
+              </TouchableOpacity>
+            </View>
+            <Text className="py-2 font-bold text-lg">Xác nhận địa chỉ</Text>
+            <View className="">
+              <TouchableOpacity
+                className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-full"
+                onPress={() => setIsLocationModalVisible(true)}
+              >
+                <Text numberOfLines={1} className="">
+                  {selectedWard
+                    ? `${selectedWard.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}`
+                    : selectedDistrict
+                    ? `${selectedDistrict.name}, ${selectedProvince?.name}`
+                    : selectedProvince
+                    ? selectedProvince.name
+                    : "Chọn địa điểm"}
+                </Text>
+                <LottieView
+                  source={require("@/assets/icons/location-icon.json")}
+                  autoPlay={false}
+                  loop={false}
+                  style={{ width: 20, height: 20 }}
+                />
+              </TouchableOpacity>
+              {detailAddress && (
+                <Text className="text-gray-600 text-sm mt-2">
+                  Địa chỉ chi tiết: {detailAddress}
+                </Text>
+              )}
+            </View>
+
             <TouchableOpacity
-              onPress={() => {
-                requestService();
-              }}
-              className="bg-primary text-white py-5 rounded-md"
+              onPress={handleConfirmRequest}
+              className="mt-6 bg-primary py-5 px-4 rounded-lg"
             >
-              <Text className="text-center font-bold text-white">
+              <Text className="text-white text-center font-bold">
                 Xác nhận đặt dịch vụ
               </Text>
             </TouchableOpacity>
-          </View>
 
-          <View className="mt-4">
-            <Text className="text-gray-500 text-sm text-center">
-              *Bằng cách nhấn "Xác nhận đặt dịch vụ", bạn đồng ý với{" "}
-              <Text className="text-primary font-semibold">
-                điều khoản sử dụng
-              </Text>{" "}
-              của chúng tôi.
-            </Text>
-          </View>
-          {/* Picker Ngày */}
-          <DateTimePickerModal
-            isVisible={isDatePickerVisible}
-            mode="date"
-            onConfirm={handleConfirmDate}
-            onCancel={hideDatePicker}
-            locale="vi"
-          />
+            <Modal
+              visible={isConfirmModalVisible}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setIsConfirmModalVisible(false)}
+            >
+              <View className="flex-1 justify-center items-center bg-black/50">
+                <View className="bg-white w-[90%] rounded-lg p-4">
+                  <Text className="text-xl font-bold mb-4 text-center">
+                    Xác nhận thông tin
+                  </Text>
 
-          {/* Picker Giờ */}
-          <DateTimePickerModal
-            isVisible={isTimePickerVisible}
-            mode="time"
-            onConfirm={handleConfirmTime}
-            onCancel={hideTimePicker}
-            locale="vi"
-            is24Hour={true}
-          />
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+                  <View className="space-y-3">
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Dịch vụ:</Text>
+                      <Text className="font-medium">{service?.name}</Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Phân loại dịch vụ:</Text>
+                      <Text className="font-medium">
+                        {listDetailService?.name}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Chi tiết thiết bị:</Text>
+                      <Text className="font-medium">{priceService?.name}</Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">
+                        Thời điểm lắp đặt/mua thiết bị:
+                      </Text>
+                      <Text className="font-medium">
+                        {selectedValue || "Trống"}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Ngày hẹn:</Text>
+                      <Text className="font-medium">
+                        {selectedDate ? formatDateWithDay(selectedDate) : ""}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Giờ hẹn:</Text>
+                      <Text className="font-medium">
+                        {selectedTime ? formatTime(selectedTime) : ""}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Địa chỉ:</Text>
+                      <Text className="font-medium text-right flex-1 ml-2">
+                        {`${detailAddress} ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}`}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Ghi chú của bạn:</Text>
+                      <Text className="font-medium">{text}</Text>
+                    </View>
+                  </View>
+
+                  <View className="flex-row justify-between mt-6">
+                    <TouchableOpacity
+                      onPress={() => setIsConfirmModalVisible(false)}
+                      className="bg-gray-200 py-3 px-6 rounded-lg"
+                    >
+                      <Text className="text-gray-700">Hủy</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={handleSubmitRequest}
+                      className="bg-primary py-3 px-6 rounded-lg"
+                    >
+                      <Text className="text-white">Xác nhận</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View className="mt-4">
+                    <Text className="text-gray-500 text-sm text-center">
+                      *Bằng cách nhấn "Xác nhận", bạn đồng ý với{" "}
+                      <Text className="text-primary font-semibold">
+                        điều khoản sử dụng
+                      </Text>{" "}
+                      của chúng tôi.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        onConfirm={handleConfirmDate}
+        onCancel={hideDatePicker}
+        minimumDate={new Date()}
+      />
+
+      <DateTimePickerModal
+        isVisible={isTimePickerVisible}
+        mode="time"
+        onConfirm={handleConfirmTime}
+        onCancel={hideTimePicker}
+      />
+
+      <LocationPicker
+        visible={isLocationModalVisible}
+        onClose={() => setIsLocationModalVisible(false)}
+        onSelect={(address) => {
+          setSelectedProvince(address.province);
+          setSelectedDistrict(address.district);
+          setSelectedWard(address.ward);
+          setDetailAddress(address.detail);
+        }}
+      />
+    </View>
   );
 };
 

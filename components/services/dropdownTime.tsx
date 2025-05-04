@@ -24,7 +24,7 @@ const DropdownTimeComponent = ({ data, onSelect }) => {
             isFocus ? "text-blue-500" : "text-gray-500"
           } bg-white`}
         >
-          Thời điểm tôi lắp đặt thiết bị
+          Thời điểm tôi lắp đặt/mua thiết bị
         </Text>
       );
     }
@@ -51,7 +51,7 @@ const DropdownTimeComponent = ({ data, onSelect }) => {
         maxHeight={350}
         labelField="title"
         valueField="id"
-        placeholder={!isFocus ? "Thời điểm bạn lắp đặt thiết bị" : "..."}
+        placeholder={!isFocus ? "Thời điểm bạn lắp đặt/mua thiết bị" : "..."}
         searchPlaceholder="Tìm kiếm nhanh"
         value={value}
         onFocus={() => setIsFocus(true)}

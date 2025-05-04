@@ -24,9 +24,9 @@ export interface PricesServiceInterface {
 
 export interface RequestServiceInterface {
   userId: string;
+  listDetailService: string;
   typeService: string;
   nameService: string;
-  listDetailService: string;
   priceService: string;
   calender: string;
   note: string;
