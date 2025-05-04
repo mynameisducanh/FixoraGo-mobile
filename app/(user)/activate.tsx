@@ -12,22 +12,22 @@ const historyData = [
     id: "1",
     nameService: "Sửa chữa, thay mới đường điện",
     listDetailService: "Kiểm tra và tư vấn sửa chữa",
-    priceService: "20.000đ",
+    status: "Đang chờ",
     time: 1742442116768,
   },
   {
     id: "2",
     nameService: "Sửa chữa, thay mới đường",
     listDetailService: "Kiểm tra và tư vấn sửa chữa",
-    priceService: "30.000đ",
-    time: 1742442116768,
+    status: "Đã nhận",
+    time: 1746370507743,
   },
   {
     id: "3",
     nameService:
       "Sửa chữa, thay mới đường đường chữa, thay mới đường chữa, thay mới đường đường ",
     listDetailService: "Kiểm tra và tư vấn sửa chữa",
-    priceService: "30.000đ",
+    status: "Hoàn thành",
     time: 1742442116768,
   },
 ];
@@ -37,6 +37,7 @@ const Activate = () => {
 
   const handleReorder = (item) => {
     console.log("đã chọn ", item.id);
+    router.replace(`/requestService/detail?${item.id}`)
   };
 
   const renderItem = ({ item }) => (
@@ -60,8 +61,8 @@ const Activate = () => {
             {formatTimestamp(item.time)}
           </Text>
         </View>
-        <Text className="text-lg font-bold text-green-600">
-          {item.priceService}
+        <Text className="w-[90px] text-lg font-bold text-green-600">
+          {item.status}
         </Text>
       </View>
       {/* <TouchableOpacity  className="mt-2">
