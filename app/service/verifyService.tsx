@@ -76,7 +76,6 @@ const VerifyService = () => {
   const [listDetailService, setListDetailService] =
     useState<ListDetailServiceInterface>();
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const handleConfirmDate = (date: any) => {
     console.log(date, "  ");
     setSelectedDate(date);
@@ -164,8 +163,7 @@ const VerifyService = () => {
     if (
       !selectedProvince ||
       !selectedDistrict ||
-      !selectedWard ||
-      !detailAddress.trim()
+      !selectedWard
     ) {
       Alert.alert(
         "Lỗi",
@@ -186,7 +184,7 @@ const VerifyService = () => {
       `${detailAddress}, ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}` ||
         ""
     );
-    formData.append("calender", formatDateWithDay(selectedDate));
+    formData.append("calender", `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`);
     formData.append("note", text || "");
 
     // Append file(s)
@@ -211,6 +209,7 @@ const VerifyService = () => {
       );
       if (res) {
         console.log("Upload thành công", res.data);
+        router.replace("/service/requestSuccess")
       }
     } catch (err) {
       console.error("Lỗi upload:", err);
@@ -223,6 +222,22 @@ const VerifyService = () => {
   };
 
   const handleConfirmRequest = () => {
+    if (!selectedDate || !selectedTime) {
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng chọn ngày và giờ hẹn trước khi xác nhận."
+      );
+      return;
+    }
+
+    if (!selectedProvince || !selectedDistrict || !selectedWard) {
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng chọn địa chỉ đầy đủ trước khi xác nhận."
+      );
+      return;
+    }
+
     setIsConfirmModalVisible(true);
   };
 
@@ -248,37 +263,42 @@ const VerifyService = () => {
               onSelect={(unit: any) => setSelectedValue(unit)}
             />
             <TextArea placeholder="Nhập mô tả ..." onChangeText={setText} />
-            <View className="mt-2 flex-row gap-3">
-              {[0, 1].map((index) => {
-                const img = images[index];
-                return (
-                  <View key={index} className="relative">
-                    <TouchableOpacity
-                      onPress={() => {
-                        selectImage(index);
-                      }}
-                      className="border-dotted border w-20 h-20 border-gray-300 justify-center items-center rounded-lg overflow-hidden"
-                    >
-                      {img ? (
-                        <Image
-                          source={{ uri: img.uri }}
-                          className="w-full h-full"
-                        />
-                      ) : (
-                        <Ionicons name="camera" size={24} color="#9CA3AF" />
-                      )}
-                    </TouchableOpacity>
-                    {img && (
+            <View className="flex-row mt-3 gap-3">
+              <View className="w-1/2">
+                <Text><Text className="font-bold">Gợi ý :</Text>Bạn có thể thêm hình ảnh để nhân viên có thể hỗ trợ cho bạn tốt hơn</Text>
+              </View>
+              <View className=" flex-row gap-3">
+                {[0, 1].map((index) => {
+                  const img = images[index];
+                  return (
+                    <View key={index} className="relative">
                       <TouchableOpacity
-                        onPress={() => removeImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
+                        onPress={() => {
+                          selectImage(index);
+                        }}
+                        className="border-dotted border w-20 h-20 border-gray-300 justify-center items-center rounded-lg overflow-hidden"
                       >
-                        <Ionicons name="close" size={12} color="white" />
+                        {img ? (
+                          <Image
+                            source={{ uri: img.uri }}
+                            className="w-full h-full"
+                          />
+                        ) : (
+                          <Ionicons name="camera" size={24} color="#9CA3AF" />
+                        )}
                       </TouchableOpacity>
-                    )}
-                  </View>
-                );
-              })}
+                      {img && (
+                        <TouchableOpacity
+                          onPress={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
+                        >
+                          <Ionicons name="close" size={12} color="white" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
             </View>
             <Text className="py-2 font-bold text-lg">Thông tin dịch vụ</Text>
             <View className="border border-gray-300 rounded-lg p-4 bg-gray-100 w-100">
@@ -383,7 +403,7 @@ const VerifyService = () => {
 
             <TouchableOpacity
               onPress={handleConfirmRequest}
-              className="mt-6 bg-primary py-3 px-4 rounded-lg"
+              className="mt-6 bg-primary py-5 px-4 rounded-lg"
             >
               <Text className="text-white text-center font-bold">
                 Xác nhận đặt dịch vụ
@@ -409,8 +429,24 @@ const VerifyService = () => {
                     </View>
 
                     <View className="flex-row justify-between">
-                      <Text className="text-gray-600">Loại thiết bị:</Text>
-                      <Text className="font-medium">{selectedValue}</Text>
+                      <Text className="text-gray-600">Phân loại dịch vụ:</Text>
+                      <Text className="font-medium">
+                        {listDetailService?.name}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Chi tiết thiết bị:</Text>
+                      <Text className="font-medium">{priceService?.name}</Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">
+                        Thời điểm lắp đặt/mua thiết bị:
+                      </Text>
+                      <Text className="font-medium">
+                        {selectedValue || "Trống"}
+                      </Text>
                     </View>
 
                     <View className="flex-row justify-between">
@@ -430,12 +466,12 @@ const VerifyService = () => {
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Địa chỉ:</Text>
                       <Text className="font-medium text-right flex-1 ml-2">
-                        {`${detailAddress}, ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}`}
+                        {`${detailAddress} ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}`}
                       </Text>
                     </View>
 
                     <View className="flex-row justify-between">
-                      <Text className="text-gray-600">Ghi chú:</Text>
+                      <Text className="text-gray-600">Ghi chú của bạn:</Text>
                       <Text className="font-medium">{text}</Text>
                     </View>
                   </View>
@@ -443,17 +479,26 @@ const VerifyService = () => {
                   <View className="flex-row justify-between mt-6">
                     <TouchableOpacity
                       onPress={() => setIsConfirmModalVisible(false)}
-                      className="bg-gray-200 py-2 px-6 rounded-lg"
+                      className="bg-gray-200 py-3 px-6 rounded-lg"
                     >
                       <Text className="text-gray-700">Hủy</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       onPress={handleSubmitRequest}
-                      className="bg-primary py-2 px-6 rounded-lg"
+                      className="bg-primary py-3 px-6 rounded-lg"
                     >
                       <Text className="text-white">Xác nhận</Text>
                     </TouchableOpacity>
+                  </View>
+                  <View className="mt-4">
+                    <Text className="text-gray-500 text-sm text-center">
+                      *Bằng cách nhấn "Xác nhận", bạn đồng ý với{" "}
+                      <Text className="text-primary font-semibold">
+                        điều khoản sử dụng
+                      </Text>{" "}
+                      của chúng tôi.
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -461,6 +506,21 @@ const VerifyService = () => {
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
+
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        onConfirm={handleConfirmDate}
+        onCancel={hideDatePicker}
+        minimumDate={new Date()}
+      />
+
+      <DateTimePickerModal
+        isVisible={isTimePickerVisible}
+        mode="time"
+        onConfirm={handleConfirmTime}
+        onCancel={hideTimePicker}
+      />
 
       <LocationPicker
         visible={isLocationModalVisible}

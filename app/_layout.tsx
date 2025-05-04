@@ -94,6 +94,10 @@ export default function RootLayout() {
               name="profile/detailProfile"
               options={{ headerShown: false }}
             />
+             <Stack.Screen
+              name="service/requestSuccess"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />
