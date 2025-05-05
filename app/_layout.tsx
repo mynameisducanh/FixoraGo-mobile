@@ -66,7 +66,7 @@ export default function RootLayout() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
-              name="activate/listActive"
+              name="requestService/listRequestSerivce"
               options={{
                 headerTitle: "Lịch sử hoạt động",
                 headerBackTitle: "Trở lại",
@@ -97,6 +97,13 @@ export default function RootLayout() {
              <Stack.Screen
               name="service/requestSuccess"
               options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="requestService/detail"
+              options={{
+                headerTitle: "Chi tiết yêu cầu của bạn",
+                headerBackTitle: "Trở lại",
+              }}
             />
             <Stack.Screen name="+not-found" />
           </Stack>

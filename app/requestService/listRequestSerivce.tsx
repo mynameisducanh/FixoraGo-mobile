@@ -23,7 +23,7 @@ const Activate = () => {
   const fetchDataActive = async () => {
     try {
       const res = await requestService.getListServiceByUserId("123");
-      console.log(res)
+      console.log(res);
       if (res) {
         setActiveData(res);
       }
@@ -70,34 +70,16 @@ const Activate = () => {
   );
 
   return (
-    <View className="h-full bg-white">
-      <View className="">
-        <Image
-          style={{ height: hp(32), width: wp(100) }}
-          source={require("../../assets/images/hero-detail-test.jpg")}
-        />
-      </View>
+    <View className="h-full bg-white mt-5">
+      <View className="">{/* Bộ lọc */}</View>
       <View className="px-5 -mt-12 pt-6 bg-background rounded-t-3xl">
-        <Text className="text-xl font-bold mb-3">Hoạt động gần đây</Text>
         <FlatList
-          data={activeData.slice(0,3)}
+          data={activeData}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
         />
       </View>
-      <TouchableOpacity className="w-full mt-4">
-        <Text
-          onPress={() => {
-            router.push({
-              pathname: "/requestService/listRequestSerivce",
-            });
-          }}
-          className="text-blue-500 text-lg font-semibold text-center "
-        >
-          Xem thêm lịch sử hoạt động
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 };

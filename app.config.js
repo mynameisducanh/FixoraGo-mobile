@@ -44,6 +44,7 @@ export default {
     extra: {
       API_URL: process.env.API_URL ||'http://localhost:3333/api',
       API_NETWORK: process.env.API_NETWORK || 'http://192.168.80.220:3333/api',
+      SOCKET_URL: process.env.SOCKET_URL || 'http://192.168.1.6:3333',
     },
   },
 };

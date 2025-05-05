@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import RequestServiceApi from "@/api/requestService";
+import { formatDateTimeVN, formatTimestamp } from "@/utils/dateFormat";
 
 const statusMap = {
   pending: {
@@ -23,6 +25,26 @@ const statusMap = {
 
 const RequestDetail = () => {
   const router = useRouter();
+  const requestServiceApi = new RequestServiceApi();
+  const { idRequest } = useLocalSearchParams();
+  const [requestData,setRequestData] = useState();
+  console.log(idRequest);
+  const fetchDataRequestDetail = async () => {
+    try {
+      const res = await requestServiceApi.getById(idRequest);
+      if (res) {
+        console.log(formatDateTimeVN(res?.createAt));
+        setRequestData(res);
+      }
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    const fetchData = async () =>{
+      await fetchDataRequestDetail();
+    }
+    fetchData();
+  }, []);
   const request = {
     id: "59ba55d3-f705-476c-bcba-f5b437fafa23",
     userId: 1231213,
@@ -37,20 +59,14 @@ const RequestDetail = () => {
     deleteAt: null,
   };
 
-  const statusInfo = statusMap[request.status] || {
-    label: request.status || "Không xác định",
+  const statusInfo = statusMap[requestData?.status] || {
+    label: requestData?.status || "Không xác định",
     color: "text-gray-500",
     icon: "help-circle-outline",
   };
 
   return (
     <View className="flex-1 bg-white">
-      <View className="flex-row items-center px-4 py-3 border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
-          <Ionicons name="arrow-back" size={24} color="#222" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold">Chi tiết yêu cầu</Text>
-      </View>
       <ScrollView className="flex-1 px-4 py-6">
         <View className="items-center mb-6">
           <Ionicons
@@ -72,19 +88,19 @@ const RequestDetail = () => {
           </Text>
         </View>
         <View className="bg-gray-50 rounded-2xl p-4 mb-4 shadow">
-          <InfoRow label="Tên dịch vụ" value={request.nameService} />
-          <InfoRow label="Phân loại" value={request.listDetailService} />
-          <InfoRow label="Chi tiết thiết bị" value={request.priceService} />
-          <InfoRow label="Ghi chú" value={request.note || "Không có"} />
+          <InfoRow label="Tên dịch vụ" value={requestData?.nameService} />
+          <InfoRow label="Phân loại" value={requestData?.listDetailService} />
+          <InfoRow label="Chi tiết thiết bị" value={requestData?.priceService} />
+          <InfoRow label="Ghi chú" value={requestData?.note || "Không có"} />
           <InfoRow
             label="Ngày tạo"
-            value={new Date(request.createAt).toLocaleString("vi-VN")}
+            value={formatDateTimeVN(requestData?.createAt)}
           />
           <InfoRow
             label="Cập nhật"
-            value={new Date(request.updateAt).toLocaleString("vi-VN")}
+            value={formatDateTimeVN(requestData?.updateAt)}
           />
-          <InfoRow label="Mã yêu cầu" value={request.id} />
+          <InfoRow label="Mã yêu cầu" value={requestData?.id} />
         </View>
       </ScrollView>
     </View>
