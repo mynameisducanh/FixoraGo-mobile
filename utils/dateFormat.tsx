@@ -1,13 +1,35 @@
+import dayjs from "dayjs";
+
 export const formatTimestamp = (timestamp) => {
+  if (!timestamp) return "Không xác định";
+
   const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return "Ngày không hợp lệ";
+
   return date.toLocaleString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
     hour12: false,
   });
+};
+
+
+
+export const formatDateTimeVN = (value: string | number | Date | undefined): string => {
+  if (!value) return "Không xác định";
+
+  const date = dayjs(value); // dayjs xử lý tốt với timestamp
+
+  if (!date.isValid()) {
+    console.log("❌ Không thể parse ngày:", value);
+    return "Ngày không hợp lệ";
+  }
+
+  return date.format("HH:mm, DD/MM/YYYY");
 };
 
 export function formatTime(isoString) {

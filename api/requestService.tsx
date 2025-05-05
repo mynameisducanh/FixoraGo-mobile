@@ -17,7 +17,11 @@ class RequestServiceApi extends Api {
   }
 
   async getListServiceByUserId(id: string) {
-    return this.request("GET", `/allbyuserid/${id}`)
+    return this.request("GET", `/allbyuserid/${id}`);
+  }
+
+  async getById(id: string) {
+    return this.request("GET", `/${id}`);
   }
 
   async getOneByUnit(unit: string) {
