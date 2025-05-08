@@ -209,7 +209,7 @@ const VerifyService = () => {
       );
       if (res) {
         console.log("Upload thành công", res.data);
-        router.replace("/service/requestSuccess")
+        router.push("/service/requestSuccess")
       }
     } catch (err) {
       console.error("Lỗi upload:", err);

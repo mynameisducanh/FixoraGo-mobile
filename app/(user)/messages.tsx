@@ -7,8 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { io, Socket } from "socket.io-client";
-
-const SOCKET_URL = "http://192.168.1.50:3333"; // chỉnh lại nếu chạy trên thiết bị thật
+import Constants from "expo-constants";
 
 const Messages = () => {
   const socketRef = useRef<Socket | null>(null);
@@ -33,7 +32,7 @@ const Messages = () => {
   useEffect(() => {
     if (socketRef.current) return; // chỉ connect socket 1 lần duy nhất
 
-    const socket = io(SOCKET_URL, {
+    const socket = io(Constants.expoConfig?.extra?.SOCKET_URL, {
       transports: ["websocket"],
       query: {
         userId,
