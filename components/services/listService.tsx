@@ -31,6 +31,7 @@ const ListService = () => {
     const fetchAnimations = async () => {
       try {
         const res = await api.getAll();
+        console.log(res)
         setlistIcons(res);
 
         const results = await Promise.allSettled(

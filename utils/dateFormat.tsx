@@ -19,10 +19,17 @@ export const formatTimestamp = (timestamp) => {
 
 
 
-export const formatDateTimeVN = (value: string | number | Date | undefined): string => {
+export const formatDateTimeVN = (
+  value: string | number | Date | undefined
+): string => {
   if (!value) return "Không xác định";
 
-  const date = dayjs(value); // dayjs xử lý tốt với timestamp
+  // Nếu là chuỗi chứa toàn số, chuyển sang số để tránh parse sai
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    value = Number(value);
+  }
+
+  const date = dayjs(value);
 
   if (!date.isValid()) {
     console.log("❌ Không thể parse ngày:", value);

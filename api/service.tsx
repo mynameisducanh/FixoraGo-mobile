@@ -5,7 +5,7 @@ class ServiceApi extends Api {
     super("services");
   }
 
-  async getId(id: number) {
+  async getId(id: string) {
     return this.request("GET", `/${id}`);
   }
 }

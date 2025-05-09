@@ -1,11 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import RequestServiceApi from "@/api/requestService";
 import { formatDateTimeVN, formatTimestamp } from "@/utils/dateFormat";
+import { statusMap } from "@/utils/function";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+import BackButton from "@/components/buttonDefault/backButton";
+import InfoButton from "@/components/buttonDefault/infoButton";
 
-const statusMap = {
+interface ActivityHistory {
+  id: string;
+  status: string;
+  timestamp: string;
+  note: string;
+}
+
+type StatusType = "pending" | "done" | "cancel" | "processing";
+
+interface StatusInfo {
+  label: string;
+  color: string;
+  icon: string;
+}
+
+const statusMapTyped: Record<StatusType, StatusInfo> = {
   pending: {
     label: "Chờ xử lý",
     color: "text-yellow-500",
@@ -21,86 +49,153 @@ const statusMap = {
     color: "text-red-500",
     icon: "close-circle-outline",
   },
+  processing: {
+    label: "Đang xử lý",
+    color: "text-blue-500",
+    icon: "sync-outline",
+  },
 };
 
 const RequestDetail = () => {
   const router = useRouter();
   const requestServiceApi = new RequestServiceApi();
   const { idRequest } = useLocalSearchParams();
-  const [requestData,setRequestData] = useState();
-  console.log(idRequest);
+  const [requestData, setRequestData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
+    {
+      id: "1",
+      status: "pending",
+      timestamp: new Date().toISOString(),
+      note: "Yêu cầu dịch vụ đã được tạo",
+    },
+    {
+      id: "2",
+      status: "processing",
+      timestamp: new Date().toISOString(),
+      note: "Đang xử lý yêu cầu",
+    },
+  ]);
+
   const fetchDataRequestDetail = async () => {
     try {
-      const res = await requestServiceApi.getById(idRequest);
+      setLoading(true);
+      const res = await requestServiceApi.getById(idRequest as string);
       if (res) {
-        console.log(formatDateTimeVN(res?.createAt));
         setRequestData(res);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const fetchData = async () =>{
-      await fetchDataRequestDetail();
-    }
-    fetchData();
+    fetchDataRequestDetail();
   }, []);
-  const request = {
-    id: "59ba55d3-f705-476c-bcba-f5b437fafa23",
-    userId: 1231213,
-    staffId: null,
-    nameService: "Sửa chữa, thay mới đường điện",
-    listDetailService: "Tại nhà riêng",
-    priceService: "Hệ thống điện âm tường",
-    note: "",
-    status: "pending",
-    createAt: "2025-05-04T15:01:02.997Z",
-    updateAt: "2025-05-04T15:01:02.997Z",
-    deleteAt: null,
-  };
 
-  const statusInfo = statusMap[requestData?.status] || {
+  const statusInfo = statusMapTyped[requestData?.status as StatusType] || {
     label: requestData?.status || "Không xác định",
     color: "text-gray-500",
     icon: "help-circle-outline",
   };
 
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-4 py-6">
-        <View className="items-center mb-6">
-          <Ionicons
-            name={statusInfo.icon as any}
-            size={56}
-            className={statusInfo.color}
-            color={
-              statusInfo.color === "text-yellow-500"
-                ? "#eab308"
-                : statusInfo.color === "text-green-500"
-                ? "#22c55e"
-                : statusInfo.color === "text-red-500"
-                ? "#ef4444"
-                : "#6b7280"
-            }
-          />
-          <Text className={`mt-2 text-xl font-bold ${statusInfo.color}`}>
+      <BackButton />
+      <InfoButton />
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: hp(5),
+        }}
+        className="flex-1 pt-20"
+      >
+        {/* Status Section */}
+        <View className="items-center py-6 bg-white mb-4">
+          <View className="bg-gray-50 p-4 rounded-full mb-4">
+            <Ionicons
+              name={statusInfo.icon as any}
+              size={48}
+              color={
+                statusInfo.color === "text-yellow-500"
+                  ? "#eab308"
+                  : statusInfo.color === "text-green-500"
+                  ? "#22c55e"
+                  : statusInfo.color === "text-red-500"
+                  ? "#ef4444"
+                  : "#6b7280"
+              }
+            />
+          </View>
+          <Text className={`text-xl font-bold ${statusInfo.color}`}>
             {statusInfo.label}
           </Text>
         </View>
-        <View className="bg-gray-50 rounded-2xl p-4 mb-4 shadow">
-          <InfoRow label="Tên dịch vụ" value={requestData?.nameService} />
-          <InfoRow label="Phân loại" value={requestData?.listDetailService} />
-          <InfoRow label="Chi tiết thiết bị" value={requestData?.priceService} />
-          <InfoRow label="Ghi chú" value={requestData?.note || "Không có"} />
-          <InfoRow
-            label="Ngày tạo"
-            value={formatDateTimeVN(requestData?.createAt)}
-          />
-          <InfoRow
-            label="Cập nhật"
-            value={formatDateTimeVN(requestData?.updateAt)}
-          />
-          <InfoRow label="Mã yêu cầu" value={requestData?.id} />
+
+        {/* Request Info Section */}
+        <View style={{ width: wp(100) }} className="px-4 mb-6">
+          <Text className="text-lg font-semibold mb-4">Thông tin yêu cầu</Text>
+          <View className="bg-gray-50 rounded-2xl p-4">
+            <InfoRow label="Tên dịch vụ" value={requestData?.nameService} />
+            <InfoRow label="Phân loại" value={requestData?.listDetailService} />
+            <InfoRow
+              label="Chi tiết thiết bị"
+              value={requestData?.priceService}
+            />
+            <InfoRow
+              label="Thời gian thiết bị được lắp đặt/mua"
+              value={requestData?.typeEquipment}
+            />
+            <InfoRow label="Ghi chú" value={requestData?.note} />
+            <InfoRow label="Địa chỉ" value={requestData?.address} />
+            <InfoRow label="Lịch hẹn" value={requestData?.calender} />
+            <InfoRow
+              label="Ngày tạo"
+              value={formatDateTimeVN(requestData?.createAt)}
+            />
+            <InfoRow
+              label="Cập nhật lần cuối"
+              value={formatDateTimeVN(requestData?.updateAt)}
+            />
+            <InfoRow label="Mã yêu cầu" value={requestData?.id} />
+          </View>
+        </View>
+
+        {/* Activity History Section */}
+        <View className="px-4">
+          <Text className="text-lg font-semibold mb-4">Lịch sử hoạt động</Text>
+          <View className="bg-gray-50 rounded-2xl p-4">
+            {activityHistory.map((activity, index) => (
+              <View key={activity.id} className="flex-row mb-4 last:mb-0">
+                <View className="mr-4 items-center w-2 justify-center ">
+                  <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                  {index !== activityHistory.length - 1 && (
+                    <View className="w-0.5 h-12 bg-gray-300" />
+                  )}
+                </View>
+                <View className="flex-1">
+                  <Text className="font-semibold text-gray-900">
+                    {statusMapTyped[activity.status as StatusType]?.label ||
+                      activity.status}
+                  </Text>
+                  <Text className="text-sm text-gray-500 mb-1">
+                    {formatDateTimeVN(activity.timestamp)}
+                  </Text>
+                  <Text className="text-gray-600">{activity.note}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -109,9 +204,19 @@ const RequestDetail = () => {
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => (
   <View className="flex-row justify-between py-2 border-b border-gray-200 last:border-b-0">
-    <Text className="text-gray-500 font-medium">{label}</Text>
-    <Text className="text-gray-900 font-semibold max-w-[60%] text-right">
-      {value}
+    <Text
+      numberOfLines={2}
+      ellipsizeMode="tail"
+      className="text-gray-500 font-medium max-w-[35%] text-left"
+    >
+      {label}
+    </Text>
+    <Text
+      numberOfLines={2}
+      ellipsizeMode="tail"
+      className="text-gray-900 font-semibold max-w-[65%] text-right"
+    >
+      {value ? value : "Trống"}
     </Text>
   </View>
 );

@@ -33,10 +33,12 @@ const DetailService = () => {
     useState<ListDetailServiceInterface>();
   useEffect(() => {
     const fetchDataService = async () => {
-      const res = await serviceApi.getId(Number(idService));
+      console.log(idService)
+      const res = await serviceApi.getId(idService as string);
       const dataListService = await listDetailServiceApi.getListService(
-        Number(idService)
+        idService as string
       );
+      console.log(res,dataListService)
       if (res) {
         setService(res);
       }

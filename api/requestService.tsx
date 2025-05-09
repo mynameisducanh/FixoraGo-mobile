@@ -12,7 +12,7 @@ class RequestServiceApi extends Api {
   //   });
   // }
 
-  async getListService(id: number) {
+  async getListService(id: string) {
     return this.request("GET", `/${id}`);
   }
 
