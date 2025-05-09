@@ -47,7 +47,7 @@ export default function Page() {
       // router.push("/(staff)");
       setTimeout(() => router.replace("/(staff)"), 4000);
     } else {
-      setTimeout(() => router.replace("/(tabs)"), 4000);
+      setTimeout(() => router.replace("/(user)"), 4000);
     }
   }, []);
 

@@ -101,8 +101,7 @@ export default function RootLayout() {
             <Stack.Screen
               name="requestService/detail"
               options={{
-                headerTitle: "Chi tiết yêu cầu của bạn",
-                headerBackTitle: "Trở lại",
+                headerShown: false
               }}
             />
             <Stack.Screen name="+not-found" />

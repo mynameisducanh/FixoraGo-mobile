@@ -140,13 +140,13 @@ const VerifyService = () => {
   useEffect(() => {
     if (unit) {
       const fetchDataService = async () => {
-        const serviceData = await serviceApi.getById(Number(serviceId));
+        const serviceData = await serviceApi.getById(serviceId as string);
         setService(serviceData);
         const unitData = await listDetailServiceApi.getOneByUnit(
           Array.isArray(unit) ? unit[0] : unit
         );
         setListDetailService(unitData);
-        const priceData = await priceServiceApi.getById(typeServiceId);
+        const priceData = await priceServiceApi.getById(typeServiceId as string);
 
         setPrice(priceData);
       };
@@ -174,7 +174,7 @@ const VerifyService = () => {
     const formData = new FormData();
 
     // Append fields
-    formData.append("userId", "1231213");
+    formData.append("userId", "670551b4-9c73-4895-840e-1ac7ea826dc1");
     formData.append("nameService", service?.name || "");
     formData.append("listDetailService", listDetailService?.name || "");
     formData.append("priceService", priceService?.name || "");
