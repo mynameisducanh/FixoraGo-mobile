@@ -56,6 +56,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
         }
       );
       if (response.data) {
+        console.log(response.data)
         await AsyncStorage.setItem(
           USER_STORAGE_KEY,
           JSON.stringify(response.data)

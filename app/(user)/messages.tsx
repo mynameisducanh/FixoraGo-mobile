@@ -115,7 +115,7 @@ const Messages = () => {
     <View className="flex-1 p-4 mt-10 bg-white">
       <Text className="text-xl font-bold mb-4 text-center">💬 Chat Realtime Demo</Text>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={toggleRole}
         className="bg-purple-600 py-2 rounded-md mb-3"
       >
@@ -191,7 +191,7 @@ const Messages = () => {
             </View>
           );
         })}
-      </ScrollView>
+      </ScrollView> */}
     </View>
   );
 };

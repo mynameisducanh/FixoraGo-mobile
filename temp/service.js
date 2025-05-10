@@ -26,7 +26,7 @@ export const newsData = [
   {
     name: "Tìm hiểu về dịch vụ sửa chữa tại nhà",
     image:
-      "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975526/samples/cup-on-a-table.jpg",
+      "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
     description: "Đặt lịch sửa chữa nhanh chóng, thợ có mặt trong 30 phút.",
     time: "3 phút trước",
     view: "1032",

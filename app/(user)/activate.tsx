@@ -9,11 +9,15 @@ import { useRouter } from "expo-router";
 import RequestServiceApi from "@/api/requestService";
 import { statusMap } from "@/utils/function";
 import { Ionicons } from "@expo/vector-icons";
+import { useUserStore } from "@/stores/user-store";
+
 
 const Activate = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
   const [activeData, setActiveData] = useState([]);
+  const { user } = useUserStore();
+  console.log(user?.id)
   const handleReorder = (item) => {
     console.log("đã chọn ", item.id);
     router.push({
@@ -24,8 +28,9 @@ const Activate = () => {
 
   const fetchDataActive = async () => {
     try {
-      const res = await requestService.getListServiceByUserId("670551b4-9c73-4895-840e-1ac7ea826dc1");
-      console.log(res)
+      const res = await requestService.getListServiceByUserId(user?.id);
+      console.log(res);
+
       if (res) {
         setActiveData(res);
       }
@@ -101,7 +106,7 @@ const Activate = () => {
       <View className="px-5 -mt-12 pt-6 bg-background rounded-t-3xl">
         <Text className="text-xl font-bold mb-3">Hoạt động gần đây</Text>
         <FlatList
-          data={activeData.slice(0,3)}
+          data={activeData.slice(0, 3)}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
@@ -110,9 +115,9 @@ const Activate = () => {
       <TouchableOpacity className="w-full mt-4">
         <Text
           onPress={() => {
-            router.push({
-              pathname: "/requestService/listRequestSerivce",
-            });
+            // router.push({
+            //   pathname: "/requestService/listRequestSerivce",
+            // });
           }}
           className="text-blue-500 text-lg font-semibold text-center "
         >

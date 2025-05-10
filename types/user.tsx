@@ -3,10 +3,13 @@ export interface UserInterface {
   deleteAt: string | null;
   email: string;
   emailVerified: number;
-  firstName: string;
+  phonenumber:string;
+  address:string;
+  authdata:string;
+  firstname: string;
   fullName: string;
   id: string;
-  lastName: string;
+  lastname: string;
   roles: string;
   updateAt: string;
   username: string;
