@@ -20,6 +20,11 @@ import {
 } from "react-native-responsive-screen";
 import BackButton from "@/components/buttonDefault/backButton";
 import InfoButton from "@/components/buttonDefault/infoButton";
+import LottieView from "lottie-react-native";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import Entypo from "@expo/vector-icons/Entypo";
+import TechnicianDetailModal from "@/components/technicianDetailModal";
 
 interface ActivityHistory {
   id: string;
@@ -28,12 +33,19 @@ interface ActivityHistory {
   note: string;
 }
 
-type StatusType = "pending" | "done" | "cancel" | "processing";
+type StatusType =
+  | "pending"
+  | "done"
+  | "cancel"
+  | "processing"
+  | "rejected"
+  | "approved";
 
 interface StatusInfo {
   label: string;
   color: string;
   icon: string;
+  bgColor: string;
 }
 
 const statusMapTyped: Record<StatusType, StatusInfo> = {
@@ -41,21 +53,37 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
     label: "Chờ xử lý",
     color: "text-yellow-500",
     icon: "time-outline",
+    bgColor: "bg-yellow-50",
   },
   done: {
     label: "Hoàn thành",
     color: "text-green-500",
     icon: "checkmark-circle-outline",
+    bgColor: "bg-green-50",
   },
   cancel: {
     label: "Đã hủy",
     color: "text-red-500",
     icon: "close-circle-outline",
+    bgColor: "bg-red-50",
   },
   processing: {
     label: "Đang xử lý",
     color: "text-blue-500",
     icon: "sync-outline",
+    bgColor: "bg-blue-50",
+  },
+  rejected: {
+    label: "Đã hủy",
+    color: "text-red-500",
+    icon: "close-circle-outline",
+    bgColor: "bg-red-50",
+  },
+  approved: {
+    label: "Đã duyệt",
+    color: "text-green-500",
+    icon: "checkmark-circle-outline",
+    bgColor: "bg-green-50",
   },
 };
 
@@ -81,6 +109,7 @@ const RequestDetail = () => {
       note: "Đang xử lý yêu cầu",
     },
   ]);
+  const [showTechnicianModal, setShowTechnicianModal] = useState(false);
 
   const fetchDataRequestDetail = async () => {
     try {
@@ -115,6 +144,21 @@ const RequestDetail = () => {
     label: requestData?.status || "Không xác định",
     color: "text-gray-500",
     icon: "help-circle-outline",
+    bgColor: "bg-gray-50",
+  };
+
+  // Mock data for technician
+  const technicianData = {
+    avatar:
+      "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
+    name: "Nguyễn Văn A",
+    hometown:
+      "55 tran thanh, Phường Hòa Thọ Đông, Quận Cẩm Lệ, Thành phố Đà Nẵng",
+    phone: "0123456789",
+    rating: 5.0,
+    totalReviews: 128,
+    experience: "5 năm kinh nghiệm",
+    skills: ["Sửa điện", "Sửa nước", "Lắp đặt thiết bị", "Bảo trì"],
   };
 
   if (loading) {
@@ -134,33 +178,119 @@ const RequestDetail = () => {
           flexGrow: 1,
           paddingBottom: hp(5),
         }}
-        className="flex-1 pt-20"
+        className="flex-1 pt-24"
       >
-        {/* Status Section */}
-        <View className="items-center py-6 bg-white mb-4">
-          <View className="bg-gray-50 p-4 rounded-full mb-4">
-            <Ionicons
-              name={statusInfo.icon as any}
-              size={48}
-              color={
-                statusInfo.color === "text-yellow-500"
-                  ? "#eab308"
-                  : statusInfo.color === "text-green-500"
-                  ? "#22c55e"
-                  : statusInfo.color === "text-red-500"
-                  ? "#ef4444"
-                  : "#6b7280"
-              }
-            />
+        <View className="h-40 px-4 py-4 mb-2">
+          <View
+            style={{ height: wp(35) }}
+            className={` w-full rounded-2xl ${statusInfo.bgColor}`}
+          >
+            {requestData?.status === "pending" && (
+              <View className="flex-1 p-4">
+                <View className="flex-row items-center justify-between mb-4"></View>
+                <View className="flex-row items-center justify-center gap-3">
+                  <Image
+                    source={{
+                      uri: "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
+                    }}
+                    className="w-12 h-12 rounded-full"
+                    resizeMode="cover"
+                  />
+                  <View className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
+                  <LottieView
+                    source={require("@/assets/icons/waiting-icon.json")}
+                    autoPlay
+                    loop
+                    style={{ width: 40, height: 40 }}
+                  />
+                  <View className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
+                  <Image
+                    source={require("@/assets/icons/fixer-icon.png")}
+                    className="w-16 h-16 rounded-full"
+                    resizeMode="cover"
+                  />
+                </View>
+                <Text className="text-gray-700 font-medium text-center">
+                  Đang tìm kiếm thợ
+                </Text>
+              </View>
+            )}
+
+            {requestData?.status === "rejected" && (
+              <View className="flex-1 p-4 items-center justify-center">
+                <View className="bg-white p-4 rounded-full mb-4">
+                  <Ionicons name="close-circle" size={48} color="#ef4444" />
+                </View>
+                <Text className="text-xl font-semibold text-red-500">
+                  Đã hủy
+                </Text>
+              </View>
+            )}
+
+            {requestData?.status === "approved" && (
+              <View className="flex-1 px-4 py-3">
+                <Text className="text-green-500 font-bold text-lg -ml-1 mb-1">
+                  Thông tin thợ đã nhận yêu cầu
+                </Text>
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <Image
+                      source={{
+                        uri: "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
+                      }}
+                      className="w-12 h-12 rounded-full mr-3"
+                      resizeMode="cover"
+                    />
+                    <View>
+                      <Text className="font-semibold text-gray-900">
+                        {"Nguyễn Văn A"}
+                      </Text>
+                      <View className="flex-row items-center">
+                        <Ionicons name="star" size={16} color="#eab308" />
+                        <Text className="text-gray-600 ml-1">{"5.0"}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View className="bg-green-500 w-10 h-10 p-2 rounded-full items-center">
+                    <FontAwesome6
+                      name="clipboard-user"
+                      size={24}
+                      color="#fff"
+                    />
+                  </View>
+                </View>
+                <View className="flex-row justify-between items-center">
+                  <View className="flex-row justify-start mt-3 space-x-4 gap-4 items-center">
+                    <TouchableOpacity
+                      className=""
+                      onPress={() => setShowTechnicianModal(true)}
+                    >
+                      <MaterialCommunityIcons
+                        name="card-account-details-star"
+                        size={24}
+                        color="#22c55e"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity className="">
+                      <Entypo name="message" size={26} color="#22c55e" />
+                    </TouchableOpacity>
+                    <TouchableOpacity className="">
+                      <Entypo name="phone" size={24} color="#22c55e" />
+                    </TouchableOpacity>
+                    <TouchableOpacity className=" ">
+                      <Entypo name="flag" size={24} color="#22c55e" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text className="mt-4">Ngày nhận : {"10/5/2025"}</Text>
+                </View>
+              </View>
+            )}
           </View>
-          <Text className={`text-xl font-bold ${statusInfo.color}`}>
-            {statusInfo.label}
-          </Text>
         </View>
 
         {/* Request Info Section */}
-        <View style={{ width: wp(100) }} className="px-4 mb-6">
-          <Text className="text-lg font-semibold mb-4">Thông tin yêu cầu</Text>
+        <View style={{ width: wp(100) }} className="px-4 mb-3 mt-3">
+          <Text className="text-lg font-semibold mb-3">Thông tin yêu cầu</Text>
           <View className="bg-gray-50 rounded-2xl p-4">
             <InfoRow label="Tên dịch vụ" value={requestData?.nameService} />
             <InfoRow label="Phân loại" value={requestData?.listDetailService} />
@@ -198,10 +328,31 @@ const RequestDetail = () => {
               label="Cập nhật lần cuối"
               value={formatDateTimeVN(requestData?.updateAt)}
             />
+            <View className="flex-row justify-between py-2 border-b border-gray-200 last:border-b-0">
+              <Text
+                numberOfLines={2}
+                ellipsizeMode="tail"
+                className="text-gray-500 font-medium max-w-[35%] text-left"
+              >
+                Tình trạng
+              </Text>
+
+              <Text
+                className={`font-semibold max-w-[65%] text-right ${statusInfo.color}`}
+              >
+                {statusInfo?.label}
+              </Text>
+            </View>
             <InfoRow label="Mã yêu cầu" value={requestData?.id} />
           </View>
         </View>
-
+        <View className="items-center p-2">
+          <TouchableOpacity className="px-4 py-2 rounded-xl w-1/2 border border-red-500 active:opacity-70">
+            <Text className="text-red-500 font-semibold text-center">
+              Hủy yêu cầu dịch vụ
+            </Text>
+          </TouchableOpacity>
+        </View>
         {/* Activity History Section */}
         <View className="px-4">
           <Text className="text-lg font-semibold mb-4">Lịch sử hoạt động</Text>
@@ -263,6 +414,12 @@ const RequestDetail = () => {
           </View>
         </View>
       </Modal>
+
+      <TechnicianDetailModal
+        visible={showTechnicianModal}
+        onClose={() => setShowTechnicianModal(false)}
+        technician={technicianData}
+      />
     </View>
   );
 };

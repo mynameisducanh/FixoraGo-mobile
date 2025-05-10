@@ -11,13 +11,12 @@ import { statusMap } from "@/utils/function";
 import { Ionicons } from "@expo/vector-icons";
 import { useUserStore } from "@/stores/user-store";
 
-
 const Activate = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
   const [activeData, setActiveData] = useState([]);
   const { user } = useUserStore();
-  console.log(user?.id)
+  console.log(user?.id);
   const handleReorder = (item) => {
     console.log("đã chọn ", item.id);
     router.push({
@@ -29,8 +28,7 @@ const Activate = () => {
   const fetchDataActive = async () => {
     try {
       const res = await requestService.getListServiceByUserId(user?.id);
-      console.log(res);
-
+      console.log(res)
       if (res) {
         setActiveData(res);
       }
@@ -38,7 +36,7 @@ const Activate = () => {
       console.log(error);
     }
   };
- const statusInfo = statusMap[activeData?.status] || {
+  const statusInfo = statusMap[activeData?.status] || {
     label: activeData?.status || "Không xác định",
     color: "text-gray-500",
     icon: "help-circle-outline",
@@ -56,39 +54,55 @@ const Activate = () => {
       color: "text-gray-500",
       icon: "help-circle-outline",
     };
-  
+
     return (
       <TouchableOpacity
         onPress={() => handleReorder(item)}
         className="rounded-lg mb-3 p-2"
       >
-        <View className="flex-row items-center gap-1">
-          <View className="flex-1">
-            <Text numberOfLines={2} ellipsizeMode="tail" className="text-lg font-bold">
+        <View className="flex-row items-center justify-between gap-1">
+          <View className="w-[70%]">
+            <Text
+              numberOfLines={2}
+              ellipsizeMode="tail"
+              className="text-lg font-bold"
+            >
               {`Dịch vụ ${item.nameService}`}
             </Text>
             <Text numberOfLines={1} ellipsizeMode="tail" className="text-lg ">
               {`${item.listDetailService}`}
             </Text>
-            <Text className="text-gray-500 mt-1">{formatTimestamp(item.createAt)}</Text>
-          </View>
-          <View className="items-center mb-6">
-            <Ionicons
-              name={statusInfo.icon as any}
-              size={36}
-              color={
-                statusInfo.color === "text-yellow-500"
-                  ? "#eab308"
-                  : statusInfo.color === "text-green-500"
-                  ? "#22c55e"
-                  : statusInfo.color === "text-red-500"
-                  ? "#ef4444"
-                  : "#6b7280"
-              }
-            />
-            <Text className={`mt-2 text-lg font-bold ${statusInfo.color}`}>
-              {statusInfo.label}
+            <Text className="text-gray-500 mt-1">
+              Ngày tạo : {formatTimestamp(item.createAt)}
             </Text>
+           
+          </View>
+          <View className="w-[30%]">
+            <View className="items-center mb-6">
+              <Ionicons
+                name={statusInfo.icon as any}
+                size={26}
+                color={
+                  statusInfo.color === "text-yellow-500"
+                    ? "#eab308"
+                    : statusInfo.color === "text-green-600"
+                    ? "#22c55e"
+                     : statusInfo.color === "text-blue-500"
+                    ? "#3b82f6"
+                    : statusInfo.color === "text-red-500"
+                    ? "#ef4444"
+                    : "#6b7280"
+                }
+              />
+              <Text className={`mt-2 text-sm font-bold ${statusInfo.color}`}>
+                {statusInfo.label}
+              </Text>
+               {item.temp && (
+              <Text numberOfLines={1} ellipsizeMode="tail" className="text-base text-blue-500">
+                {`Ex :${item.temp}`}
+              </Text>
+            )}
+            </View>
           </View>
         </View>
       </TouchableOpacity>
