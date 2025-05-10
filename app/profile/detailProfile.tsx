@@ -16,8 +16,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import Feather from "@expo/vector-icons/Feather";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
+import { useUserStore } from "@/stores/user-store";
 
 const DetailProfile = () => {
+    const { user } = useUserStore();
+  console.log(user)
   return (
     <ScrollView style={{ width: wp(100) }} className="flex-1 bg-white">
       <View className="h-[300px] relative items-center">
@@ -38,29 +41,29 @@ const DetailProfile = () => {
       </View>
 
       <View className="items-center px-4 mt-[68px]">
-        <Text className="text-2xl font-bold text-gray-800">Nguyễn Văn A</Text>
-        <Text className="text-base text-gray-500 mt-1">@username</Text>
+        <Text className="text-2xl font-bold text-gray-800">{user?.fullName}</Text>
+        <Text className="text-base text-gray-500 mt-1">@{user?.username}</Text>
       </View>
 
       <View className="w-[90%] m-auto">
         <View className="flex-row items-center border border-gray-300 rounded-full h-14 p-3 mt-3">
           <Ionicons name="mail-outline" size={20} color="#888" />
-          <Text className="ml-3">anhnguyenduc@gmail.com</Text>
+          <Text className="ml-3">{user?.email}</Text>
         </View>
         <View className="flex-row justify-between">
           <View className="flex-row items-center border border-gray-300 rounded-full w-[60%] h-14 p-3 mt-3">
             <Feather name="phone" size={20} color="#888" />
-            <Text className="ml-3">0982828828</Text>
+            <Text className="ml-3">{user?.phonenumber}</Text>
           </View>
           <View className="flex-row items-center border border-gray-300 rounded-full w-1/3 h-14 p-3 mt-3">
             <Ionicons name="person-outline" size={20} color="#888" />
-            <Text className="ml-3">Nam</Text>
+            <Text className="ml-3">{user?.authdata}</Text>
           </View>
         </View>
 
         <View className="flex-row items-center border border-gray-300 rounded-full h-14 p-3 mt-3">
           <Ionicons name="location-outline" size={20} color="#888" />
-          <Text className="ml-3">123 Tôn Đức Thắng</Text>
+          <Text className="ml-3">{user?.address}</Text>
         </View>
       </View>
       <View className="w-[80%] m-auto flex-row justify-between p-1 mt-5">

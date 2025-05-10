@@ -5,6 +5,9 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Modal,
+  Image,
+  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -62,6 +65,8 @@ const RequestDetail = () => {
   const { idRequest } = useLocalSearchParams();
   const [requestData, setRequestData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
     {
       id: "1",
@@ -83,6 +88,17 @@ const RequestDetail = () => {
       const res = await requestServiceApi.getById(idRequest as string);
       if (res) {
         setRequestData(res);
+        // Parse fileImage string to array of URLs
+        if (res.fileImage) {
+          try {
+            const imageUrls = JSON.parse(res.fileImage);
+            if (Array.isArray(imageUrls)) {
+              setImages(imageUrls);
+            }
+          } catch (error) {
+            console.error("Error parsing fileImage:", error);
+          }
+        }
       }
     } catch (error) {
       console.error(error);
@@ -156,6 +172,21 @@ const RequestDetail = () => {
               label="Thời gian thiết bị được lắp đặt/mua"
               value={requestData?.typeEquipment}
             />
+            <View className="flex-row justify-between py-2 border-b border-gray-200 last:border-b-0">
+              <Text
+                numberOfLines={2}
+                ellipsizeMode="tail"
+                className="text-gray-500 font-medium max-w-[35%] text-left"
+              >
+                Hình ảnh
+              </Text>
+              <TouchableOpacity
+                className="max-w-[65%] text-right"
+                onPress={() => setShowImageModal(true)}
+              >
+                <Text className="text-primary font-semibold">Xem chi tiết</Text>
+              </TouchableOpacity>
+            </View>
             <InfoRow label="Ghi chú" value={requestData?.note} />
             <InfoRow label="Địa chỉ" value={requestData?.address} />
             <InfoRow label="Lịch hẹn" value={requestData?.calender} />
@@ -198,6 +229,40 @@ const RequestDetail = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Image Modal */}
+      <Modal
+        visible={showImageModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowImageModal(false)}
+      >
+        <View className="flex-1 bg-black/80 justify-center items-center">
+          <View className="bg-white w-[90%] rounded-2xl p-4">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-lg font-semibold">Hình ảnh</Text>
+              <TouchableOpacity onPress={() => setShowImageModal(false)}>
+                <Ionicons name="close" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {images.map((imageUrl, index) => (
+                <View key={index} className="mr-4">
+                  <Image
+                    source={{ uri: imageUrl }}
+                    style={{
+                      width: Dimensions.get("window").width * 0.7,
+                      height: Dimensions.get("window").width * 0.7,
+                      borderRadius: 8,
+                    }}
+                    resizeMode="cover"
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

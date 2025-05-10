@@ -36,6 +36,7 @@ import axios from "axios";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import LocationPicker from "@/components/default/locationPicker";
+import { useUserStore } from "@/stores/user-store";
 
 interface Location {
   code: string;
@@ -59,6 +60,7 @@ const VerifyService = () => {
   const [selectedWard, setSelectedWard] = useState<Location | null>(null);
   const [detailAddress, setDetailAddress] = useState("");
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const { user } = useUserStore();
 
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
@@ -174,7 +176,7 @@ const VerifyService = () => {
     const formData = new FormData();
 
     // Append fields
-    formData.append("userId", "670551b4-9c73-4895-840e-1ac7ea826dc1");
+    formData.append("userId", user?.id);
     formData.append("nameService", service?.name || "");
     formData.append("listDetailService", listDetailService?.name || "");
     formData.append("priceService", priceService?.name || "");
