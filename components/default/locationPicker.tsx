@@ -60,7 +60,10 @@ const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
     setLoading(true);
     try {
       const res = await axios.get("https://provinces.open-api.vn/api/p/");
-      setProvinces(res.data);
+      const daNang = res.data.find(
+        (province: Location) => province.name === "Thành phố Đà Nẵng"
+      );
+      setProvinces(daNang ? [daNang] : []);
     } finally {
       setLoading(false);
     }
@@ -162,7 +165,7 @@ const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
                   <>
                     <View className="flex-row items-center justify-between mb-4">
                       <Text className="text-lg font-bold text-center flex-1">
-                        Chọn địa chỉ của bạn
+                        Chọn địa chỉ tại Đà Nẵng
                       </Text>
                       <TouchableOpacity onPress={onClose}>
                         <Ionicons name="close" size={18} color="#000" />
@@ -198,7 +201,7 @@ const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
                         }`}
                       >
                         {!selectedProvince ? (
-                          "Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
+                          "Quận/Huyện, Phường/Xã tại Đà Nẵng"
                         ) : (
                           <>
                             <Text className=" text-base font-bold mb-1">

@@ -5,7 +5,7 @@ class ListDetailServiceApi extends Api {
     super("listDetailService");
   }
 
-  async getListService(id: number) {
+  async getListService(id: string) {
     return this.request("GET", `/${id}`);
   }
 

@@ -12,18 +12,22 @@ class RequestServiceApi extends Api {
   //   });
   // }
 
-  async getListService(id: number) {
+  async getListService(id: string) {
     return this.request("GET", `/${id}`);
   }
 
   async getListServiceByUserId(id: string) {
     return this.request("GET", `/allbyuserid/${id}`);
   }
-
+  async getListServiceByFixerId(id: string) {
+    return this.request("GET", `/getallbyfixerid/${id}`);
+  }
   async getById(id: string) {
     return this.request("GET", `/${id}`);
   }
-
+  async getAllPendingOrRejected(params: any) {
+    return this.request("GET", `/filter`, null, params); // null cho body, params là query string
+  }
   async getOneByUnit(unit: string) {
     return this.request("GET", `/unit/${unit}`);
   }

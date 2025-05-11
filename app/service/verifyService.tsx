@@ -36,6 +36,7 @@ import axios from "axios";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import LocationPicker from "@/components/default/locationPicker";
+import { useUserStore } from "@/stores/user-store";
 
 interface Location {
   code: string;
@@ -59,6 +60,7 @@ const VerifyService = () => {
   const [selectedWard, setSelectedWard] = useState<Location | null>(null);
   const [detailAddress, setDetailAddress] = useState("");
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const { user } = useUserStore();
 
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
@@ -140,13 +142,13 @@ const VerifyService = () => {
   useEffect(() => {
     if (unit) {
       const fetchDataService = async () => {
-        const serviceData = await serviceApi.getById(Number(serviceId));
+        const serviceData = await serviceApi.getById(serviceId as string);
         setService(serviceData);
         const unitData = await listDetailServiceApi.getOneByUnit(
           Array.isArray(unit) ? unit[0] : unit
         );
         setListDetailService(unitData);
-        const priceData = await priceServiceApi.getById(typeServiceId);
+        const priceData = await priceServiceApi.getById(typeServiceId as string);
 
         setPrice(priceData);
       };
@@ -174,14 +176,14 @@ const VerifyService = () => {
     const formData = new FormData();
 
     // Append fields
-    formData.append("userId", "1231213");
+    formData.append("userId", user?.id);
     formData.append("nameService", service?.name || "");
     formData.append("listDetailService", listDetailService?.name || "");
     formData.append("priceService", priceService?.name || "");
     formData.append("typeEquipment", selectedValue || "");
     formData.append(
       "address",
-      `${detailAddress}, ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}` ||
+      `${detailAddress} ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}` ||
         ""
     );
     formData.append("calender", `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`);
@@ -330,14 +332,6 @@ const VerifyService = () => {
                 </Text>
                 <Text className="font-bold">{priceService?.name}</Text>
               </View>
-              {/* <View className="flex-row justify-between mt-2">
-            <Text className="text-gray-600">
-             
-            </Text>
-            <Text className="font-bold text-green-600">
-     
-            </Text>
-          </View> */}
             </View>
             <Text className="py-2 font-bold text-lg">Xác nhận lịch hẹn</Text>
             <View className="flex-row gap-1">

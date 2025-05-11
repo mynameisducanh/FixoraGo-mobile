@@ -7,11 +7,16 @@ import {
 import { formatTimestamp } from "@/utils/dateFormat";
 import { useRouter } from "expo-router";
 import RequestServiceApi from "@/api/requestService";
+import { statusMap } from "@/utils/function";
+import { Ionicons } from "@expo/vector-icons";
+import { useUserStore } from "@/stores/user-store";
 
 const Activate = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
   const [activeData, setActiveData] = useState([]);
+  const { user } = useUserStore();
+  console.log(user?.id);
   const handleReorder = (item) => {
     console.log("đã chọn ", item.id);
     router.push({
@@ -22,7 +27,7 @@ const Activate = () => {
 
   const fetchDataActive = async () => {
     try {
-      const res = await requestService.getListServiceByUserId("123");
+      const res = await requestService.getListServiceByUserId(user?.id);
       console.log(res)
       if (res) {
         setActiveData(res);
@@ -31,43 +36,78 @@ const Activate = () => {
       console.log(error);
     }
   };
-
+  const statusInfo = statusMap[activeData?.status] || {
+    label: activeData?.status || "Không xác định",
+    color: "text-gray-500",
+    icon: "help-circle-outline",
+  };
   useEffect(() => {
     const fetchData = async () => {
       await fetchDataActive();
     };
     fetchData();
   }, []);
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => handleReorder(item)}
-      className="rounded-lg mb-3 p-2"
-    >
-      <View className="flex-row items-center gap-1">
-        <View className="flex-1">
-          <Text
-            numberOfLines={2}
-            ellipsizeMode="tail"
-            className="text-lg font-bold"
-          >{`Dịch vụ ${item.nameService}`}</Text>
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            className="text-lg "
-          >{`${item.listDetailService}`}</Text>
-          <Text className="text-gray-500 mt-1">
-            {formatTimestamp(item.createAt)}
-          </Text>
+
+  const renderItem = ({ item }) => {
+    const statusInfo = statusMap[item.status] || {
+      label: item.status || "Không xác định",
+      color: "text-gray-500",
+      icon: "help-circle-outline",
+    };
+
+    return (
+      <TouchableOpacity
+        onPress={() => handleReorder(item)}
+        className="rounded-lg mb-3 p-2"
+      >
+        <View className="flex-row items-center justify-between gap-1">
+          <View className="w-[70%]">
+            <Text
+              numberOfLines={2}
+              ellipsizeMode="tail"
+              className="text-lg font-bold"
+            >
+              {`Dịch vụ ${item.nameService}`}
+            </Text>
+            <Text numberOfLines={1} ellipsizeMode="tail" className="text-lg ">
+              {`${item.listDetailService}`}
+            </Text>
+            <Text className="text-gray-500 mt-1">
+              Ngày tạo : {formatTimestamp(item.createAt)}
+            </Text>
+           
+          </View>
+          <View className="w-[30%]">
+            <View className="items-center mb-6">
+              <Ionicons
+                name={statusInfo.icon as any}
+                size={26}
+                color={
+                  statusInfo.color === "text-yellow-500"
+                    ? "#eab308"
+                    : statusInfo.color === "text-green-600"
+                    ? "#22c55e"
+                     : statusInfo.color === "text-blue-500"
+                    ? "#3b82f6"
+                    : statusInfo.color === "text-red-500"
+                    ? "#ef4444"
+                    : "#6b7280"
+                }
+              />
+              <Text className={`mt-2 text-sm font-bold ${statusInfo.color}`}>
+                {statusInfo.label}
+              </Text>
+               {item.temp && (
+              <Text numberOfLines={1} ellipsizeMode="tail" className="text-base text-blue-500">
+                {`Ex :${item.temp}`}
+              </Text>
+            )}
+            </View>
+          </View>
         </View>
-        <Text className="w-[90px] text-lg font-bold text-green-600">
-          {item.status}
-        </Text>
-      </View>
-      {/* <TouchableOpacity  className="mt-2">
-        <Text className="text-blue-500 text-lg font-semibold">Xem thêm thông tin</Text>
-      </TouchableOpacity> */}
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View className="h-full bg-white">
@@ -80,7 +120,7 @@ const Activate = () => {
       <View className="px-5 -mt-12 pt-6 bg-background rounded-t-3xl">
         <Text className="text-xl font-bold mb-3">Hoạt động gần đây</Text>
         <FlatList
-          data={activeData.slice(0,3)}
+          data={activeData.slice(0, 3)}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
@@ -89,9 +129,9 @@ const Activate = () => {
       <TouchableOpacity className="w-full mt-4">
         <Text
           onPress={() => {
-            router.push({
-              pathname: "/requestService/listRequestSerivce",
-            });
+            // router.push({
+            //   pathname: "/requestService/listRequestSerivce",
+            // });
           }}
           className="text-blue-500 text-lg font-semibold text-center "
         >

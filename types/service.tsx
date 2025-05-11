@@ -1,5 +1,5 @@
 export interface ServiceInterface {
-  id: number;
+  id: string;
   categoryId: string;
   name: string;
   description: string;
@@ -8,7 +8,7 @@ export interface ServiceInterface {
 
 export interface ListDetailServiceInterface {
   id: number;
-  serviceId: number;
+  serviceId: string;
   name: string;
   unit: string;
   type: string;
@@ -16,7 +16,7 @@ export interface ListDetailServiceInterface {
 
 export interface PricesServiceInterface {
   id: string;
-  ServiceId: number;
+  ServiceId: string;
   name: string;
   UnitService: string;
   price: string;

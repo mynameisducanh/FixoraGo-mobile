@@ -25,3 +25,30 @@ export const fetchLottieFile = async (data: any) => {
   }
 };
 
+export const statusMap = {
+  pending: {
+    label: "Đang chờ xử lý",
+    color: "text-yellow-500",
+    icon: "hourglass-outline",
+  },
+  completed: {
+    label: "Đã hoàn thành",
+    color: "text-green-600",
+    icon: "checkmark-circle-outline",
+  },
+  rejected: {
+    label: "Đã bị từ chối",
+    color: "text-red-500",
+    icon: "close-circle-outline",
+  },
+  guarantee: {
+    label: "Đang bảo hành",
+    color: "text-blue-500",
+    icon: "shield-checkmark-outline",
+  },
+  approved: {
+    label: "Đã được nhận",
+    color: "text-green-500",
+    icon: "person-outline",
+  },
+};

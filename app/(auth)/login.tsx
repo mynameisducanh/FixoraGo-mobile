@@ -72,7 +72,7 @@ const Login = () => {
               Vui lòng đăng nhập để tiếp tục
             </Text>
 
-            <View className="w-full flex-row items-center border border-gray-300 rounded-full  p-2 mt-3">
+            <View className="w-full flex-row items-center border border-gray-300 rounded-full px-3 mt-3">
               <Ionicons name="person-outline" size={20} color="#888" />
               <TextInput
                 placeholder="Tên đăng nhập"
@@ -80,11 +80,11 @@ const Login = () => {
                 onChangeText={setUsername}
                 className="flex-1 ml-2 text-lg justify-center"
                 placeholderTextColor="#888"
-                style={{ height: 35, alignItems: "center", lineHeight: 19 }}
+                style={{ height: 50, alignItems: "center", lineHeight: 19 }}
               />
             </View>
 
-            <View className="w-full flex-row items-center border border-gray-300 rounded-full p-2 mt-3">
+            <View className="flex-row items-center border border-gray-300 rounded-full px-3 mt-3">
               <Ionicons name="lock-closed-outline" size={20} color="#888" />
               <TextInput
                 placeholder="Mật khẩu"
@@ -93,7 +93,7 @@ const Login = () => {
                 secureTextEntry={secure}
                 className="flex-1 ml-2 text-lg justify-center"
                 placeholderTextColor="#888"
-                style={{ height: 35, alignItems: "center", lineHeight: 19 }}
+                style={{ height: 50, alignItems: "center", lineHeight: 19 }}
               />
               <TouchableOpacity onPress={() => setSecure(!secure)}>
                 <Ionicons
