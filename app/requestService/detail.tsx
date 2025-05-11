@@ -25,6 +25,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Entypo from "@expo/vector-icons/Entypo";
 import TechnicianDetailModal from "@/components/technicianDetailModal";
+import { useUserStore } from "@/stores/user-store";
 
 interface ActivityHistory {
   id: string;
@@ -35,9 +36,8 @@ interface ActivityHistory {
 
 type StatusType =
   | "pending"
-  | "done"
-  | "cancel"
-  | "processing"
+  | "completed"
+  | "guarantee"
   | "rejected"
   | "approved";
 
@@ -55,34 +55,28 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
     icon: "time-outline",
     bgColor: "bg-yellow-50",
   },
-  done: {
+  completed: {
     label: "Hoàn thành",
-    color: "text-green-500",
+    color: "#16a34a",
     icon: "checkmark-circle-outline",
-    bgColor: "bg-green-50",
+    bgColor: "bg-green-100",
   },
-  cancel: {
-    label: "Đã hủy",
-    color: "text-red-500",
-    icon: "close-circle-outline",
-    bgColor: "bg-red-50",
-  },
-  processing: {
-    label: "Đang xử lý",
-    color: "text-blue-500",
-    icon: "sync-outline",
-    bgColor: "bg-blue-50",
+  guarantee: {
+    label: "Đang bảo hành",
+    color: "#3b82f6",
+    icon: "shield-checkmark-outline",
+    bgColor: "bg-blue-100",
   },
   rejected: {
     label: "Đã hủy",
-    color: "text-red-500",
+    color: "#ef4444",
     icon: "close-circle-outline",
     bgColor: "bg-red-50",
   },
   approved: {
     label: "Đã duyệt",
-    color: "text-green-500",
-    icon: "checkmark-circle-outline",
+    color: "#22c55e",
+    icon: "clipboard-user",
     bgColor: "bg-green-50",
   },
 };
@@ -93,6 +87,7 @@ const RequestDetail = () => {
   const { idRequest } = useLocalSearchParams();
   const [requestData, setRequestData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useUserStore();
   const [showImageModal, setShowImageModal] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
@@ -178,47 +173,48 @@ const RequestDetail = () => {
           flexGrow: 1,
           paddingBottom: hp(5),
         }}
-        className="flex-1 pt-24"
+        className="flex-1 pt-24 "
       >
-        <View className="h-40 px-4 py-4 mb-2">
+        <View className="h-40 px-4 py-4 mb-2 ">
           <View
             style={{ height: wp(35) }}
             className={` w-full rounded-2xl ${statusInfo.bgColor}`}
           >
-            {requestData?.status === "pending" && (
-              <View className="flex-1 p-4">
-                <View className="flex-row items-center justify-between mb-4"></View>
-                <View className="flex-row items-center justify-center gap-3">
-                  <Image
-                    source={{
-                      uri: "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
-                    }}
-                    className="w-12 h-12 rounded-full"
-                    resizeMode="cover"
-                  />
-                  <View className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
-                  <LottieView
-                    source={require("@/assets/icons/waiting-icon.json")}
-                    autoPlay
-                    loop
-                    style={{ width: 40, height: 40 }}
-                  />
-                  <View className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
-                  <Image
-                    source={require("@/assets/icons/fixer-icon.png")}
-                    className="w-16 h-16 rounded-full"
-                    resizeMode="cover"
-                  />
+            {requestData?.status === "pending" &&
+              user?.roles !== "system_fixer" && (
+                <View className="flex-1 p-4">
+                  <View className="flex-row items-center justify-between mb-4"></View>
+                  <View className="flex-row items-center justify-center gap-3">
+                    <Image
+                      source={{
+                        uri: "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
+                      }}
+                      className="w-12 h-12 rounded-full"
+                      resizeMode="cover"
+                    />
+                    <View className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
+                    <LottieView
+                      source={require("@/assets/icons/waiting-icon.json")}
+                      autoPlay
+                      loop
+                      style={{ width: 40, height: 40 }}
+                    />
+                    <View className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
+                    <Image
+                      source={require("@/assets/icons/fixer-icon.png")}
+                      className="w-16 h-16 rounded-full"
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <Text className="text-gray-700 font-medium text-center">
+                    Đang tìm kiếm thợ
+                  </Text>
                 </View>
-                <Text className="text-gray-700 font-medium text-center">
-                  Đang tìm kiếm thợ
-                </Text>
-              </View>
-            )}
+              )}
 
             {requestData?.status === "rejected" && (
               <View className="flex-1 p-4 items-center justify-center">
-                <View className="bg-white p-4 rounded-full mb-4">
+                <View className=" p-4 rounded-full mb-4">
                   <Ionicons name="close-circle" size={48} color="#ef4444" />
                 </View>
                 <Text className="text-xl font-semibold text-red-500">
@@ -227,11 +223,28 @@ const RequestDetail = () => {
               </View>
             )}
 
-            {requestData?.status === "approved" && (
+            {(requestData?.status === "approved" ||
+              requestData?.status === "guarantee" ||
+              requestData?.status === "completed" ||
+              (requestData?.status === "pending" &&
+                user?.roles === "system_fixer")) && (
               <View className="flex-1 px-4 py-3">
-                <Text className="text-green-500 font-bold text-lg -ml-1 mb-1">
-                  Thông tin thợ đã nhận yêu cầu
-                </Text>
+                {user?.roles === "system_user" ? (
+                  <Text
+                    style={{ color: statusInfo.color }}
+                    className="text-green-500 font-bold text-lg -ml-1 mb-1"
+                  >
+                    Thông tin thợ đã nhận yêu cầu
+                  </Text>
+                ) : (
+                  <Text
+                    style={{ color: statusInfo.color }}
+                    className="text-green-500 font-bold text-lg -ml-1 mb-1"
+                  >
+                    Thông tin khách hàng
+                  </Text>
+                )}
+
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center">
                     <Image
@@ -245,18 +258,31 @@ const RequestDetail = () => {
                       <Text className="font-semibold text-gray-900">
                         {"Nguyễn Văn A"}
                       </Text>
-                      <View className="flex-row items-center">
-                        <Ionicons name="star" size={16} color="#eab308" />
-                        <Text className="text-gray-600 ml-1">{"5.0"}</Text>
-                      </View>
+                      {user?.roles === "system_user" && (
+                        <View className="flex-row items-center">
+                          <Ionicons name="star" size={16} color="#eab308" />
+                          <Text className="text-gray-600 ml-1">{"5.0"}</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
-                  <View className="bg-green-500 w-10 h-10 p-2 rounded-full items-center">
-                    <FontAwesome6
-                      name="clipboard-user"
-                      size={24}
-                      color="#fff"
-                    />
+                  <View
+                    style={{ backgroundColor: statusInfo.color }}
+                    className=" w-10 h-10 p-2 rounded-full items-center"
+                  >
+                    {requestData?.status === "approved" ? (
+                      <FontAwesome6
+                        name={statusInfo.icon}
+                        size={24}
+                        color="#fff"
+                      />
+                    ) : (
+                      <Ionicons
+                        name={statusInfo.icon as any}
+                        size={22}
+                        color="#fff"
+                      />
+                    )}
                   </View>
                 </View>
                 <View className="flex-row justify-between items-center">
@@ -268,20 +294,30 @@ const RequestDetail = () => {
                       <MaterialCommunityIcons
                         name="card-account-details-star"
                         size={24}
-                        color="#22c55e"
+                        color={statusInfo.color}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity className="">
-                      <Entypo name="message" size={26} color="#22c55e" />
+                      <Entypo
+                        name="message"
+                        size={26}
+                        color={statusInfo.color}
+                      />
                     </TouchableOpacity>
                     <TouchableOpacity className="">
-                      <Entypo name="phone" size={24} color="#22c55e" />
+                      <Entypo name="phone" size={24} color={statusInfo.color} />
                     </TouchableOpacity>
                     <TouchableOpacity className=" ">
-                      <Entypo name="flag" size={24} color="#22c55e" />
+                      <Entypo name="flag" size={24} color={statusInfo.color} />
                     </TouchableOpacity>
                   </View>
-                  <Text className="mt-4">Ngày nhận : {"10/5/2025"}</Text>
+                  <View className="flex-col">
+                    <Text className="mt-4">Ngày nhận : {"10/5/2025"}</Text>
+                    {(requestData?.status === "guarantee" ||
+                      requestData?.status === "completed") && (
+                      <Text>Hạn BH : {"21/5/2025"}</Text>
+                    )}
+                  </View>
                 </View>
               </View>
             )}
@@ -338,6 +374,7 @@ const RequestDetail = () => {
               </Text>
 
               <Text
+                style={{ color: statusInfo.color }}
                 className={`font-semibold max-w-[65%] text-right ${statusInfo.color}`}
               >
                 {statusInfo?.label}
@@ -346,13 +383,16 @@ const RequestDetail = () => {
             <InfoRow label="Mã yêu cầu" value={requestData?.id} />
           </View>
         </View>
-        <View className="items-center p-2">
-          <TouchableOpacity className="px-4 py-2 rounded-xl w-1/2 border border-red-500 active:opacity-70">
-            <Text className="text-red-500 font-semibold text-center">
-              Hủy yêu cầu dịch vụ
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {requestData?.status !== "rejected" && (
+          <View className="items-center p-2">
+            <TouchableOpacity className="px-4 py-2 rounded-xl w-1/2 border border-red-500 active:opacity-70">
+              <Text className="text-red-500 font-semibold text-center">
+                Hủy yêu cầu dịch vụ
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Activity History Section */}
         <View className="px-4">
           <Text className="text-lg font-semibold mb-4">Lịch sử hoạt động</Text>
@@ -419,6 +459,8 @@ const RequestDetail = () => {
         visible={showTechnicianModal}
         onClose={() => setShowTechnicianModal(false)}
         technician={technicianData}
+        bgColor={statusInfo.bgColor}
+        color={statusInfo.color}
       />
     </View>
   );
@@ -429,7 +471,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
     <Text
       numberOfLines={2}
       ellipsizeMode="tail"
-      className="text-gray-500 font-medium max-w-[35%] text-left"
+      className="text-gray-500 font-medium max-w-[35%] text-left "
     >
       {label}
     </Text>

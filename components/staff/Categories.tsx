@@ -26,7 +26,7 @@ const Categories = ({ onCategoryChanged }: Props) => {
         ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 10 }}
+        contentContainerStyle={{ paddingHorizontal: 10 }}
       >
         {jobsCategoryList.map((item, index) => (
           <TouchableOpacity
