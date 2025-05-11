@@ -51,9 +51,11 @@ const VerifyOtp = () => {
       let email = await AsyncStorage.getItem(TEMP_EMAIL_REGISTER);
       if (email) {
         const res = await otpApi.verifyOtp(email, otpCode);
+        console.log(res)
         if (res) {
           setVerified(true);
         } else {
+
           showAlert("Lỗi đăng ký", res.message);
         }
       }
@@ -65,7 +67,7 @@ const VerifyOtp = () => {
   if (verified) {
     return (
       <View className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-2xl font-bold text-green-600 mb-4">
+        <Text className="text-2xl font-bold text-primary mb-4">
           Xác thực thành công!
         </Text>
         <Text className="text-gray-600 mb-6 text-center">
@@ -77,7 +79,7 @@ const VerifyOtp = () => {
 
   return (
     <View className="flex-1 items-center justify-center bg-white px-6">
-      <Text className="text-2xl font-bold text-gray-900 mb-4">
+      <Text className="text-2xl font-bold text-primary mb-4">
         Xác thực OTP
       </Text>
       <Text className="text-gray-600 mb-6 text-center">
@@ -100,7 +102,7 @@ const VerifyOtp = () => {
       </View>
 
       <TouchableOpacity
-        className="bg-blue-600 w-full p-3 rounded-lg items-center"
+        className="bg-primary w-full p-3 rounded-lg items-center"
         onPress={handleSubmit}
       >
         <Text className="text-white text-lg font-semibold">Xác nhận</Text>

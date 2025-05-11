@@ -48,7 +48,7 @@ export const statusMap = {
   },
   approved: {
     label: "Đã được nhận",
-    color: "text-green-600",
+    color: "text-green-500",
     icon: "person-outline",
   },
 };

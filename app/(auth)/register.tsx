@@ -94,41 +94,41 @@ const Register = () => {
               Vui lòng đăng ký để tiếp tục
             </Text>
             <View className="w-full space-y-3 mt-4">
-              <View className="flex-row items-center border border-gray-300 rounded-full h-14 p-2 mt-3">
+              <View className="flex-row items-center border border-gray-300 rounded-full px-2">
                 <Ionicons name="person-outline" size={20} color="#888" />
                 <TextInput
-                  className="flex-1 ml-2 text-lg"
+                  className="flex-1 ml-2 text-lg justify-center"
                   placeholder="Tên đăng nhập"
                   keyboardType="email-address"
                   placeholderTextColor="#888"
                   value={form.username}
-                  style={{ height: 50 }}
+                  style={{ height: 50, alignItems: "center", lineHeight: 19 }}
                   onChangeText={(text) => handleChange("username", text)}
                 />
               </View>
-              <View className="flex-row items-center border border-gray-300 rounded-full h-14 p-2 mt-3">
+              <View className="flex-row items-center border border-gray-300 rounded-full px-2 mt-3">
                 <Ionicons name="mail-outline" size={20} color="#888" />
                 <TextInput
-                  className="flex-1 ml-2 text-lg"
+                  className="flex-1 ml-2 text-lg justify-center"
                   placeholder="Email"
                   keyboardType="email-address"
                   placeholderTextColor="#888"
                   value={form.email}
-                  style={{ height: 50 }}
+                  style={{ height: 50, alignItems: "center", lineHeight: 19 }}
                   onChangeText={(text) => handleChange("email", text)}
                 />
               </View>
 
-              <View className="flex-row items-center border border-gray-300 rounded-full h-14 p-2 mt-3">
+              <View className="flex-row items-center border border-gray-300 rounded-full px-2 mt-3">
                 <Ionicons name="lock-closed-outline" size={20} color="#888" />
                 <TextInput
-                  className="flex-1 ml-2 text-lg"
+                  className="flex-1 ml-2 text-lg justify-center"
                   placeholder="Mật khẩu"
                   secureTextEntry={secure}
                   placeholderTextColor="#888"
                   value={form.password}
                   onChangeText={(text) => handleChange("password", text)}
-                  style={{ height: 50 }}
+                  style={{ height: 50, alignItems: "center", lineHeight: 19 }}
                 />
                 <TouchableOpacity onPress={() => setSecure(!secure)}>
                   <Ionicons
@@ -139,15 +139,15 @@ const Register = () => {
                 </TouchableOpacity>
               </View>
 
-              <View className="flex-row items-center border border-gray-300 rounded-full h-14 p-2 mt-3">
+              <View className="flex-row items-center border border-gray-300 rounded-full px-2 mt-3">
                 <Ionicons name="lock-closed-outline" size={20} color="#888" />
                 <TextInput
-                  className="flex-1 ml-2 text-lg"
+                  className="flex-1 ml-2 text-lg justify-center"
                   placeholder="Nhập lại mật khẩu"
                   secureTextEntry={secure}
                   placeholderTextColor="#888"
                   value={form.confirmPassword}
-                  style={{ height: 50 }}
+                  style={{ height: 50, alignItems: "center", lineHeight: 19 }}
                   onChangeText={(text) => handleChange("confirmPassword", text)}
                 />
                 <TouchableOpacity onPress={() => setSecure(!secure)}>

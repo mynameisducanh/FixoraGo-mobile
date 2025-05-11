@@ -183,7 +183,7 @@ const VerifyService = () => {
     formData.append("typeEquipment", selectedValue || "");
     formData.append(
       "address",
-      `${detailAddress}, ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}` ||
+      `${detailAddress} ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}` ||
         ""
     );
     formData.append("calender", `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`);
@@ -332,14 +332,6 @@ const VerifyService = () => {
                 </Text>
                 <Text className="font-bold">{priceService?.name}</Text>
               </View>
-              {/* <View className="flex-row justify-between mt-2">
-            <Text className="text-gray-600">
-             
-            </Text>
-            <Text className="font-bold text-green-600">
-     
-            </Text>
-          </View> */}
             </View>
             <Text className="py-2 font-bold text-lg">Xác nhận lịch hẹn</Text>
             <View className="flex-row gap-1">

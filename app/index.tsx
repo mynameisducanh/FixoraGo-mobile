@@ -42,12 +42,12 @@ export default function Page() {
       // console.log("User");
       // router.push("/(user)");
       setTimeout(() => router.replace("/(user)"), 4000);
-    } else if (user?.roles === "system_staff") {
+    } else if (user?.roles === "system_fixer") {
       // console.log("Staff");
       // router.push("/(staff)");
       setTimeout(() => router.replace("/(staff)"), 4000);
     } else {
-      setTimeout(() => router.replace("/(user)"), 4000);
+      setTimeout(() => router.replace("/(tabs)"), 4000);
     }
   }, []);
 

@@ -28,12 +28,16 @@ interface TechnicianDetailModalProps {
     experience: string;
     skills: string[];
   };
+  bgColor:string;
+  color:string;
 }
 
 const TechnicianDetailModal = ({
   visible,
   onClose,
   technician,
+  bgColor,
+  color
 }: TechnicianDetailModalProps) => {
   return (
     <Modal
@@ -79,20 +83,20 @@ const TechnicianDetailModal = ({
             {/* Action Buttons */}
             <View className="flex-row justify-center gap-3 mb-3">
               <TouchableOpacity className="items-center">
-                <View className="bg-yellow-50 p-3 rounded-full mb-1">
-                  <Entypo name="message" size={24} color="#FFC107" />
+                <View className={` p-3 rounded-full mb-1 ${bgColor}`}>
+                  <Entypo name="message" size={24} color={color} />
                 </View>
                 <Text className="text-gray-600 text-sm">Nhắn tin</Text>
               </TouchableOpacity>
               <TouchableOpacity className="items-center">
-                <View className="bg-yellow-50 p-3 rounded-full mb-1">
-                  <Entypo name="phone" size={24} color="#FFC107" />
+                <View className={` p-3 rounded-full mb-1 ${bgColor}`}>
+                  <Entypo name="phone" size={24} color={color} />
                 </View>
                 <Text className="text-gray-600 text-sm">Gọi điện</Text>
               </TouchableOpacity>
               <TouchableOpacity className="items-center">
-                <View className="bg-yellow-50 p-3 rounded-full mb-1">
-                  <Entypo name="flag" size={24} color="#FFC107" />
+                <View className={` p-3 rounded-full mb-1 ${bgColor}`}>
+                  <Entypo name="flag" size={24} color={color} />
                 </View>
                 <Text className="text-gray-600 text-sm">Báo cáo</Text>
               </TouchableOpacity>
@@ -104,16 +108,19 @@ const TechnicianDetailModal = ({
                 icon="location"
                 title="Quê quán"
                 value={technician.hometown}
+                color={color}
               />
               <InfoItem
                 icon="call"
                 title="Số điện thoại"
                 value={technician.phone}
+                 color={color}
               />
               <InfoItem
                 icon="time"
                 title="Kinh nghiệm"
                 value={technician.experience}
+                 color={color}
               />
 
               {/* Skills */}
@@ -125,6 +132,7 @@ const TechnicianDetailModal = ({
                   {technician.skills.map((skill, index) => (
                     <View
                       key={index}
+                      style={{backgroundColor:color}}
                       className="bg-primary px-3 py-1 rounded-full mr-2 mb-2"
                     >
                       <Text className="text-white">{skill}</Text>
@@ -144,14 +152,16 @@ const InfoItem = ({
   icon,
   title,
   value,
+  color
 }: {
   icon: string;
   title: string;
   value: string;
+  color:string;
 }) => (
   <View className="flex-row items-center">
-    <View className="bg-yellow-50 p-2 rounded-full mr-3">
-      <Ionicons name={icon as any} size={20} color="#FFC107" />
+    <View className=" p-2 rounded-full mr-3">
+      <Ionicons name={icon as any} size={20} color={color} />
     </View>
     <View className="flex-1 flex-row">
       <Text className="text-gray-900 font-medium">{value}</Text>
