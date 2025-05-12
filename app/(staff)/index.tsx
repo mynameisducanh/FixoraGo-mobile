@@ -96,7 +96,6 @@ const RequestCard: React.FC<RequestCardProps> = ({ data, onPress }) => {
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-        paddingBottom: 50,
       }}
     >
       <View className="flex-row justify-between items-start mb-2">
@@ -150,6 +149,9 @@ const HomeStaff = () => {
   const requestService = new RequestServiceApi();
   const [activeData, setActiveData] = useState<RequestData[]>([]);
   const { user } = useUserStore();
+  const [approvedRequest, setApprovedRequest] = useState<RequestData | null>(
+    null
+  );
 
   const onCatChanged = (category: string) => {
     console.log(category);
@@ -171,8 +173,26 @@ const HomeStaff = () => {
     }
   };
 
+  const getApprovedServiceByFixerId = async () => {
+    try {
+      const res = await requestService.getApprovedServiceByFixerId(
+        user?.id as string
+      );
+      if (res.status === "success") {
+        setApprovedRequest(res);
+        return;
+      }
+
+      fetchDataActive();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+
   useEffect(() => {
-    fetchDataActive();
+    getApprovedServiceByFixerId();
+    // fetchDataActive();
   }, []);
 
   return (
@@ -180,38 +200,96 @@ const HomeStaff = () => {
       <StatusBar style="dark" />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 50 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
         className="space-y-4 pt-14"
       >
         <Overview />
 
-        <View className="px-4 mt-3">
-          <View className="flex-row justify-between items-center mb-3">
+        {/* Approved Request Section */}
+        {approvedRequest ? (
+          <View className="px-4 mt-3">
             <Text className="text-xl font-bold text-gray-900">
-              Danh sách yêu cầu
+              Thông tin yêu cầu bạn đã nhận
             </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/post/ListPost")}
-              className="bg-blue-50 p-3 items-center rounded-full"
-            >
-              <Text className="text-blue-600 font-semibold">Xem thêm</Text>
-            </TouchableOpacity>
-          </View>
+            {/* Warning Message */}
+            <View className="bg-yellow-50 p-4 rounded-xl mb-4 flex-row items-center mt-3">
+              <Ionicons name="warning" size={24} color="#f59e0b" />
+              <Text className="text-yellow-800 ml-2 flex-1">
+                Bạn phải hoàn thành yêu cầu này trước khi nhận các yêu cầu khác
+              </Text>
+            </View>
 
-          <Categories onCategoryChanged={onCatChanged} />
+            {/* Approved Request Card */}
+            <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+              <View className="flex-row justify-between items-start mb-3">
+                <View className="flex-1">
+                  <Text className="text-lg font-semibold text-gray-900">
+                    {approvedRequest.nameService}
+                  </Text>
+                  <Text className="text-gray-500 mt-1">
+                    {approvedRequest.listDetailService}
+                  </Text>
+                </View>
+              </View>
 
-          <View className="mt-4">
-            {activeData.map((item) => (
-              <RequestCard
-                key={item.id}
-                data={item}
+              <View className="space-y-2 mb-4">
+                <View className="flex-row items-center">
+                  <Ionicons name="location" size={20} color="#6b7280" />
+                  <Text className="text-gray-600 ml-2 flex-1">
+                    {approvedRequest.address}
+                  </Text>
+                </View>
+                <View className="flex-row items-center">
+                  <Ionicons name="calendar" size={20} color="#6b7280" />
+                  <Text className="text-gray-600 ml-2">
+                    {approvedRequest.calender}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                className="bg-primary p-3 rounded-lg"
                 onPress={() =>
-                  router.push(`/requestService/detail?idRequest=${item.id}`)
+                  router.push(
+                    `/requestService/detail?idRequest=${approvedRequest.id}`
+                  )
                 }
-              />
-            ))}
+              >
+                <Text className="text-white font-semibold text-center">
+                  Xem chi tiết
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        ) : (
+          <View className="px-4 mt-3">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-xl font-bold text-gray-900">
+                Danh sách yêu cầu
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push("/post/ListPost")}
+                className="bg-blue-50 p-3 items-center rounded-full"
+              >
+                <Text className="text-blue-600 font-semibold">Xem thêm</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Categories onCategoryChanged={onCatChanged} />
+
+            <View className="mt-4">
+              {activeData.map((item) => (
+                <RequestCard
+                  key={item.id}
+                  data={item}
+                  onPress={() =>
+                    router.push(`/requestService/detail?idRequest=${item.id}`)
+                  }
+                />
+              ))}
+            </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
