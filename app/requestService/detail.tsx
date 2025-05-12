@@ -26,6 +26,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Entypo from "@expo/vector-icons/Entypo";
 import TechnicianDetailModal from "@/components/technicianDetailModal";
 import { useUserStore } from "@/stores/user-store";
+import CountdownConfirmModal from "../../components/CountdownConfirmModal";
 
 interface ActivityHistory {
   id: string;
@@ -105,6 +106,7 @@ const RequestDetail = () => {
     },
   ]);
   const [showTechnicianModal, setShowTechnicianModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const fetchDataRequestDetail = async () => {
     try {
@@ -112,7 +114,6 @@ const RequestDetail = () => {
       const res = await requestServiceApi.getById(idRequest as string);
       if (res) {
         setRequestData(res);
-        // Parse fileImage string to array of URLs
         if (res.fileImage) {
           try {
             const imageUrls = JSON.parse(res.fileImage);
@@ -129,6 +130,49 @@ const RequestDetail = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFixerApproved = async () => {
+    try {
+      const payload = {
+        requestId: idRequest,
+        fixerId: user?.id,
+      };
+      const res = await requestServiceApi.fixerReceiveRequest(payload);
+      if (res) {
+        router.push({
+          pathname: "/notification/success",
+          params: {
+            type: "success",
+            title: "Nhận yêu cầu thành công",
+            message: "Bạn đã nhận yêu cầu dịch vụ thành công. Vui lòng liên hệ với khách hàng để thực hiện dịch vụ.",
+            redirectTo: "/(staff)",
+            buttonText: "Xem danh sách yêu cầu"
+          }
+        });
+      }
+    } catch (error) {
+      router.replace({
+        pathname: "/notification/success",
+        params: {
+          type: "error",
+          title: "Có lỗi xảy ra",
+          message: "Không thể nhận yêu cầu dịch vụ. Vui lòng thử lại sau.",
+          redirectTo: "/(staff)",
+          redirectParams: JSON.stringify({ idRequest }),
+          buttonText: "Thử lại"
+        }
+      });
+    }
+  };
+
+  const handleShowConfirmModal = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmApproved = () => {
+    setShowConfirmModal(false);
+    handleFixerApproved();
   };
 
   useEffect(() => {
@@ -383,16 +427,47 @@ const RequestDetail = () => {
             <InfoRow label="Mã yêu cầu" value={requestData?.id} />
           </View>
         </View>
-        {requestData?.status !== "rejected" && (
-          <View className="items-center p-2">
-            <TouchableOpacity className="px-4 py-2 rounded-xl w-1/2 border border-red-500 active:opacity-70">
-              <Text className="text-red-500 font-semibold text-center">
-                Hủy yêu cầu dịch vụ
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
+        <View style={{ width: wp(100) }} className="flex-row justify-center">
+          {((requestData?.status === "rejected" &&
+            user?.roles === "system_user") ||
+            (requestData?.status === "approved" &&
+              user?.roles === "system_fixer") ||
+            (requestData?.status === "pending" &&
+              user?.roles === "system_user")) && (
+            <View className="items-center p-2">
+              <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">
+                <Text className="text-red-500 font-semibold text-center">
+                  Hủy yêu cầu dịch vụ
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {((requestData?.status === "guarantee" &&
+            user?.roles === "system_user") ||
+            requestData?.status === "completed") && (
+            <View className="items-center p-2">
+              <TouchableOpacity className="px-6 py-2 rounded-xl border border-primary active:opacity-70">
+                <Text className="text-primary font-semibold text-center">
+                  Đánh giá
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {((requestData?.status === "pending" &&
+            user?.roles === "system_fixer") ||
+            requestData?.status === "completed") && (
+            <View className="items-center p-2">
+              <TouchableOpacity
+                onPress={handleShowConfirmModal}
+                className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+              >
+                <Text className="text-primary font-semibold text-center">
+                  Nhận yêu cầu
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
         {/* Activity History Section */}
         <View className="px-4">
           <Text className="text-lg font-semibold mb-4">Lịch sử hoạt động</Text>
@@ -461,6 +536,16 @@ const RequestDetail = () => {
         technician={technicianData}
         bgColor={statusInfo.bgColor}
         color={statusInfo.color}
+      />
+
+      <CountdownConfirmModal
+        visible={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmApproved}
+        title="Xác nhận nhận yêu cầu"
+        message="Bạn có chắc chắn muốn nhận yêu cầu này?"
+        data={requestData}
+        countdownSetup={10}
       />
     </View>
   );

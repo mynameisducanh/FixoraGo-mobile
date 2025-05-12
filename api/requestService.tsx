@@ -31,6 +31,12 @@ class RequestServiceApi extends Api {
   async getOneByUnit(unit: string) {
     return this.request("GET", `/unit/${unit}`);
   }
+  async fixerReceiveRequest(body: any) {
+    return this.request("PATCH", `/fixer-approval`,  body );
+  }
+    async getApprovedServiceByFixerId(id: string) {
+    return this.request("GET", `/approved-service/${id}` );
+  }
 }
 
 export default RequestServiceApi;
