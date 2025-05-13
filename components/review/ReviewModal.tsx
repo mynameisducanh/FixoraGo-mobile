@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,31 +7,32 @@ import {
   TextInput,
   ScrollView,
   StyleSheet,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
-} from 'react-native-responsive-screen';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+} from "react-native-responsive-screen";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { useUserStore } from "@/stores/user-store";
 
 // Predefined options for reviews
 const SERVICE_REVIEW_OPTIONS = [
-  'Dịch vụ nhanh chóng',
-  'Nhân viên thân thiện',
-  'Giá cả hợp lý',
-  'Chất lượng tốt',
-  'Đúng hẹn',
-  'Tư vấn nhiệt tình',
+  "Dịch vụ nhanh chóng",
+  "Nhân viên thân thiện",
+  "Giá cả hợp lý",
+  "Chất lượng tốt",
+  "Đúng hẹn",
+  "Tư vấn nhiệt tình",
 ];
 
 const STAFF_REVIEW_OPTIONS = [
-  'Thái độ phục vụ tốt',
-  'Chuyên môn cao',
-  'Nhiệt tình, chu đáo',
-  'Đúng giờ hẹn',
-  'Giải thích rõ ràng',
-  'Tư vấn hữu ích',
+  "Thái độ phục vụ tốt",
+  "Chuyên môn cao",
+  "Nhiệt tình, chu đáo",
+  "Đúng giờ hẹn",
+  "Giải thích rõ ràng",
+  "Tư vấn hữu ích",
 ];
 
 interface ReviewModalProps {
@@ -44,7 +45,7 @@ interface ReviewModalProps {
     fixerId?: string;
   }) => void;
   idRequestService: string;
-  type: 'service' | 'staff';
+  type: "service" | "staff";
   fixerId?: string;
 }
 
@@ -57,24 +58,26 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
   fixerId,
 }) => {
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [hoveredStar, setHoveredStar] = useState(0);
-
-  const options = type === 'service' ? SERVICE_REVIEW_OPTIONS : STAFF_REVIEW_OPTIONS;
+  const { user } = useUserStore();
+  const options =
+    type === "service" ? SERVICE_REVIEW_OPTIONS : STAFF_REVIEW_OPTIONS;
 
   const handleOptionToggle = (option: string) => {
     if (selectedOptions.includes(option)) {
-      setSelectedOptions(selectedOptions.filter(item => item !== option));
+      setSelectedOptions(selectedOptions.filter((item) => item !== option));
     } else {
       setSelectedOptions([...selectedOptions, option]);
     }
   };
 
   const handleSubmit = () => {
-    const finalComment = selectedOptions.length > 0
-      ? `${selectedOptions.join(', ')}${comment ? '. ' + comment : ''}`
-      : comment;
+    const finalComment =
+      selectedOptions.length > 0
+        ? `${selectedOptions.join(", ")}${comment ? ". " + comment : ""}`
+        : comment;
 
     onSubmit({
       idRequestService,
@@ -83,10 +86,10 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
       type,
       ...(fixerId && { fixerId }),
     });
-    
+
     // Reset form
     setRating(0);
-    setComment('');
+    setComment("");
     setSelectedOptions([]);
     onClose();
   };
@@ -102,9 +105,9 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
             onPressOut={() => setHoveredStar(0)}
           >
             <Ionicons
-              name={star <= (hoveredStar || rating) ? 'star' : 'star-outline'}
+              name={star <= (hoveredStar || rating) ? "star" : "star-outline"}
               size={40}
-              color={star <= (hoveredStar || rating) ? '#FFD700' : '#D1D5DB'}
+              color={star <= (hoveredStar || rating) ? "#FFD700" : "#D1D5DB"}
             />
           </TouchableOpacity>
         ))}
@@ -114,11 +117,11 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
 
   const renderRatingLabel = () => {
     const labels = {
-      1: 'Rất không hài lòng',
-      2: 'Không hài lòng',
-      3: 'Bình thường',
-      4: 'Hài lòng',
-      5: 'Rất hài lòng',
+      1: "Rất không hài lòng",
+      2: "Không hài lòng",
+      3: "Bình thường",
+      4: "Hài lòng",
+      5: "Rất hài lòng",
     };
     return rating > 0 ? (
       <Text className="text-center text-gray-600 mb-4">
@@ -135,15 +138,15 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 bg-black/50 justify-center items-center">
-        <Animated.View 
-          entering={FadeIn} 
+        <Animated.View
+          entering={FadeIn}
           exiting={FadeOut}
           className="bg-white rounded-2xl w-[90%] max-h-[80%]"
         >
           <ScrollView className="p-6">
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-xl font-bold text-neutral-800">
-                {type === 'service' ? 'Đánh giá dịch vụ' : 'Đánh giá nhân viên'}
+                {type === "service" ? "Đánh giá dịch vụ" : "Đánh giá nhân viên"}
               </Text>
               <TouchableOpacity onPress={onClose}>
                 <Ionicons name="close" size={24} color="#6B7280" />
@@ -151,7 +154,8 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
             </View>
 
             <Text className="text-base text-gray-600 mb-2">
-              Bạn hài lòng với {type === 'service' ? 'dịch vụ' : 'nhân viên'} này như thế nào?
+              Bạn hài lòng với {type === "service" ? "dịch vụ" : "nhân viên"}{" "}
+              này như thế nào?
             </Text>
 
             {renderStars()}
@@ -167,15 +171,15 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
                   onPress={() => handleOptionToggle(option)}
                   className={`mr-2 mb-2 px-3 py-2 rounded-full ${
                     selectedOptions.includes(option)
-                      ? 'bg-primary/10 border border-primary'
-                      : 'bg-gray-100'
+                      ? "bg-primary/10 border border-primary"
+                      : "bg-gray-100"
                   }`}
                 >
                   <Text
                     className={`${
                       selectedOptions.includes(option)
-                        ? 'text-primary'
-                        : 'text-gray-600'
+                        ? "text-primary"
+                        : "text-gray-600"
                     }`}
                   >
                     {option}
@@ -200,7 +204,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
               onPress={handleSubmit}
               disabled={rating === 0}
               className={`mt-6 py-3 rounded-xl ${
-                rating === 0 ? 'bg-gray-300' : 'bg-primary'
+                rating === 0 ? "bg-gray-300" : "bg-primary"
               }`}
             >
               <Text className="text-white text-center font-semibold text-base">
@@ -214,4 +218,4 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
   );
 };
 
-export default ReviewModal; 
+export default ReviewModal;
