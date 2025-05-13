@@ -18,6 +18,7 @@ import {
 } from "@/types/service";
 import ListDetailServiceApi from "@/api/listIconService";
 import PriceServiceApi from "@/api/priceService";
+import LoadingOverlay from "@/components/default/loading";
 
 const DetailService = () => {
   const { idService } = useLocalSearchParams();
@@ -27,23 +28,35 @@ const DetailService = () => {
   const [radio, setRadio] = useState("");
   const [active, setActive] = useState(false);
   const [selectedValue, setSelectedValue] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [service, setService] = useState<ServiceInterface>();
   const [option, setOption] = useState<PricesServiceInterface[]>();
   const [listDetailService, setListDetailService] =
     useState<ListDetailServiceInterface>();
   useEffect(() => {
     const fetchDataService = async () => {
-      console.log(idService)
-      const res = await serviceApi.getId(idService as string);
-      const dataListService = await listDetailServiceApi.getListService(
-        idService as string
-      );
-      console.log(res,dataListService)
-      if (res) {
-        setService(res);
-      }
-      if (dataListService) {
-        setListDetailService(dataListService);
+      try {
+        setLoading(true);
+        console.log(idService);
+
+        const res = await serviceApi.getId(idService as string);
+        const dataListService = await listDetailServiceApi.getListService(
+          idService as string
+        );
+
+        console.log(res, dataListService);
+
+        if (res) {
+          setService(res);
+        }
+
+        if (dataListService) {
+          setListDetailService(dataListService);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu dịch vụ:", error);
+      } finally {
+        setLoading(false); 
       }
     };
     fetchDataService();
@@ -55,7 +68,7 @@ const DetailService = () => {
       const fetchDataPackageSelect = async () => {
         const res = await priceServiceApi.getByUnit(selectedValue);
         if (res) {
-          console.log(res)
+          console.log(res);
           setOption(res);
         }
       };
@@ -71,48 +84,55 @@ const DetailService = () => {
   }, [option]);
   return (
     <View className="relative">
-      <BackButton />
-      <InfoButton />
-      {service && (
-        <ScrollView
-          className="h-full bg-white"
-          contentContainerStyle={{ paddingBottom: 60 }}
-        >
-          <View>
-            <Image
-              style={{ height: hp(32), width: wp(100) }}
-              source={{ uri: service.imageUrl }}
-            />
-          </View>
-          <View className="rounded-t-3xl bg-white -mt-12 pt-6">
-            <View className="px-5">
-              <Text className="text-3xl font-bold mb-4">{service.name}</Text>
-              <Text className="mb-6">{service.description}</Text>
-              <DropdownComponent
-                data={listDetailService}
-                onSelect={(unit: any) => setSelectedValue(unit)}
-              />
-              {option && (
-                <View className="mt-5 pb-10">
-                  <Text>Hãy chọn các gói phù hợp với bạn </Text>
-                  <RadioPriceButton
-                    options={option}
-                    checkedValue={radio}
-                    onChange={setRadio}
+      {loading ? (
+        <LoadingOverlay />
+      ) : (
+        <View>
+          <BackButton />
+          <InfoButton />
+          {service && (
+            <ScrollView
+              className="h-full bg-white"
+              contentContainerStyle={{ paddingBottom: 60 }}
+            >
+              <View>
+                <Image
+                  style={{ height: hp(32), width: wp(100) }}
+                  source={{ uri: service.imageUrl }}
+                />
+              </View>
+              <View className="rounded-t-3xl bg-white -mt-12 pt-6">
+                <View className="px-5">
+                  <Text className="text-3xl font-bold mb-4">
+                    {service.name}
+                  </Text>
+                  <Text className="mb-6">{service.description}</Text>
+                  <DropdownComponent
+                    data={listDetailService}
+                    onSelect={(unit: any) => setSelectedValue(unit)}
                   />
+                  {option && (
+                    <View className="mt-5 pb-10">
+                      <Text>Hãy chọn các gói phù hợp với bạn </Text>
+                      <RadioPriceButton
+                        options={option}
+                        checkedValue={radio}
+                        onChange={setRadio}
+                      />
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
-          </View>
-        </ScrollView>
+              </View>
+            </ScrollView>
+          )}
+          <FooterDetailService
+            unit={selectedValue}
+            serviceId={idService}
+            typeService={radio}
+            isActive={active}
+          />
+        </View>
       )}
-
-      <FooterDetailService
-        unit={selectedValue}
-        serviceId={idService}
-        typeService={radio}
-        isActive={active}
-      />
     </View>
   );
 };

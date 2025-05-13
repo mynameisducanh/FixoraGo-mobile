@@ -45,6 +45,7 @@ interface Location {
 
 const VerifyService = () => {
   const { unit, serviceId, typeServiceId } = useLocalSearchParams();
+  console.log(unit, serviceId, typeServiceId);
   const [selectedValue, setSelectedValue] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
@@ -148,7 +149,9 @@ const VerifyService = () => {
           Array.isArray(unit) ? unit[0] : unit
         );
         setListDetailService(unitData);
-        const priceData = await priceServiceApi.getById(typeServiceId as string);
+        const priceData = await priceServiceApi.getById(
+          typeServiceId as string
+        );
 
         setPrice(priceData);
       };
@@ -162,21 +165,20 @@ const VerifyService = () => {
       return;
     }
 
-    if (
-      !selectedProvince ||
-      !selectedDistrict ||
-      !selectedWard
-    ) {
+    if (!selectedProvince || !selectedDistrict || !selectedWard) {
       Alert.alert(
         "Lỗi",
         "Vui lòng chọn đầy đủ địa chỉ và nhập địa chỉ chi tiết."
       );
       return;
     }
+
     const formData = new FormData();
 
     // Append fields
-    formData.append("userId", user?.id);
+    if (user?.id) {
+      formData.append("userId", user.id);
+    }
     formData.append("nameService", service?.name || "");
     formData.append("listDetailService", listDetailService?.name || "");
     formData.append("priceService", priceService?.name || "");
@@ -186,18 +188,22 @@ const VerifyService = () => {
       `${detailAddress} ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}` ||
         ""
     );
-    formData.append("calender", `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`);
+    formData.append(
+      "calender",
+      `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`
+    );
     formData.append("note", text || "");
 
     // Append file(s)
-    images.forEach((image, index) => {
-      formData.append("file", {
-        uri: image.uri,
-        name: image.name || `photo_${index}.jpg`,
-        type: image.type || "image/jpeg",
+    images
+      .filter((img) => img !== undefined)
+      .forEach((image, index) => {
+        formData.append("file", {
+          uri: image.uri,
+          name: image.name || `photo_${index}.jpg`,
+          type: image.type || "image/jpeg",
+        });
       });
-    });
-
     try {
       // const res = await requestServiceApi.createRequestService(formData);
       const res = await axios.post(
@@ -211,7 +217,7 @@ const VerifyService = () => {
       );
       if (res) {
         console.log("Upload thành công", res.data);
-        router.push("/service/requestSuccess")
+        router.push("/service/requestSuccess");
       }
     } catch (err) {
       console.error("Lỗi upload:", err);
@@ -267,7 +273,10 @@ const VerifyService = () => {
             <TextArea placeholder="Nhập mô tả ..." onChangeText={setText} />
             <View className="flex-row mt-3 gap-3">
               <View className="w-1/2">
-                <Text><Text className="font-bold">Gợi ý :</Text>Bạn có thể thêm hình ảnh để nhân viên có thể hỗ trợ cho bạn tốt hơn</Text>
+                <Text>
+                  <Text className="font-bold">Gợi ý :</Text>Bạn có thể thêm hình
+                  ảnh để nhân viên có thể hỗ trợ cho bạn tốt hơn
+                </Text>
               </View>
               <View className=" flex-row gap-3">
                 {[0, 1].map((index) => {

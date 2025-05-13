@@ -55,6 +55,10 @@ export default function RootLayout() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
+              name="service/listServiceForUser"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="service/verifyService"
               options={{
                 headerTitle: "Xác nhận dịch vụ",
