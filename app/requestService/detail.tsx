@@ -27,6 +27,8 @@ import Entypo from "@expo/vector-icons/Entypo";
 import TechnicianDetailModal from "@/components/technicianDetailModal";
 import { useUserStore } from "@/stores/user-store";
 import CountdownConfirmModal from "../../components/CountdownConfirmModal";
+import ReviewModal from "@/components/review/ReviewModal";
+import LoadingOverlay from "@/components/default/loading";
 
 interface ActivityHistory {
   id: string;
@@ -90,6 +92,7 @@ const RequestDetail = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useUserStore();
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
     {
@@ -145,10 +148,11 @@ const RequestDetail = () => {
           params: {
             type: "success",
             title: "Nhận yêu cầu thành công",
-            message: "Bạn đã nhận yêu cầu dịch vụ thành công. Vui lòng liên hệ với khách hàng để thực hiện dịch vụ.",
+            message:
+              "Bạn đã nhận yêu cầu dịch vụ thành công. Vui lòng liên hệ với khách hàng để thực hiện dịch vụ.",
             redirectTo: "/(staff)",
-            buttonText: "Xem danh sách yêu cầu"
-          }
+            buttonText: "Xem danh sách yêu cầu",
+          },
         });
       }
     } catch (error) {
@@ -160,12 +164,16 @@ const RequestDetail = () => {
           message: "Không thể nhận yêu cầu dịch vụ. Vui lòng thử lại sau.",
           redirectTo: "/(staff)",
           redirectParams: JSON.stringify({ idRequest }),
-          buttonText: "Thử lại"
-        }
+          buttonText: "Thử lại",
+        },
       });
     }
   };
 
+  const handleSubmitReview = (review) => {
+    // Gọi API để gửi đánh giá
+    console.log(review);
+  };
   const handleShowConfirmModal = () => {
     setShowConfirmModal(true);
   };
@@ -201,11 +209,7 @@ const RequestDetail = () => {
   };
 
   if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
+    return <LoadingOverlay />;
   }
 
   return (
@@ -446,7 +450,10 @@ const RequestDetail = () => {
             user?.roles === "system_user") ||
             requestData?.status === "completed") && (
             <View className="items-center p-2">
-              <TouchableOpacity className="px-6 py-2 rounded-xl border border-primary active:opacity-70">
+              <TouchableOpacity
+                onPress={() => setShowReviewModal(true)}
+                className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+              >
                 <Text className="text-primary font-semibold text-center">
                   Đánh giá
                 </Text>
@@ -546,6 +553,15 @@ const RequestDetail = () => {
         message="Bạn có chắc chắn muốn nhận yêu cầu này?"
         data={requestData}
         countdownSetup={10}
+      />
+
+      <ReviewModal
+        visible={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        onSubmit={handleSubmitReview}
+        idRequestService="request-id"
+        type="service" // hoặc "staff"
+        fixerId="fixer-id" // chỉ cần khi type là "staff"
       />
     </View>
   );

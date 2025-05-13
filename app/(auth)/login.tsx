@@ -21,22 +21,31 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import BackButton from "@/components/buttonDefault/backButton";
+import { ActivityIndicator } from "react-native-paper";
 
 const Login = () => {
   const { login } = useUserStore();
   const [secure, setSecure] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { showAlert } = useAppAlert();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const errorMessage = validateLoginForm({ username, password });
     if (errorMessage) {
       showAlert("Lỗi đăng nhập", errorMessage);
       return;
     }
-    login({ username, password });
+    setIsLoading(true);
+    try {
+      await login({ username, password });
+    } catch (error) {
+      showAlert("Đăng nhập thất bại", "Vui lòng kiểm tra lại thông tin.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -107,10 +116,16 @@ const Login = () => {
             <TouchableOpacity
               className="w-full bg-black py-4 rounded-full items-center mt-3"
               onPress={handleLogin}
+              disabled={isLoading}
+              style={{ opacity: isLoading ? 0.7 : 1 }}
             >
-              <Text className="text-white font-semibold text-base">
-                Đăng nhập
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator color="#fff" size={20}/>
+              ) : (
+                <Text className="text-white font-semibold text-base">
+                  Đăng nhập
+                </Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
