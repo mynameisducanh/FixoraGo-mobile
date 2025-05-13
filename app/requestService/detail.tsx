@@ -93,6 +93,8 @@ const RequestDetail = () => {
   const { user } = useUserStore();
   const [showImageModal, setShowImageModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showReviewModal2, setShowReviewModal2] = useState(false);
+
   const [images, setImages] = useState<string[]>([]);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
     {
@@ -170,6 +172,20 @@ const RequestDetail = () => {
     }
   };
 
+  const handleSubmitStaffReview= (review) => {
+    handleSubmitReview(review); // Gửi đánh giá dịch vụ
+    setShowReviewModal(false);
+    setTimeout(() => {
+      if (user?.roles === "system_user") {
+        setShowReviewModal2(true); // Mở đánh giá nhân viên sau khi gửi xong dịch vụ
+      }
+    }, 300);
+  };
+
+  const handleSubmitServiceReview = (review) => {
+    handleSubmitReview(review); // Gửi đánh giá nhân viên
+    setShowReviewModal2(false);
+  };
   const handleSubmitReview = (review) => {
     // Gọi API để gửi đánh giá
     console.log(review);
@@ -451,7 +467,9 @@ const RequestDetail = () => {
             requestData?.status === "completed") && (
             <View className="items-center p-2">
               <TouchableOpacity
-                onPress={() => setShowReviewModal(true)}
+                onPress={() => {
+                  setShowReviewModal(true);
+                }}
                 className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
               >
                 <Text className="text-primary font-semibold text-center">
@@ -461,8 +479,7 @@ const RequestDetail = () => {
             </View>
           )}
           {((requestData?.status === "pending" &&
-            user?.roles === "system_fixer") ||
-            requestData?.status === "completed") && (
+            user?.roles === "system_fixer")) && (
             <View className="items-center p-2">
               <TouchableOpacity
                 onPress={handleShowConfirmModal}
@@ -502,7 +519,6 @@ const RequestDetail = () => {
           </View>
         </View>
       </ScrollView>
-
       {/* Image Modal */}
       <Modal
         visible={showImageModal}
@@ -536,7 +552,6 @@ const RequestDetail = () => {
           </View>
         </View>
       </Modal>
-
       <TechnicianDetailModal
         visible={showTechnicianModal}
         onClose={() => setShowTechnicianModal(false)}
@@ -544,7 +559,6 @@ const RequestDetail = () => {
         bgColor={statusInfo.bgColor}
         color={statusInfo.color}
       />
-
       <CountdownConfirmModal
         visible={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -554,15 +568,41 @@ const RequestDetail = () => {
         data={requestData}
         countdownSetup={10}
       />
-
-      <ReviewModal
+      {/* <ReviewModal
         visible={showReviewModal}
         onClose={() => setShowReviewModal(false)}
         onSubmit={handleSubmitReview}
         idRequestService="request-id"
-        type="service" // hoặc "staff"
-        fixerId="fixer-id" // chỉ cần khi type là "staff"
-      />
+        type="service"
+        fixerId="fixer-id" 
+      /> */}
+      {user?.roles === "system_user" ? (
+        <>
+          <ReviewModal
+            visible={showReviewModal2}
+            onClose={() => setShowReviewModal2(false)}
+            onSubmit={handleSubmitServiceReview}
+            idRequestService={requestData?.id}
+            type="service"
+          />
+          <ReviewModal
+            visible={showReviewModal}
+            onClose={() => setShowReviewModal(false)}
+            onSubmit={handleSubmitStaffReview}
+            idRequestService={requestData?.id}
+            type="staff"
+            fixerId={requestData?.fixerId}
+          />
+        </>
+      ) : (
+        <ReviewModal
+          visible={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          onSubmit={handleSubmitReview}
+          idRequestService={requestData?.id}
+          type="service"
+        />
+      )}
     </View>
   );
 };
