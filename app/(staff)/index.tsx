@@ -88,6 +88,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ data, onPress }) => {
 
   return (
     <TouchableOpacity
+      key={data.id}
       className="bg-white rounded-xl p-4 mb-3"
       onPress={onPress}
       style={{
@@ -149,9 +150,7 @@ const HomeStaff = () => {
   const requestService = new RequestServiceApi();
   const [activeData, setActiveData] = useState<RequestData[]>([]);
   const { user } = useUserStore();
-  const [approvedRequest, setApprovedRequest] = useState<RequestData | null>(
-    null
-  );
+  const [approvedRequest, setApprovedRequest] = useState<RequestData>();
 
   const onCatChanged = (category: string) => {
     console.log(category);
@@ -178,17 +177,18 @@ const HomeStaff = () => {
       const res = await requestService.getApprovedServiceByFixerId(
         user?.id as string
       );
-      if (res.status === "success") {
-        setApprovedRequest(res);
+      console.log(res.statusForFixer);
+      if (res.statusForFixer === "success") {
+        console.log(res.data);
+        setApprovedRequest(res.data);
         return;
+      } else {
+        fetchDataActive();
       }
-
-      fetchDataActive();
     } catch (error) {
       console.error(error);
     }
   };
-
 
   useEffect(() => {
     getApprovedServiceByFixerId();
@@ -205,13 +205,11 @@ const HomeStaff = () => {
       >
         <Overview />
 
-        {/* Approved Request Section */}
         {approvedRequest ? (
-          <View className="px-4 mt-3">
+          <View key="approved-request" className="px-4 mt-3">
             <Text className="text-xl font-bold text-gray-900">
               Thông tin yêu cầu bạn đã nhận
             </Text>
-            {/* Warning Message */}
             <View className="bg-yellow-50 p-4 rounded-xl mb-4 flex-row items-center mt-3">
               <Ionicons name="warning" size={24} color="#f59e0b" />
               <Text className="text-yellow-800 ml-2 flex-1">
@@ -219,15 +217,14 @@ const HomeStaff = () => {
               </Text>
             </View>
 
-            {/* Approved Request Card */}
             <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
               <View className="flex-row justify-between items-start mb-3">
                 <View className="flex-1">
                   <Text className="text-lg font-semibold text-gray-900">
-                    {approvedRequest.nameService}
+                    {approvedRequest?.nameService}
                   </Text>
                   <Text className="text-gray-500 mt-1">
-                    {approvedRequest.listDetailService}
+                    {approvedRequest?.listDetailService}
                   </Text>
                 </View>
               </View>
@@ -236,24 +233,26 @@ const HomeStaff = () => {
                 <View className="flex-row items-center">
                   <Ionicons name="location" size={20} color="#6b7280" />
                   <Text className="text-gray-600 ml-2 flex-1">
-                    {approvedRequest.address}
+                    {approvedRequest?.address}
                   </Text>
                 </View>
                 <View className="flex-row items-center">
                   <Ionicons name="calendar" size={20} color="#6b7280" />
                   <Text className="text-gray-600 ml-2">
-                    {approvedRequest.calender}
+                    {approvedRequest?.calender}
                   </Text>
                 </View>
               </View>
 
               <TouchableOpacity
                 className="bg-primary p-3 rounded-lg"
-                onPress={() =>
-                  router.push(
-                    `/requestService/detail?idRequest=${approvedRequest.id}`
-                  )
-                }
+                onPress={() => {
+                  if (approvedRequest.id) {
+                    router.push(
+                      `/requestService/detail?idRequest=${approvedRequest.id}`
+                    );
+                  }
+                }}
               >
                 <Text className="text-white font-semibold text-center">
                   Xem chi tiết
@@ -262,7 +261,7 @@ const HomeStaff = () => {
             </View>
           </View>
         ) : (
-          <View className="px-4 mt-3">
+          <View key="request-list" className="px-4 mt-3">
             <View className="flex-row justify-between items-center mb-3">
               <Text className="text-xl font-bold text-gray-900">
                 Danh sách yêu cầu

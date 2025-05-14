@@ -29,6 +29,7 @@ import { useUserStore } from "@/stores/user-store";
 import CountdownConfirmModal from "../../components/CountdownConfirmModal";
 import ReviewModal from "@/components/review/ReviewModal";
 import LoadingOverlay from "@/components/default/loading";
+import ProposeRepairModal from "@/components/staff/ProposeRepairModal";
 
 interface ActivityHistory {
   id: string;
@@ -92,6 +93,7 @@ const RequestDetail = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useUserStore();
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showImageModal3, setShowImageModal3] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showReviewModal2, setShowReviewModal2] = useState(false);
 
@@ -152,27 +154,17 @@ const RequestDetail = () => {
             title: "Nhận yêu cầu thành công",
             message:
               "Bạn đã nhận yêu cầu dịch vụ thành công. Vui lòng liên hệ với khách hàng để thực hiện dịch vụ.",
-            redirectTo: "/(staff)",
+            redirectTo: "/",
             buttonText: "Xem danh sách yêu cầu",
           },
         });
       }
     } catch (error) {
-      router.replace({
-        pathname: "/notification/success",
-        params: {
-          type: "error",
-          title: "Có lỗi xảy ra",
-          message: "Không thể nhận yêu cầu dịch vụ. Vui lòng thử lại sau.",
-          redirectTo: "/(staff)",
-          redirectParams: JSON.stringify({ idRequest }),
-          buttonText: "Thử lại",
-        },
-      });
+      console.log(error);
     }
   };
 
-  const handleSubmitStaffReview= (review) => {
+  const handleSubmitStaffReview = (review) => {
     handleSubmitReview(review); // Gửi đánh giá dịch vụ
     setShowReviewModal(false);
     setTimeout(() => {
@@ -181,7 +173,11 @@ const RequestDetail = () => {
       }
     }, 300);
   };
+  const handleShowProposeRepairModalProps = () => {
+    setShowImageModal3(true);
+  };
 
+  const handleSubmitProposeRepairModalProps = () => {};
   const handleSubmitServiceReview = (review) => {
     handleSubmitReview(review); // Gửi đánh giá nhân viên
     setShowReviewModal2(false);
@@ -478,19 +474,32 @@ const RequestDetail = () => {
               </TouchableOpacity>
             </View>
           )}
-          {((requestData?.status === "pending" &&
-            user?.roles === "system_fixer")) && (
-            <View className="items-center p-2">
-              <TouchableOpacity
-                onPress={handleShowConfirmModal}
-                className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
-              >
-                <Text className="text-primary font-semibold text-center">
-                  Nhận yêu cầu
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          {requestData?.status === "pending" &&
+            user?.roles === "system_fixer" && (
+              <View className="items-center p-2">
+                <TouchableOpacity
+                  onPress={handleShowConfirmModal}
+                  className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                >
+                  <Text className="text-primary font-semibold text-center">
+                    Nhận yêu cầu
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          {requestData?.status === "approved" &&
+            user?.roles === "system_fixer" && (
+              <View className="items-center p-2">
+                <TouchableOpacity
+                  onPress={handleShowProposeRepairModalProps}
+                  className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                >
+                  <Text className="text-primary font-semibold text-center">
+                    Đề xuất sửa
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
         </View>
         {/* Activity History Section */}
         <View className="px-4">
@@ -559,6 +568,11 @@ const RequestDetail = () => {
         bgColor={statusInfo.bgColor}
         color={statusInfo.color}
       />
+      <ProposeRepairModal
+        visible={showImageModal3}
+        onClose={() => setShowImageModal3(false)}
+        onSubmit={handleSubmitProposeRepairModalProps}
+      />
       <CountdownConfirmModal
         visible={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -566,7 +580,7 @@ const RequestDetail = () => {
         title="Xác nhận nhận yêu cầu"
         message="Bạn có chắc chắn muốn nhận yêu cầu này?"
         data={requestData}
-        countdownSetup={10}
+        countdownSetup={9}
       />
       {/* <ReviewModal
         visible={showReviewModal}

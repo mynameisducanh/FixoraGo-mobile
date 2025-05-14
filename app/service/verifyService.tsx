@@ -79,6 +79,7 @@ const VerifyService = () => {
   const [listDetailService, setListDetailService] =
     useState<ListDetailServiceInterface>();
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  const [otherDevice, setOtherDevice] = useState("");
   const handleConfirmDate = (date: any) => {
     console.log(date, "  ");
     setSelectedDate(date);
@@ -172,7 +173,13 @@ const VerifyService = () => {
       );
       return;
     }
-
+    if (listDetailService?.name === "Khác") {
+      Alert.alert(
+        "Lỗi",
+        "Vui lòng nhập chính xác thiết bị bạn cần được hỗ trợ"
+      );
+      return;
+    }
     const formData = new FormData();
 
     // Append fields
@@ -230,6 +237,11 @@ const VerifyService = () => {
   };
 
   const handleConfirmRequest = () => {
+    if (otherDevice) {
+      if (priceService) {
+        priceService.name = otherDevice;
+      }
+    }
     if (!selectedDate || !selectedTime) {
       Alert.alert(
         "Thông báo",
@@ -237,7 +249,13 @@ const VerifyService = () => {
       );
       return;
     }
-
+    if (listDetailService?.name === "Khác") {
+      Alert.alert(
+        "Lỗi",
+        "Vui lòng nhập chính xác thiết bị bạn cần được hỗ trợ"
+      );
+      return;
+    }
     if (!selectedProvince || !selectedDistrict || !selectedWard) {
       Alert.alert(
         "Thông báo",
@@ -263,6 +281,19 @@ const VerifyService = () => {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView className="px-4 pt-3 bg-white ">
+            {listDetailService?.name === "Khác" && (
+              <View>
+                <Text className="pb-2 font-bold text-lg">
+                  Thiết bị cần được hỗ trợ của bạn là gì ?
+                </Text>
+                <TextInput
+                  className="border border-gray-300 rounded-lg p-2 mb-2"
+                  placeholder="Nhập thiết bị cần hỗ trợ (bắt buộc)"
+                  value={otherDevice}
+                  onChangeText={(text) => setOtherDevice(text)}
+                />
+              </View>
+            )}
             <Text className="pb-3 font-bold text-lg">
               Mô tả thêm về vấn đề bạn đang gặp
             </Text>
@@ -335,12 +366,14 @@ const VerifyService = () => {
                   {listDetailService?.name}
                 </Text>
               </View>
-              <View className="flex-row justify-between mt-2">
-                <Text className="text-gray-600">
-                  Chi tiết thiết bị của bạn:
-                </Text>
-                <Text className="font-bold">{priceService?.name}</Text>
-              </View>
+              {priceService?.name !== "Khác" && (
+                <View className="flex-row justify-between mt-2">
+                  <Text className="text-gray-600">
+                    Chi tiết thiết bị của bạn:
+                  </Text>
+                  <Text className="font-bold">{priceService?.name}</Text>
+                </View>
+              )}
             </View>
             <Text className="py-2 font-bold text-lg">Xác nhận lịch hẹn</Text>
             <View className="flex-row gap-1">
@@ -440,7 +473,11 @@ const VerifyService = () => {
 
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Chi tiết thiết bị:</Text>
-                      <Text className="font-medium">{priceService?.name}</Text>
+                      <Text className="font-medium">
+                        {priceService?.name === "Khác"
+                          ? otherDevice
+                          : priceService?.name}
+                      </Text>
                     </View>
 
                     <View className="flex-row justify-between">
