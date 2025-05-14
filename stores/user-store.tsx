@@ -16,6 +16,7 @@ interface UserStoreContextType {
   login: (userData: SignInInterface) => void;
   logout: () => void;
   fetchUserData: (token: string) => void;
+  loading: boolean;
 }
 
 interface UserStoreProviderProps {
@@ -42,8 +43,9 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
   const [user, setUser] = useState<UserInterface | null>(null);
   const router = useRouter();
   const { showAlert } = useAppAlert();
-
+  const [loading, setLoading] = useState(true);
   const fetchUserData = async (token: string) => {
+    const tokenLog = await AsyncStorage.getItem(ACCESS_TOKEN);
     try {
       const response = await axios.get(
         `${Constants.expoConfig?.extra?.API_NETWORK}/users/me`,
@@ -51,21 +53,23 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token || tokenLog}`,
           },
         }
       );
       if (response.data) {
-        console.log(response.data)
+        console.log("log in user-store", response.data);
         await AsyncStorage.setItem(
           USER_STORAGE_KEY,
           JSON.stringify(response.data)
         );
         setUser(response.data);
+        // handleRedirectUser(response.data);
         router.push("/");
       }
     } catch (error) {
-      console.error("Failed to fetch user data:", error);
+      console.log("no login");
+      logout();
     }
   };
 
@@ -88,8 +92,30 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
     await AsyncStorage.removeItem(USER_STORAGE_KEY);
     await AsyncStorage.removeItem(REFRESH_TOKEN);
     await AsyncStorage.removeItem(ACCESS_TOKEN);
+    // router.replace("/");
   };
+  const handleRedirectUser = (user: UserInterface) => {
+    if (user.emailVerified === 0) {
+      return;
+    }
 
+    if (user.roles === "system_user") {
+      router.push({
+        pathname: "/(user)",
+        params: { roles: "(user)" },
+      });
+    } else if (user.roles === "system_fixer") {
+      router.push({
+        pathname: "/(staff)",
+        params: { roles: "(staff)" },
+      });
+    } else {
+      router.push({
+        pathname: "/(tabs)",
+        params: { roles: "(tabs)" },
+      });
+    }
+  };
   const checkToken = async () => {
     try {
       const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN);
@@ -122,8 +148,9 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
       if (storedUser) {
         const parsedUser: UserInterface = JSON.parse(storedUser);
         setUser(parsedUser);
-        router.push("/");
+        // router.push("/");
       }
+      setLoading(false);
     };
 
     getStoredUser();
@@ -131,7 +158,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
 
   return (
     <UserStoreContext.Provider
-      value={{ user, isAuthenticated, login, logout, fetchUserData }}
+      value={{ user, isAuthenticated, login, logout, fetchUserData, loading }}
     >
       {children}
     </UserStoreContext.Provider>

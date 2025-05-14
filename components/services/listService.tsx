@@ -16,20 +16,20 @@ import LottieView from "lottie-react-native";
 import { IconLottieInterface } from "@/types";
 import { useRouter } from "expo-router";
 import IconServiceApi from "@/api/iconService";
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ListService = () => {
   const [animations, setAnimations] = useState({});
-  const [activeCategory, setActiveCategory] = useState<string | null>(
-    "Điện"
-  );
-  const [listIcons, setlistIcons] = useState<IconLottieInterface[]>(
-    []
-  );
+  const [activeCategory, setActiveCategory] = useState<string | null>("Điện");
+  const [listIcons, setlistIcons] = useState<IconLottieInterface[]>([]);
+  const [loading, setLoading] = useState(false);
   const api = new IconServiceApi();
   const router = useRouter();
   useEffect(() => {
     const fetchAnimations = async () => {
       try {
+        setLoading(true);
         const res = await api.getAll();
         setlistIcons(res);
 
@@ -50,6 +50,8 @@ const ListService = () => {
         setAnimations(animations);
       } catch (error) {
         console.error("Lỗi khi tải icon động:", error);
+      }finally{
+        setLoading(false);
       }
     };
 
@@ -60,7 +62,9 @@ const ListService = () => {
     <Animated.View entering={FadeInDown.duration(500).springify()}>
       <View className="flex flex-row justify-between items-center m-5">
         <Text className="text-lg font-bold">Dịch vụ sửa chữa</Text>
-        <Text className="text-textBlue font-semibold">Xem tất cả</Text>
+        <TouchableOpacity onPress={() => router.push("/service/listServiceForUser")}>
+          <Text className="text-textBlue font-semibold">Xem tất cả</Text>
+        </TouchableOpacity>
       </View>
       <ScrollView
         horizontal
@@ -68,40 +72,64 @@ const ListService = () => {
         className="space-x-4"
         contentContainerStyle={{ paddingHorizontal: 15 }}
       >
-        {listIcons.map((cat, index) => {
-          let isActive = cat.name == activeCategory;
-          let activeButtonClass = isActive ? "bg-primary" : "bg-black/10";
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => {
-                setActiveCategory(cat.name);
-                router.push({
-                  pathname: "/service/detailService",
-                  params: { idService: cat.idService },
-                });
-              }}
-              className="flex items-center space-y-1 mr-3"
-            >
-              <View className={"rounded-full p-[6px] " + activeButtonClass}>
-                {animations[cat.name] && (
-                  <LottieView
-                    key={
-                      activeCategory === cat.name
-                        ? "active"
-                        : `inactive-${index}`
-                    }
-                    source={animations[cat.name]}
-                    autoPlay={activeCategory === cat.name}
-                    loop={activeCategory === cat.name}
-                    style={{ width: 50, height: 50 }}
-                  />
-                )}
+        {loading
+          ? //  Hiển thị shimmer placeholder hình tròn
+            Array.from({ length: 5 }).map((_, index) => (
+              <View key={index} className="flex items-center space-y-1 mr-3">
+                <ShimmerPlaceholder
+                  LinearGradient={LinearGradient}
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    marginBottom: 8,
+                  }}
+                />
+                <ShimmerPlaceholder
+                  LinearGradient={LinearGradient}
+                  style={{
+                    width: 50,
+                    height: 12,
+                    borderRadius: 6,
+                  }}
+                />
               </View>
-              <Text className="text-neutral-600">{cat.name}</Text>
-            </TouchableOpacity>
-          );
-        })}
+            ))
+          : listIcons.map((cat, index) => {
+              let isActive = cat.name == activeCategory;
+              let activeButtonClass = isActive ? "bg-primary" : "bg-black/10";
+
+              return (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => {
+                    setActiveCategory(cat.name);
+                    router.push({
+                      pathname: "/service/detailService",
+                      params: { idService: cat.idService },
+                    });
+                  }}
+                  className="flex items-center space-y-1 mr-3"
+                >
+                  <View className={"rounded-full p-[6px] " + activeButtonClass}>
+                    {animations[cat.name] && (
+                      <LottieView
+                        key={
+                          activeCategory === cat.name
+                            ? "active"
+                            : `inactive-${index}`
+                        }
+                        source={animations[cat.name]}
+                        autoPlay={activeCategory === cat.name}
+                        loop={activeCategory === cat.name}
+                        style={{ width: 50, height: 50 }}
+                      />
+                    )}
+                  </View>
+                  <Text className="text-neutral-600">{cat.name}</Text>
+                </TouchableOpacity>
+              );
+            })}
       </ScrollView>
     </Animated.View>
   );

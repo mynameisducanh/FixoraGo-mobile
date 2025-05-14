@@ -44,7 +44,7 @@ const Overview = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <Text className="font-semibold text-blue-700">Tổng quan tháng</Text>
+      <Text className="font-semibold text-blue-700 mt-2">Tổng quan tháng</Text>
       <View className="flex-row justify-between p-1">
         <View className="items-center">
           <Text className="text-lg font-bold text-gray-700">132</Text>

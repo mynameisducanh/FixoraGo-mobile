@@ -26,6 +26,10 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Entypo from "@expo/vector-icons/Entypo";
 import TechnicianDetailModal from "@/components/technicianDetailModal";
 import { useUserStore } from "@/stores/user-store";
+import CountdownConfirmModal from "../../components/CountdownConfirmModal";
+import ReviewModal from "@/components/review/ReviewModal";
+import LoadingOverlay from "@/components/default/loading";
+import ProposeRepairModal from "@/components/staff/ProposeRepairModal";
 
 interface ActivityHistory {
   id: string;
@@ -89,6 +93,10 @@ const RequestDetail = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useUserStore();
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showImageModal3, setShowImageModal3] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showReviewModal2, setShowReviewModal2] = useState(false);
+
   const [images, setImages] = useState<string[]>([]);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
     {
@@ -105,6 +113,7 @@ const RequestDetail = () => {
     },
   ]);
   const [showTechnicianModal, setShowTechnicianModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const fetchDataRequestDetail = async () => {
     try {
@@ -112,7 +121,6 @@ const RequestDetail = () => {
       const res = await requestServiceApi.getById(idRequest as string);
       if (res) {
         setRequestData(res);
-        // Parse fileImage string to array of URLs
         if (res.fileImage) {
           try {
             const imageUrls = JSON.parse(res.fileImage);
@@ -129,6 +137,62 @@ const RequestDetail = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFixerApproved = async () => {
+    try {
+      const payload = {
+        requestId: idRequest,
+        fixerId: user?.id,
+      };
+      const res = await requestServiceApi.fixerReceiveRequest(payload);
+      if (res) {
+        router.push({
+          pathname: "/notification/success",
+          params: {
+            type: "success",
+            title: "Nhận yêu cầu thành công",
+            message:
+              "Bạn đã nhận yêu cầu dịch vụ thành công. Vui lòng liên hệ với khách hàng để thực hiện dịch vụ.",
+            redirectTo: "/",
+            buttonText: "Xem danh sách yêu cầu",
+          },
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleSubmitStaffReview = (review) => {
+    handleSubmitReview(review); // Gửi đánh giá dịch vụ
+    setShowReviewModal(false);
+    setTimeout(() => {
+      if (user?.roles === "system_user") {
+        setShowReviewModal2(true); // Mở đánh giá nhân viên sau khi gửi xong dịch vụ
+      }
+    }, 300);
+  };
+  const handleShowProposeRepairModalProps = () => {
+    setShowImageModal3(true);
+  };
+
+  const handleSubmitProposeRepairModalProps = () => {};
+  const handleSubmitServiceReview = (review) => {
+    handleSubmitReview(review); // Gửi đánh giá nhân viên
+    setShowReviewModal2(false);
+  };
+  const handleSubmitReview = (review) => {
+    // Gọi API để gửi đánh giá
+    console.log(review);
+  };
+  const handleShowConfirmModal = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmApproved = () => {
+    setShowConfirmModal(false);
+    handleFixerApproved();
   };
 
   useEffect(() => {
@@ -157,11 +221,7 @@ const RequestDetail = () => {
   };
 
   if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
+    return <LoadingOverlay />;
   }
 
   return (
@@ -383,16 +443,64 @@ const RequestDetail = () => {
             <InfoRow label="Mã yêu cầu" value={requestData?.id} />
           </View>
         </View>
-        {requestData?.status !== "rejected" && (
-          <View className="items-center p-2">
-            <TouchableOpacity className="px-4 py-2 rounded-xl w-1/2 border border-red-500 active:opacity-70">
-              <Text className="text-red-500 font-semibold text-center">
-                Hủy yêu cầu dịch vụ
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
+        <View style={{ width: wp(100) }} className="flex-row justify-center">
+          {((requestData?.status === "rejected" &&
+            user?.roles === "system_user") ||
+            (requestData?.status === "approved" &&
+              user?.roles === "system_fixer") ||
+            (requestData?.status === "pending" &&
+              user?.roles === "system_user")) && (
+            <View className="items-center p-2">
+              <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">
+                <Text className="text-red-500 font-semibold text-center">
+                  Hủy yêu cầu dịch vụ
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {((requestData?.status === "guarantee" &&
+            user?.roles === "system_user") ||
+            requestData?.status === "completed") && (
+            <View className="items-center p-2">
+              <TouchableOpacity
+                onPress={() => {
+                  setShowReviewModal(true);
+                }}
+                className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+              >
+                <Text className="text-primary font-semibold text-center">
+                  Đánh giá
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {requestData?.status === "pending" &&
+            user?.roles === "system_fixer" && (
+              <View className="items-center p-2">
+                <TouchableOpacity
+                  onPress={handleShowConfirmModal}
+                  className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                >
+                  <Text className="text-primary font-semibold text-center">
+                    Nhận yêu cầu
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          {requestData?.status === "approved" &&
+            user?.roles === "system_fixer" && (
+              <View className="items-center p-2">
+                <TouchableOpacity
+                  onPress={handleShowProposeRepairModalProps}
+                  className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                >
+                  <Text className="text-primary font-semibold text-center">
+                    Đề xuất sửa
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+        </View>
         {/* Activity History Section */}
         <View className="px-4">
           <Text className="text-lg font-semibold mb-4">Lịch sử hoạt động</Text>
@@ -420,7 +528,6 @@ const RequestDetail = () => {
           </View>
         </View>
       </ScrollView>
-
       {/* Image Modal */}
       <Modal
         visible={showImageModal}
@@ -454,7 +561,6 @@ const RequestDetail = () => {
           </View>
         </View>
       </Modal>
-
       <TechnicianDetailModal
         visible={showTechnicianModal}
         onClose={() => setShowTechnicianModal(false)}
@@ -462,6 +568,55 @@ const RequestDetail = () => {
         bgColor={statusInfo.bgColor}
         color={statusInfo.color}
       />
+      <ProposeRepairModal
+        visible={showImageModal3}
+        onClose={() => setShowImageModal3(false)}
+        onSubmit={handleSubmitProposeRepairModalProps}
+      />
+      <CountdownConfirmModal
+        visible={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmApproved}
+        title="Xác nhận nhận yêu cầu"
+        message="Bạn có chắc chắn muốn nhận yêu cầu này?"
+        data={requestData}
+        countdownSetup={9}
+      />
+      {/* <ReviewModal
+        visible={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        onSubmit={handleSubmitReview}
+        idRequestService="request-id"
+        type="service"
+        fixerId="fixer-id" 
+      /> */}
+      {user?.roles === "system_user" ? (
+        <>
+          <ReviewModal
+            visible={showReviewModal2}
+            onClose={() => setShowReviewModal2(false)}
+            onSubmit={handleSubmitServiceReview}
+            idRequestService={requestData?.id}
+            type="service"
+          />
+          <ReviewModal
+            visible={showReviewModal}
+            onClose={() => setShowReviewModal(false)}
+            onSubmit={handleSubmitStaffReview}
+            idRequestService={requestData?.id}
+            type="staff"
+            fixerId={requestData?.fixerId}
+          />
+        </>
+      ) : (
+        <ReviewModal
+          visible={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          onSubmit={handleSubmitReview}
+          idRequestService={requestData?.id}
+          type="service"
+        />
+      )}
     </View>
   );
 };

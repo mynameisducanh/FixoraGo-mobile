@@ -1,6 +1,7 @@
 import {
   DarkTheme,
   DefaultTheme,
+  NavigationContainer,
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
@@ -52,6 +53,10 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name="service/detailService"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="service/listServiceForUser"
               options={{ headerShown: false }}
             />
             <Stack.Screen
