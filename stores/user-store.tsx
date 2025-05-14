@@ -70,7 +70,6 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
     } catch (error) {
       console.log("no login");
       logout();
-      router.push("/");
     }
   };
 
@@ -93,6 +92,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
     await AsyncStorage.removeItem(USER_STORAGE_KEY);
     await AsyncStorage.removeItem(REFRESH_TOKEN);
     await AsyncStorage.removeItem(ACCESS_TOKEN);
+    // router.replace("/");
   };
   const handleRedirectUser = (user: UserInterface) => {
     if (user.emailVerified === 0) {
@@ -158,7 +158,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
 
   return (
     <UserStoreContext.Provider
-      value={{ user, isAuthenticated, login, logout, fetchUserData ,loading}}
+      value={{ user, isAuthenticated, login, logout, fetchUserData, loading }}
     >
       {children}
     </UserStoreContext.Provider>

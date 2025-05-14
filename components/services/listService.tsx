@@ -73,7 +73,7 @@ const ListService = () => {
         contentContainerStyle={{ paddingHorizontal: 15 }}
       >
         {loading
-          ? // ✅ Hiển thị shimmer placeholder hình tròn
+          ? //  Hiển thị shimmer placeholder hình tròn
             Array.from({ length: 5 }).map((_, index) => (
               <View key={index} className="flex items-center space-y-1 mr-3">
                 <ShimmerPlaceholder
