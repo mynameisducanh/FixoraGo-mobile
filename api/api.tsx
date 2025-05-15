@@ -24,7 +24,11 @@ class Api {
       },
       ...(method === "GET"
         ? { body: undefined }
-        : { body: JSON.stringify(data) }),
+        : { 
+            body: headers["Content-Type"] === "multipart/form-data" 
+              ? data as FormData 
+              : JSON.stringify(data) 
+          }),
     };
 
     return fetch(url, options)
