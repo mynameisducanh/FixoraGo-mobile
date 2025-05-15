@@ -453,7 +453,7 @@ const RequestDetail = () => {
             <View className="items-center p-2">
               <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">
                 <Text className="text-red-500 font-semibold text-center">
-                  Hủy yêu cầu dịch vụ
+                  Hủy yêu cầu 
                 </Text>
               </TouchableOpacity>
             </View>
