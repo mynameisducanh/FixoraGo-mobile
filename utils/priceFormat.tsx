@@ -14,7 +14,7 @@ export const getPriceSuggestions = (basePrice: string) => {
   const num = parseInt(basePrice.replace(/[^0-9]/g, ""));
   if (isNaN(num)) return [];
 
-  return [num * 1000, num * 10000, num * 100000, num * 1000000].map((price) =>
+  return [num * 1000, num * 10000, num * 100000].map((price) =>
     price.toString()
   );
 };

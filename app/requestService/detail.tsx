@@ -30,6 +30,8 @@ import CountdownConfirmModal from "../../components/CountdownConfirmModal";
 import ReviewModal from "@/components/review/ReviewModal";
 import LoadingOverlay from "@/components/default/loading";
 import ProposeRepairModal from "@/components/staff/ProposeRepairModal";
+import ActivityLogApi from "@/api/activityLogApi";
+import CheckInModal from "@/components/staff/CheckInModal";
 
 interface ActivityHistory {
   id: string;
@@ -88,15 +90,17 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
 const RequestDetail = () => {
   const router = useRouter();
   const requestServiceApi = new RequestServiceApi();
+  const ativityLogApi = new ActivityLogApi();
   const { idRequest } = useLocalSearchParams();
   const [requestData, setRequestData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useUserStore();
   const [showImageModal, setShowImageModal] = useState(false);
   const [showImageModal3, setShowImageModal3] = useState(false);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showReviewModal2, setShowReviewModal2] = useState(false);
-
+  const [fixerChecked, setFixerChecked] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
     {
@@ -154,7 +158,7 @@ const RequestDetail = () => {
             title: "Nhận yêu cầu thành công",
             message:
               "Bạn đã nhận yêu cầu dịch vụ thành công. Vui lòng liên hệ với khách hàng để thực hiện dịch vụ.",
-            redirectTo: "/",
+            redirectTo: "/(staff)",
             buttonText: "Xem danh sách yêu cầu",
           },
         });
@@ -164,6 +168,20 @@ const RequestDetail = () => {
     }
   };
 
+  const checkFixerCheckIn = async () => {
+    try {
+      const res = await ativityLogApi.CheckFixerCheckIn(idRequest as string);
+      console.log(user?.id, res, res.hasCheckin);
+      if (res.hasCheckin === true) {
+        setFixerChecked(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    checkFixerCheckIn();
+  }, []);
   const handleSubmitStaffReview = (review) => {
     handleSubmitReview(review); // Gửi đánh giá dịch vụ
     setShowReviewModal(false);
@@ -178,6 +196,11 @@ const RequestDetail = () => {
   };
 
   const handleSubmitProposeRepairModalProps = () => {};
+  const handleSubmitCheckInModalProps = () => {
+    fetchDataRequestDetail();
+    checkFixerCheckIn();
+    setShowCheckInModal(false);
+  };
   const handleSubmitServiceReview = (review) => {
     handleSubmitReview(review); // Gửi đánh giá nhân viên
     setShowReviewModal2(false);
@@ -453,7 +476,7 @@ const RequestDetail = () => {
             <View className="items-center p-2">
               <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">
                 <Text className="text-red-500 font-semibold text-center">
-                  Hủy yêu cầu 
+                  Hủy yêu cầu
                 </Text>
               </TouchableOpacity>
             </View>
@@ -488,7 +511,8 @@ const RequestDetail = () => {
               </View>
             )}
           {requestData?.status === "approved" &&
-            user?.roles === "system_fixer" && (
+            user?.roles === "system_fixer" &&
+            fixerChecked === true && (
               <View className="items-center p-2">
                 <TouchableOpacity
                   onPress={handleShowProposeRepairModalProps}
@@ -500,6 +524,20 @@ const RequestDetail = () => {
                 </TouchableOpacity>
               </View>
             )}
+          {fixerChecked === false && user?.roles === "system_fixer" && (
+            <View className="items-center p-2">
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCheckInModal(true);
+                }}
+                className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+              >
+                <Text className="text-primary font-semibold text-center">
+                  Check-In
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
         {/* Activity History Section */}
         <View className="px-4">
@@ -570,6 +608,7 @@ const RequestDetail = () => {
       />
       <ProposeRepairModal
         visible={showImageModal3}
+        requestServiceId={requestData.id}
         onClose={() => setShowImageModal3(false)}
         onSubmit={handleSubmitProposeRepairModalProps}
       />
@@ -582,14 +621,12 @@ const RequestDetail = () => {
         data={requestData}
         countdownSetup={9}
       />
-      {/* <ReviewModal
-        visible={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
-        onSubmit={handleSubmitReview}
-        idRequestService="request-id"
-        type="service"
-        fixerId="fixer-id" 
-      /> */}
+      <CheckInModal
+        visible={showCheckInModal}
+        requestId={requestData?.id}
+        onClose={() => setShowCheckInModal(false)}
+        onSubmit={handleSubmitCheckInModalProps}
+      />
       {user?.roles === "system_user" ? (
         <>
           <ReviewModal

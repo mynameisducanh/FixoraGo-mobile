@@ -8,6 +8,11 @@ import {
   ScrollView,
   Image,
   Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -16,8 +21,11 @@ import {
   getNumericPrice,
   getPriceSuggestions,
 } from "@/utils/priceFormat";
+import RequestConfirmServiceApi from "@/api/requestConfirmServiceApi";
+import { useUserStore } from "@/stores/user-store";
 
 interface RepairItem {
+  id?: string;
   type: string;
   name: string;
   images: ImagePicker.ImagePickerAsset[];
@@ -27,6 +35,7 @@ interface RepairItem {
 
 interface ProposeRepairModalProps {
   visible: boolean;
+  requestServiceId: string;
   onClose: () => void;
   onSubmit: (data: {
     type: string;
@@ -62,6 +71,7 @@ const PriceSuggestions: React.FC<{
 
 const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
   visible,
+  requestServiceId,
   onClose,
   onSubmit,
 }) => {
@@ -73,19 +83,22 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [repairCount, setRepairCount] = useState(0);
+  const { user } = useUserStore();
   const [repairHistory, setRepairHistory] = useState<RepairItem[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
-
+  const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
+  const requestConfirmServiceApi = new RequestConfirmServiceApi();
   // Calculate total price
   const totalPrice = repairHistory.reduce((sum, repair) => {
     const price = parseFloat(repair.price.replace(/[^0-9.-]+/g, "")) || 0;
     return sum + price;
   }, 0);
 
-  // Function to check if current form data is different from original data
-  const checkForChanges = () => {
+  // Function to check if form data has changed
+  const hasFormChanged = () => {
     if (editingIndex === null) {
       // For new repair, check if any field is filled
       return (
@@ -102,7 +115,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
       type,
       name,
       images: images.filter((img) => img !== undefined),
-      price,
+      price: getNumericPrice(price).toString(),
       note,
     };
 
@@ -124,7 +137,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
 
   // Update hasChanges whenever form data changes
   useEffect(() => {
-    setHasChanges(checkForChanges());
+    setHasChanges(hasFormChanged());
   }, [type, name, images, price, note]);
 
   const selectImage = async (index: number) => {
@@ -183,40 +196,94 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
     setShowConfirmModal(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const newRepair = {
       type,
       name,
       images: images.filter((img) => img !== undefined),
-      price: getNumericPrice(price).toString(), // Store numeric value
+      price: getNumericPrice(price).toString(),
       note,
     };
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      if (editingIndex !== null) {
+        formData.append("name", newRepair.name);
+        formData.append("type", newRepair.type);
+        formData.append("price", newRepair.price);
+        formData.append("note", newRepair.note);
+        newRepair.images.forEach((image, index) => {
+          formData.append(`file`, {
+            uri: image.uri,
+            name: image.uri.split("/").pop() || `image${index}.jpg`,
+            type: image.type || "image/jpeg",
+          } as any);
+        });
+      } else {
+        if (user?.id) {
+          formData.append("userId", user.id);
+        }
+        formData.append("name", newRepair.name);
+        formData.append("type", newRepair.type);
+        formData.append("price", newRepair.price);
+        formData.append("note", newRepair.note);
+        formData.append("requestServiceId", requestServiceId);
 
-    console.log(newRepair);
-    if (editingIndex !== null) {
-      // Update existing repair
-      setRepairHistory((prev) => {
-        const updated = [...prev];
-        updated[editingIndex] = newRepair;
-        return updated;
-      });
-    } else {
-      // Add new repair
-      setRepairHistory((prev) => [...prev, newRepair]);
+        newRepair.images.forEach((image, index) => {
+          formData.append(`file`, {
+            uri: image.uri,
+            name: image.uri.split("/").pop() || `image${index}.jpg`,
+            type: image.type || "image/jpeg",
+          } as any);
+        });
+      }
+
+      if (editingIndex !== null) {
+        // Update existing repair
+        const repair = repairHistory[editingIndex];
+        if (!repair.id) {
+          Alert.alert("Lỗi", "Không thể cập nhật đề xuất sửa chữa này");
+          return;
+        }
+        console.log(formData);
+        const res = await requestConfirmServiceApi.updateRequest(
+          formData,
+          repair.id
+        );
+        console.log(res);
+        if (res) {
+          setRepairHistory((prev) => {
+            const updated = [...prev];
+            updated[editingIndex] = { ...newRepair, id: repair.id };
+            return updated;
+          });
+        }
+      } else {
+        // Create new repair
+        console.log("vào tạo", formData);
+        const res = await requestConfirmServiceApi.createRequest(formData);
+        console.log(res);
+        if (res && res.id) {
+          setRepairHistory((prev) => [...prev, { ...newRepair, id: res.id }]);
+        }
+      }
+
+      // Reset form
+      setType("repair");
+      setName("");
+      setImages([]);
+      setPrice("");
+      setNote("");
+      setShowConfirmModal(false);
+      setShowForm(false);
+      setEditingIndex(null);
+      setRepairCount((prev) => prev + 1);
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu đề xuất sửa chữa");
+    } finally {
+      setLoading(false);
     }
-
-    onSubmit(newRepair);
-
-    // Reset form
-    setType("repair");
-    setName("");
-    setImages([]);
-    setPrice("");
-    setNote("");
-    setShowConfirmModal(false);
-    setShowForm(false);
-    setEditingIndex(null);
-    setRepairCount((prev) => prev + 1);
   };
 
   const handleEdit = (index: number) => {
@@ -231,7 +298,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
     setShowForm(true);
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = async (index: number) => {
     Alert.alert("Xác nhận xóa", "Bạn có chắc chắn muốn xóa sửa chữa này?", [
       {
         text: "Hủy",
@@ -240,8 +307,24 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
       {
         text: "Xóa",
         style: "destructive",
-        onPress: () => {
-          setRepairHistory((prev) => prev.filter((_, i) => i !== index));
+        onPress: async () => {
+          try {
+            setDeleteLoading(index);
+            const repair = repairHistory[index];
+            if (!repair.id) {
+              Alert.alert("Lỗi", "Không thể xóa đề xuất sửa chữa này");
+              return;
+            }
+            const res = await requestConfirmServiceApi.deleteRequest(repair.id);
+            if (res) {
+              setRepairHistory((prev) => prev.filter((_, i) => i !== index));
+            }
+          } catch (error) {
+            console.log(error);
+            Alert.alert("Lỗi", "Có lỗi xảy ra khi xóa đề xuất sửa chữa");
+          } finally {
+            setDeleteLoading(null);
+          }
         },
       },
     ]);
@@ -249,156 +332,11 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
 
   const handleFinalConfirm = () => {
     if (repairHistory.length === 0) {
-      Alert.alert("Lỗi", "Vui lòng thêm ít nhất một sửa chữa");
+      Alert.alert("Lỗi", "Vui lòng thêm ít nhất một đề xuất sửa chữa");
       return;
     }
     setShowSummaryModal(true);
   };
-
-  const renderForm = () => (
-    <ScrollView className="space-y-4">
-      <View>
-        <Text className="text-gray-700 mb-2">Loại sửa chữa</Text>
-        <View className="flex-row space-x-4 gap-5">
-          <TouchableOpacity
-            onPress={() => setType("repair")}
-            className="flex-1 flex-row items-center space-x-2 bg-gray-100 p-3 rounded-lg"
-          >
-            <View
-              className={`w-5 h-5 rounded-full border-2 ${
-                type === "repair" ? "border-primary" : "border-gray-400"
-              } items-center justify-center`}
-            >
-              {type === "repair" && (
-                <View className="w-3 h-3 rounded-full bg-primary" />
-              )}
-            </View>
-            <Text className="text-gray-700 ml-3">Sửa chữa</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setType("replace")}
-            className="flex-1 flex-row items-center space-x-2 bg-gray-100 p-3 rounded-lg"
-          >
-            <View
-              className={`w-5 h-5 rounded-full border-2 ${
-                type === "replace" ? "border-primary" : "border-gray-400"
-              } items-center justify-center`}
-            >
-              {type === "replace" && (
-                <View className="w-3 h-3 rounded-full bg-primary" />
-              )}
-            </View>
-            <Text className="text-gray-700 ml-3">Thay mới</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View>
-        <Text className="text-gray-700 my-2">Tên sửa chữa</Text>
-        <TextInput
-          className="border border-gray-300 rounded-lg p-3"
-          value={name}
-          onChangeText={setName}
-          placeholder="Nhập tên sửa chữa"
-        />
-      </View>
-
-      <View>
-        <Text className="text-gray-700 my-2">Hình ảnh</Text>
-        <View className="flex-row gap-3">
-          {[0, 1].map((index) => {
-            const img = images[index];
-            return (
-              <View key={index} className="relative">
-                <TouchableOpacity
-                  onPress={() => selectImage(index)}
-                  className="border-dotted border w-20 h-20 border-gray-300 justify-center items-center rounded-lg overflow-hidden"
-                >
-                  {img ? (
-                    <Image
-                      source={{ uri: img.uri }}
-                      className="w-full h-full"
-                    />
-                  ) : (
-                    <Ionicons name="camera" size={24} color="#9CA3AF" />
-                  )}
-                </TouchableOpacity>
-                {img && (
-                  <TouchableOpacity
-                    onPress={() => removeImage(index)}
-                    className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
-                  >
-                    <Ionicons name="close" size={12} color="white" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })}
-        </View>
-      </View>
-
-      <View>
-        <Text className="text-gray-700 my-2">Giá tiền</Text>
-        <TextInput
-          className="border border-gray-300 rounded-lg p-3"
-          value={price}
-          onChangeText={handlePriceChange}
-          placeholder="Nhập giá tiền"
-          keyboardType="numeric"
-        />
-        <PriceSuggestions
-          basePrice={getNumericPrice(price).toString()}
-          onSelect={(suggestedPrice) => {
-            const formattedPrice = new Intl.NumberFormat("vi-VN").format(
-              parseInt(suggestedPrice)
-            );
-            setPrice(formattedPrice);
-          }}
-        />
-      </View>
-
-      <View>
-        <Text className="text-gray-700 my-2">Ghi chú</Text>
-        <TextInput
-          className="border border-gray-300 rounded-lg p-3"
-          value={note}
-          onChangeText={setNote}
-          placeholder="Nhập ghi chú"
-          multiline
-          numberOfLines={3}
-        />
-      </View>
-
-      <View className="flex-row space-x-4 my-2 gap-2">
-        <TouchableOpacity
-          onPress={() => {
-            setShowForm(false);
-            setEditingIndex(null);
-            // Reset form
-            setType("repair");
-            setName("");
-            setImages([]);
-            setPrice("");
-            setNote("");
-          }}
-          className="flex-1 bg-gray-200 py-3 rounded-lg"
-        >
-          <Text className="text-gray-700 text-center font-semibold">Hủy</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleSubmit}
-          className={`flex-1 py-3 rounded-lg ${
-            hasChanges ? "bg-primary" : "bg-gray-400"
-          }`}
-          disabled={!hasChanges}
-        >
-          <Text className="text-white text-center font-semibold">
-            {editingIndex !== null ? "Cập nhật" : "Xác nhận"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
 
   return (
     <Modal
@@ -407,67 +345,246 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-black/50 justify-center items-center">
-        <View className="bg-white w-[90%] rounded-2xl p-4 max-h-[80%]">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-xl font-bold">Đề xuất sửa chữa</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="#6B7280" />
-            </TouchableOpacity>
-          </View>
-
-          {!showForm && <Text className="mb-2">Các đề xuất của bạn :</Text>}
-          {!showForm ? (
-            <View className="space-y-4">
-              {repairHistory.map((repair, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleEdit(index)}
-                  className="bg-gray-100 py-4 px-4 rounded-lg mt-3"
-                >
-                  <View className="flex-row justify-between items-center">
-                    <View className="flex-1">
-                      <Text className="text-gray-700 font-medium">
-                        {repair.name}
-                      </Text>
-                      <Text className="text-gray-500 text-sm">
-                        Giá: {repair.price}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        handleDelete(index);
-                      }}
-                      className="bg-red-500 p-2 rounded-lg"
-                    >
-                      <Ionicons name="trash-outline" size={20} color="white" />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                onPress={() => setShowForm(true)}
-                className="py-4 rounded-lg w-full border border-dashed border-primary mt-3"
-              >
-                <Text className="text-primary text-center font-semibold">
-                  Thêm đề xuất
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleFinalConfirm}
-                className="bg-green-500 py-4 rounded-lg w-full mt-5"
-              >
-                <Text className="text-white text-center font-semibold">
-                  Xác nhận
-                </Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center">
+          <View className="bg-white w-[90%] rounded-2xl p-4 max-h-[80%]">
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-bold">Đề xuất sửa chữa</Text>
+              <TouchableOpacity onPress={onClose}>
+                <Ionicons name="close" size={24} color="#6B7280" />
               </TouchableOpacity>
             </View>
-          ) : (
-            renderForm()
-          )}
+
+            {!showForm && <Text className="mb-2">Các đề xuất của bạn :</Text>}
+            {!showForm ? (
+              <View className="space-y-4">
+                {repairHistory.map((repair, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleEdit(index)}
+                    className="bg-gray-100 py-4 px-4 rounded-lg mt-3"
+                  >
+                    <View className="flex-row justify-between items-center">
+                      <View className="flex-1">
+                        <Text className="text-gray-700 font-medium">
+                          {repair.name}
+                        </Text>
+                        <Text className="text-gray-500 text-sm">
+                          Giá: {repair.price}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleDelete(index);
+                        }}
+                        className="bg-red-500 p-2 rounded-lg"
+                        disabled={deleteLoading === index}
+                      >
+                        {deleteLoading === index ? (
+                          <ActivityIndicator color="white" size="small" />
+                        ) : (
+                          <Ionicons
+                            name="trash-outline"
+                            size={20}
+                            color="white"
+                          />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={() => setShowForm(true)}
+                  className="py-4 rounded-lg w-full border border-dashed border-primary mt-3"
+                >
+                  <Text className="text-primary text-center font-semibold">
+                    Thêm đề xuất
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleFinalConfirm}
+                  className="bg-green-500 py-4 rounded-lg w-full mt-5"
+                >
+                  <Text className="text-white text-center font-semibold">
+                    Xác nhận
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <ScrollView 
+                className="space-y-4"
+                keyboardShouldPersistTaps="handled"
+              >
+                <View className="flex-row items-center">
+                  <Text className="text-gray-700 mb-2 mr-2">Loại sửa chữa</Text>
+                  <View className="flex-1 flex-row space-x-4 gap-5 items-center">
+                    <TouchableOpacity
+                      onPress={() => setType("repair")}
+                      className="flex-1 flex-row items-center space-x-2 bg-gray-100 p-3 rounded-lg"
+                    >
+                      <View
+                        className={`w-5 h-5 rounded-full border-2 ${
+                          type === "repair"
+                            ? "border-primary"
+                            : "border-gray-400"
+                        } items-center justify-center`}
+                      >
+                        {type === "repair" && (
+                          <View className="w-3 h-3 rounded-full bg-primary" />
+                        )}
+                      </View>
+                      <Text className="text-gray-700 ml-3">Sửa chữa</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setType("replace")}
+                      className="flex-1 flex-row items-center space-x-2 bg-gray-100 p-3 rounded-lg"
+                    >
+                      <View
+                        className={`w-5 h-5 rounded-full border-2 ${
+                          type === "replace"
+                            ? "border-primary"
+                            : "border-gray-400"
+                        } items-center justify-center`}
+                      >
+                        {type === "replace" && (
+                          <View className="w-3 h-3 rounded-full bg-primary" />
+                        )}
+                      </View>
+                      <Text className="text-gray-700 ml-3">Thay mới</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View>
+                  <Text className="text-gray-700 my-2">Tên sửa chữa</Text>
+                  <TextInput
+                    className="border border-gray-300 rounded-lg p-3"
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Nhập tên sửa chữa"
+                  />
+                </View>
+
+                <View className="flex-row gap-3">
+                  <View>
+                    <Text className="text-gray-700 my-2">Hình ảnh</Text>
+                    <View className="flex-row gap-3">
+                      {[0].map((index) => {
+                        const img = images[index];
+                        return (
+                          <View key={index} className="relative">
+                            <TouchableOpacity
+                              onPress={() => selectImage(index)}
+                              className="border-dotted border w-20 h-20 border-gray-300 justify-center items-center rounded-lg overflow-hidden"
+                            >
+                              {img ? (
+                                <Image
+                                  source={{ uri: img.uri }}
+                                  className="w-full h-full"
+                                />
+                              ) : (
+                                <Ionicons
+                                  name="camera"
+                                  size={24}
+                                  color="#9CA3AF"
+                                />
+                              )}
+                            </TouchableOpacity>
+                            {img && (
+                              <TouchableOpacity
+                                onPress={() => removeImage(index)}
+                                className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
+                              >
+                                <Ionicons
+                                  name="close"
+                                  size={12}
+                                  color="white"
+                                />
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                  <View className="flex-1">
+                    <View className="w-full">
+                      <Text className="text-gray-700 my-2">Giá tiền</Text>
+                      <TextInput
+                        className="border border-gray-300 rounded-lg p-3 w-full"
+                        value={price}
+                        onChangeText={handlePriceChange}
+                        placeholder="Nhập giá tiền"
+                        keyboardType="numeric"
+                      />
+                      <PriceSuggestions
+                        basePrice={getNumericPrice(price).toString()}
+                        onSelect={(suggestedPrice) => {
+                          const formattedPrice = new Intl.NumberFormat(
+                            "vi-VN"
+                          ).format(parseInt(suggestedPrice));
+                          setPrice(formattedPrice);
+                        }}
+                      />
+                    </View>
+
+                    <View>
+                      <Text className="text-gray-700 my-2">Ghi chú</Text>
+                      <TextInput
+                        className="border border-gray-300 rounded-lg p-3"
+                        value={note}
+                        onChangeText={setNote}
+                        placeholder="Nhập ghi chú (Không bắt buộc"
+                        multiline
+                        numberOfLines={3}
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                <View className="flex-row space-x-4 my-2 gap-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowForm(false);
+                      setEditingIndex(null);
+                      setType("repair");
+                      setName("");
+                      setImages([]);
+                      setPrice("");
+                      setNote("");
+                    }}
+                    className="flex-1 bg-gray-200 py-3 rounded-lg"
+                    disabled={loading}
+                  >
+                    <Text className="text-gray-700 text-center font-semibold">
+                      Hủy
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleSubmit}
+                    className={`flex-1 py-3 rounded-lg ${
+                      hasChanges ? "bg-primary" : "bg-gray-400"
+                    }`}
+                    disabled={!hasChanges || loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text className="text-white text-center font-semibold">
+                        {editingIndex !== null ? "Cập nhật" : "Xác nhận"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            )}
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       {/* Confirmation Modal */}
       <Modal
@@ -518,9 +635,13 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                 onPress={handleConfirm}
                 className="bg-primary py-3 px-6 rounded-lg"
               >
-                <Text className="text-white">
-                  {editingIndex !== null ? "Cập nhật" : "Xác nhận"}
-                </Text>
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white">
+                    {editingIndex !== null ? "Cập nhật" : "Xác nhận"}
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>

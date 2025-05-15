@@ -1,0 +1,26 @@
+import { RegisterInterface, SignInInterface } from "@/types/auth";
+import Api from "./api";
+
+class RequestConfirmServiceApi extends Api {
+  constructor() {
+    super("requestConfirmService");
+  }
+
+  async createRequest(data: any) {
+    return this.request("POST", "", data, {
+      "Content-Type": "multipart/form-data",
+    });
+  }
+
+  async updateRequest(data: any, id: string) {
+    return this.request("PATCH", `/${id}`, data, {
+      "Content-Type": "multipart/form-data",
+    });
+  }
+
+  async deleteRequest(id: string) {
+    return this.request("DELETE", `/${id}`);
+  }
+}
+
+export default RequestConfirmServiceApi;
