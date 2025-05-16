@@ -17,7 +17,9 @@ class RequestConfirmServiceApi extends Api {
       "Content-Type": "multipart/form-data",
     });
   }
-
+  async getByRequestId(id: string, params: any) {
+    return this.request("get", `/confirm/${id}?type=${params.type}`);
+  }
   async deleteRequest(id: string) {
     return this.request("DELETE", `/${id}`);
   }
