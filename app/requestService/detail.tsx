@@ -611,6 +611,7 @@ const RequestDetail = () => {
         requestServiceId={requestData.id}
         onClose={() => setShowImageModal3(false)}
         onSubmit={handleSubmitProposeRepairModalProps}
+        onSuccess={fetchDataRequestDetail}
       />
       <CountdownConfirmModal
         visible={showConfirmModal}
