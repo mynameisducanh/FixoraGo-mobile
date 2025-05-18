@@ -1,5 +1,6 @@
+import { ACCESS_TOKEN } from "@/constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-
 
 class Api {
   uri: string;
@@ -8,35 +9,43 @@ class Api {
     this.uri = uri;
   }
 
-  protected request(
+  protected async request(
     method: string,
     path = "",
     data?: object,
     headers: Record<string, string> = {}
   ) {
-    const url = `${Constants.expoConfig?.extra?.API_NETWORK}/${this.uri}${path}`; // Đảm bảo rằng API endpoint của bạn là đúng
-
+    const url = `${Constants.expoConfig?.extra?.API_NETWORK}/${this.uri}${path}`; 
+      
+    const token = await AsyncStorage.getItem(ACCESS_TOKEN);
+    const authHeaders: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+    const mergedHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...headers,
+      ...authHeaders,
+    };
     const options: RequestInit = {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
+      headers: mergedHeaders,
       ...(method === "GET"
         ? { body: undefined }
-        : { 
-            body: headers["Content-Type"] === "multipart/form-data" 
-              ? data as FormData 
-              : JSON.stringify(data) 
+        : {
+            body:
+              headers["Content-Type"] === "multipart/form-data"
+                ? (data as FormData)
+                : JSON.stringify(data),
           }),
     };
 
-    return fetch(url, options)
-      .then((response) => response.json())
-      .catch((error) => {
-        console.error("API request error:", error);
-        throw error;
-      });
+    try {
+      const response = await fetch(url, options);
+      return await response.json();
+    } catch (error) {
+      console.error("API request error:", error);
+      throw error;
+    }
   }
 
   get(query: object) {

@@ -15,21 +15,23 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import Avatar from "@/components/others/Avatar";
 interface TechnicianDetailModalProps {
   visible: boolean;
   onClose: () => void;
   technician: {
-    avatar: string;
-    name: string;
-    hometown: string;
-    phone: string;
-    rating: number;
-    totalReviews: number;
-    experience: string;
-    skills: string[];
+    username: string;
+    avatarurl: string;
+    fullName: string;
+    address: string;
+    phonenumber: string;
   };
-  bgColor:string;
-  color:string;
+  bgColor: string;
+  color: string;
+  skills: string[];
+  experience: string;
+  rating: number;
+  totalReviews: number;
 }
 
 const TechnicianDetailModal = ({
@@ -37,7 +39,11 @@ const TechnicianDetailModal = ({
   onClose,
   technician,
   bgColor,
-  color
+  color,
+  skills,
+  experience,
+  rating,
+  totalReviews,
 }: TechnicianDetailModalProps) => {
   return (
     <Modal
@@ -61,21 +67,26 @@ const TechnicianDetailModal = ({
           <ScrollView className="flex-1">
             {/* Avatar and Basic Info */}
             <View className="items-center pb-4">
-              <Image
-                source={{ uri: technician.avatar }}
-                className="w-24 h-24 rounded-full mb-4"
-                resizeMode="cover"
-              />
-              <Text className="text-2xl font-bold text-gray-900 mb-1">
-                {technician.name}
+              {technician.avatarurl ? (
+                <Image
+                  source={{ uri: technician.avatarurl }}
+                  className="w-24 h-24 rounded-full mb-4"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Avatar size={96} username={technician?.username} />
+              )}
+
+              <Text className="text-2xl font-bold text-gray-900 mb-1 mt-3">
+                {technician.fullName || technician.username}
               </Text>
               <View className="flex-row items-center">
                 <Ionicons name="star" size={20} color="#eab308" />
                 <Text className="text-gray-700 font-semibold ml-1">
-                  {technician.rating}
+                  {rating || 5}
                 </Text>
                 <Text className="text-gray-500 ml-1">
-                  ({technician.totalReviews} đánh giá)
+                  ({totalReviews || 1} đánh giá)
                 </Text>
               </View>
             </View>
@@ -107,20 +118,20 @@ const TechnicianDetailModal = ({
               <InfoItem
                 icon="location"
                 title="Quê quán"
-                value={technician.hometown}
+                value={technician.address}
                 color={color}
               />
               <InfoItem
                 icon="call"
                 title="Số điện thoại"
-                value={technician.phone}
-                 color={color}
+                value={technician.phonenumber}
+                color={color}
               />
               <InfoItem
                 icon="time"
                 title="Kinh nghiệm"
-                value={technician.experience}
-                 color={color}
+                value={experience}
+                color={color}
               />
 
               {/* Skills */}
@@ -129,10 +140,10 @@ const TechnicianDetailModal = ({
                   Kỹ năng
                 </Text>
                 <View className="flex-row flex-wrap">
-                  {technician.skills.map((skill, index) => (
+                  {skills.map((skill, index) => (
                     <View
                       key={index}
-                      style={{backgroundColor:color}}
+                      style={{ backgroundColor: color }}
                       className="bg-primary px-3 py-1 rounded-full mr-2 mb-2"
                     >
                       <Text className="text-white">{skill}</Text>
@@ -152,12 +163,12 @@ const InfoItem = ({
   icon,
   title,
   value,
-  color
+  color,
 }: {
   icon: string;
   title: string;
   value: string;
-  color:string;
+  color: string;
 }) => (
   <View className="flex-row items-center">
     <View className=" p-2 rounded-full mr-3">

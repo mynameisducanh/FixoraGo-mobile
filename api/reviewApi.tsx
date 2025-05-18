@@ -9,8 +9,12 @@ class ReviewApi extends Api {
     return this.request("post", "/", body);
   }
 
-  async verifyOtp(email: string, otp: string) {
-    return this.request("post", "/validate", { email, otp });
+  async getReviewAverageByFixerId(fixerId: string) {
+    return this.request("get", `/fixer/${fixerId}/average`);
+  }
+  
+  async checkUserReview(requestServiceId: string) {
+    return this.request("get", `/check-review/${requestServiceId}`);
   }
 }
 
