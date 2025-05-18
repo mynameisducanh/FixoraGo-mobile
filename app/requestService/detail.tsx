@@ -30,12 +30,18 @@ import CountdownConfirmModal from "../../components/CountdownConfirmModal";
 import ReviewModal from "@/components/review/ReviewModal";
 import LoadingOverlay from "@/components/default/loading";
 import ProposeRepairModal from "@/components/staff/ProposeRepairModal";
+import ActivityLogApi from "@/api/activityLogApi";
+import CheckInModal from "@/components/staff/CheckInModal";
+import HistoryRequestServiceApi from "@/api/historyRequestServiceApi";
+import ReviewApi from "@/api/reviewApi";
+import UserApi from "@/api/userApi";
+import Avatar from "@/components/others/Avatar";
 
 interface ActivityHistory {
   id: string;
-  status: string;
-  timestamp: string;
-  note: string;
+  type: string;
+  createAt: string;
+  name: string;
 }
 
 type StatusType =
@@ -88,37 +94,41 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
 const RequestDetail = () => {
   const router = useRouter();
   const requestServiceApi = new RequestServiceApi();
+  const ativityLogApi = new ActivityLogApi();
+  const reviewApi = new ReviewApi();
+  const userApi = new UserApi();
+  const historyRequestServiceApi = new HistoryRequestServiceApi();
   const { idRequest } = useLocalSearchParams();
   const [requestData, setRequestData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useUserStore();
   const [showImageModal, setShowImageModal] = useState(false);
   const [showImageModal3, setShowImageModal3] = useState(false);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showReviewModal2, setShowReviewModal2] = useState(false);
-
+  const [fixerChecked, setFixerChecked] = useState(false);
   const [images, setImages] = useState<string[]>([]);
-  const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
-    {
-      id: "1",
-      status: "pending",
-      timestamp: new Date().toISOString(),
-      note: "Yêu cầu dịch vụ đã được tạo",
-    },
-    {
-      id: "2",
-      status: "processing",
-      timestamp: new Date().toISOString(),
-      note: "Đang xử lý yêu cầu",
-    },
-  ]);
+  const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([]);
   const [showTechnicianModal, setShowTechnicianModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [fixerData, setFixerData] = useState<any>(null);
+  const [userData, setUserData] = useState<any>(null);
+  const [averageFixer, setAverageFixer] = useState<number>(0);
+  const [fixerSkills, setFixerSkills] = useState<string[]>([]);
+  const [fixerExperience, setFixerExperience] = useState<string>("");
+  const [fixerRating, setFixerRating] = useState<number>(0);
+  const [fixerTotalReviews, setFixerTotalReviews] = useState<number>(0);
+  const [checkUserReview, setCheckUserReview] = useState(false);
 
   const fetchDataRequestDetail = async () => {
     try {
       setLoading(true);
       const res = await requestServiceApi.getById(idRequest as string);
+      const activityRes = await historyRequestServiceApi.getHistory(
+        idRequest as string
+      );
+      console.log(activityRes);
       if (res) {
         setRequestData(res);
         if (res.fileImage) {
@@ -131,11 +141,51 @@ const RequestDetail = () => {
             console.error("Error parsing fileImage:", error);
           }
         }
+        await fetchUserData(res);
+      }
+      if (activityRes) {
+        setActivityHistory(activityRes);
       }
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserData = async (requestData: any) => {
+    try {
+      if (requestData.userId) {
+        const resUser = await userApi.getByUserId(requestData.userId);
+        console.log(resUser);
+        if (requestData?.fixerId) {
+          const resFixer = await userApi.getByUserId(requestData.fixerId);
+          if (resFixer) {
+            console.log(resFixer);
+            setFixerData(resFixer);
+            setFixerSkills([
+              "Sửa điện",
+              "Sửa nước",
+              "Lắp đặt thiết bị",
+              "Bảo trì",
+            ]);
+            setFixerExperience("5 năm kinh nghiệm");
+          }
+          const average = await reviewApi.getReviewAverageByFixerId(
+            requestData.fixerId
+          );
+          if (average) {
+            setFixerRating(average.average);
+            setFixerTotalReviews(average.count);
+          }
+        }
+
+        if (resUser) {
+          setUserData(resUser);
+        }
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -154,7 +204,7 @@ const RequestDetail = () => {
             title: "Nhận yêu cầu thành công",
             message:
               "Bạn đã nhận yêu cầu dịch vụ thành công. Vui lòng liên hệ với khách hàng để thực hiện dịch vụ.",
-            redirectTo: "/",
+            redirectTo: "/(staff)",
             buttonText: "Xem danh sách yêu cầu",
           },
         });
@@ -164,12 +214,34 @@ const RequestDetail = () => {
     }
   };
 
+  const checkFixerCheckIn = async () => {
+    try {
+      const res = await ativityLogApi.CheckFixerCheckIn(idRequest as string);
+      console.log(user?.id, res, res.hasCheckin);
+      if (res.hasCheckin === true) {
+        setFixerChecked(true);
+      }
+      const res2 = await reviewApi.checkUserReview(idRequest as string);
+      console.log(res2);
+      if (res2) {
+        if (res2.hasReviewed === true) {
+          console.log("vào");
+          setCheckUserReview(true);
+        }
+      }
+    } catch (error) {
+      console.log("checkFixerCheckIn", error);
+    }
+  };
+  useEffect(() => {
+    checkFixerCheckIn();
+  }, []);
   const handleSubmitStaffReview = (review) => {
-    handleSubmitReview(review); // Gửi đánh giá dịch vụ
+    handleSubmitReview(review);
     setShowReviewModal(false);
     setTimeout(() => {
       if (user?.roles === "system_user") {
-        setShowReviewModal2(true); // Mở đánh giá nhân viên sau khi gửi xong dịch vụ
+        setShowReviewModal2(true);
       }
     }, 300);
   };
@@ -178,13 +250,45 @@ const RequestDetail = () => {
   };
 
   const handleSubmitProposeRepairModalProps = () => {};
+  const handleSubmitCheckInModalProps = () => {
+    fetchDataRequestDetail();
+    checkFixerCheckIn();
+    setShowCheckInModal(false);
+  };
   const handleSubmitServiceReview = (review) => {
-    handleSubmitReview(review); // Gửi đánh giá nhân viên
+    handleSubmitReview2(review); // Gửi đánh giá dịch vụ
     setShowReviewModal2(false);
   };
-  const handleSubmitReview = (review) => {
-    // Gọi API để gửi đánh giá
-    console.log(review);
+  const handleSubmitReview = async (review) => {
+    try {
+      const payLoad = {
+        idRequestService: idRequest,
+        rating: review.rating || 5,
+        comment: review.comment,
+        fixerId: requestData.fixerId,
+        userId: requestData.userId,
+        type: "userReviewFixer",
+      };
+      const res = await reviewApi.createReview(payLoad);
+      console.log("1", res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleSubmitReview2 = async (review) => {
+    try {
+      const payLoad = {
+        idRequestService: idRequest,
+        rating: review.rating || 5,
+        comment: review.comment,
+        userId: user?.id,
+        type: "userReviewService",
+      };
+      const res = await reviewApi.createReview(payLoad);
+      console.log("2", res);
+    } catch (error) {
+      console.log(error);
+    }
   };
   const handleShowConfirmModal = () => {
     setShowConfirmModal(true);
@@ -245,13 +349,19 @@ const RequestDetail = () => {
                 <View className="flex-1 p-4">
                   <View className="flex-row items-center justify-between mb-4"></View>
                   <View className="flex-row items-center justify-center gap-3">
-                    <Image
-                      source={{
-                        uri: "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
-                      }}
-                      className="w-12 h-12 rounded-full"
-                      resizeMode="cover"
-                    />
+                    {userData &&
+                      (userData.avatarurl ? (
+                        <Image
+                          source={{
+                            uri: userData.avatarurl,
+                          }}
+                          className="w-12 h-12 rounded-full"
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <Avatar size={48} username={userData?.username} />
+                      ))}
+
                     <View className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
                     <LottieView
                       source={require("@/assets/icons/waiting-icon.json")}
@@ -306,26 +416,54 @@ const RequestDetail = () => {
                 )}
 
                 <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <Image
-                      source={{
-                        uri: "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
-                      }}
-                      className="w-12 h-12 rounded-full mr-3"
-                      resizeMode="cover"
-                    />
-                    <View>
-                      <Text className="font-semibold text-gray-900">
-                        {"Nguyễn Văn A"}
-                      </Text>
-                      {user?.roles === "system_user" && (
-                        <View className="flex-row items-center">
-                          <Ionicons name="star" size={16} color="#eab308" />
-                          <Text className="text-gray-600 ml-1">{"5.0"}</Text>
-                        </View>
-                      )}
+                  {user?.roles === "system_fixer" ? (
+                    <View className="flex-row items-center">
+                      {userData &&
+                        (userData.avatarurl ? (
+                          <Image
+                            source={{
+                              uri: userData.avatarurl,
+                            }}
+                            className="w-12 h-12 rounded-full"
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <Avatar size={48} username={userData?.username} />
+                        ))}
+                      <View>
+                        <Text className="font-semibold text-gray-900 ml-3">
+                          {userData?.fullName || userData?.username}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
+                  ) : (
+                    <View className="flex-row items-center">
+                      {fixerData &&
+                        (fixerData.avatarurl ? (
+                          <Image
+                            source={{
+                              uri: fixerData.avatarurl,
+                            }}
+                            className="w-12 h-12 rounded-full"
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <Avatar size={48} username={fixerData?.username} />
+                        ))}
+                      <View>
+                        <Text className="font-semibold text-gray-900 ml-3">
+                          {fixerData?.fullName || fixerData?.username}
+                        </Text>
+                        <View className="flex-row items-center ml-3">
+                          <Ionicons name="star" size={16} color="#eab308" />
+                          <Text className="text-gray-600 ml-1">
+                            {fixerRating || 5}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
                   <View
                     style={{ backgroundColor: statusInfo.color }}
                     className=" w-10 h-10 p-2 rounded-full items-center"
@@ -346,7 +484,7 @@ const RequestDetail = () => {
                   </View>
                 </View>
                 <View className="flex-row justify-between items-center">
-                  <View className="flex-row justify-start mt-3 space-x-4 gap-4 items-center">
+                  <View className="flex-row justify-start mt-3 space-x-4 gap-3 items-center">
                     <TouchableOpacity
                       className=""
                       onPress={() => setShowTechnicianModal(true)}
@@ -372,7 +510,9 @@ const RequestDetail = () => {
                     </TouchableOpacity>
                   </View>
                   <View className="flex-col">
-                    <Text className="mt-4">Ngày nhận : {"10/5/2025"}</Text>
+                    <Text className="mt-4">
+                      Ngày nhận: {formatDateTimeVN(requestData?.approvedTime)}
+                    </Text>
                     {(requestData?.status === "guarantee" ||
                       requestData?.status === "completed") && (
                       <Text>Hạn BH : {"21/5/2025"}</Text>
@@ -453,14 +593,15 @@ const RequestDetail = () => {
             <View className="items-center p-2">
               <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">
                 <Text className="text-red-500 font-semibold text-center">
-                  Hủy yêu cầu dịch vụ
+                  Hủy yêu cầu
                 </Text>
               </TouchableOpacity>
             </View>
           )}
           {((requestData?.status === "guarantee" &&
             user?.roles === "system_user") ||
-            requestData?.status === "completed") && (
+            (requestData?.status === "completed" &&
+              checkUserReview === false)) && (
             <View className="items-center p-2">
               <TouchableOpacity
                 onPress={() => {
@@ -488,7 +629,8 @@ const RequestDetail = () => {
               </View>
             )}
           {requestData?.status === "approved" &&
-            user?.roles === "system_fixer" && (
+            user?.roles === "system_fixer" &&
+            fixerChecked === true && (
               <View className="items-center p-2">
                 <TouchableOpacity
                   onPress={handleShowProposeRepairModalProps}
@@ -500,33 +642,50 @@ const RequestDetail = () => {
                 </TouchableOpacity>
               </View>
             )}
+          {fixerChecked === false && user?.roles === "system_fixer" && (
+            <View className="items-center p-2">
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCheckInModal(true);
+                }}
+                className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+              >
+                <Text className="text-primary font-semibold text-center">
+                  Check-In
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
         {/* Activity History Section */}
-        <View className="px-4">
-          <Text className="text-lg font-semibold mb-4">Lịch sử hoạt động</Text>
-          <View className="bg-gray-50 rounded-2xl p-4">
-            {activityHistory.map((activity, index) => (
-              <View key={activity.id} className="flex-row mb-4 last:mb-0">
-                <View className="mr-4 items-center w-2 justify-center ">
-                  <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
-                  {index !== activityHistory.length - 1 && (
-                    <View className="w-0.5 h-12 bg-gray-300" />
-                  )}
+        {activityHistory && activityHistory.length > 0 ? (
+          <View className="px-4">
+            <Text className="text-lg font-semibold mb-4">
+              Lịch sử hoạt động
+            </Text>
+            <View className="bg-gray-50 rounded-2xl p-4">
+              {activityHistory.map((activity, index) => (
+                <View key={activity.id} className="flex-row mb-4 last:mb-0">
+                  <View className="mr-4 items-center w-2 justify-center ">
+                    <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                    {index !== activityHistory.length - 1 && (
+                      <View className="w-0.5 h-12 bg-gray-300" />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <Text className="font-semibold text-gray-900">
+                      {activity.type}
+                    </Text>
+                    <Text className="text-sm text-gray-500 mb-1">
+                      {formatDateTimeVN(activity.createAt)}
+                    </Text>
+                    <Text className="text-gray-600">{activity.name}</Text>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className="font-semibold text-gray-900">
-                    {statusMapTyped[activity.status as StatusType]?.label ||
-                      activity.status}
-                  </Text>
-                  <Text className="text-sm text-gray-500 mb-1">
-                    {formatDateTimeVN(activity.timestamp)}
-                  </Text>
-                  <Text className="text-gray-600">{activity.note}</Text>
-                </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        ) : null}
       </ScrollView>
       {/* Image Modal */}
       <Modal
@@ -544,19 +703,23 @@ const RequestDetail = () => {
               </TouchableOpacity>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {images.map((imageUrl, index) => (
-                <View key={index} className="mr-4">
-                  <Image
-                    source={{ uri: imageUrl }}
-                    style={{
-                      width: Dimensions.get("window").width * 0.7,
-                      height: Dimensions.get("window").width * 0.7,
-                      borderRadius: 8,
-                    }}
-                    resizeMode="cover"
-                  />
-                </View>
-              ))}
+              {images && images.length > 0 ? (
+                images.map((imageUrl, index) => (
+                  <View key={index} className="mr-4">
+                    <Image
+                      source={{ uri: imageUrl }}
+                      style={{
+                        width: Dimensions.get("window").width * 0.7,
+                        height: Dimensions.get("window").width * 0.7,
+                        borderRadius: 8,
+                      }}
+                      resizeMode="cover"
+                    />
+                  </View>
+                ))
+              ) : (
+                <Text className="text-gray-500">Không có hình ảnh</Text>
+              )}
             </ScrollView>
           </View>
         </View>
@@ -564,14 +727,20 @@ const RequestDetail = () => {
       <TechnicianDetailModal
         visible={showTechnicianModal}
         onClose={() => setShowTechnicianModal(false)}
-        technician={technicianData}
+        technician={fixerData || {}}
+        skills={fixerSkills}
+        experience={fixerExperience}
+        rating={fixerRating}
+        totalReviews={fixerTotalReviews}
         bgColor={statusInfo.bgColor}
         color={statusInfo.color}
       />
       <ProposeRepairModal
         visible={showImageModal3}
+        requestServiceId={requestData.id}
         onClose={() => setShowImageModal3(false)}
         onSubmit={handleSubmitProposeRepairModalProps}
+        onSuccess={fetchDataRequestDetail}
       />
       <CountdownConfirmModal
         visible={showConfirmModal}
@@ -582,30 +751,26 @@ const RequestDetail = () => {
         data={requestData}
         countdownSetup={9}
       />
-      {/* <ReviewModal
-        visible={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
-        onSubmit={handleSubmitReview}
-        idRequestService="request-id"
-        type="service"
-        fixerId="fixer-id" 
-      /> */}
+      <CheckInModal
+        visible={showCheckInModal}
+        requestId={requestData?.id}
+        onClose={() => setShowCheckInModal(false)}
+        onSubmit={handleSubmitCheckInModalProps}
+      />
       {user?.roles === "system_user" ? (
         <>
-          <ReviewModal
-            visible={showReviewModal2}
-            onClose={() => setShowReviewModal2(false)}
-            onSubmit={handleSubmitServiceReview}
-            idRequestService={requestData?.id}
-            type="service"
-          />
           <ReviewModal
             visible={showReviewModal}
             onClose={() => setShowReviewModal(false)}
             onSubmit={handleSubmitStaffReview}
-            idRequestService={requestData?.id}
-            type="staff"
+            type="fixer"
             fixerId={requestData?.fixerId}
+          />
+          <ReviewModal
+            visible={showReviewModal2}
+            onClose={() => setShowReviewModal2(false)}
+            onSubmit={handleSubmitServiceReview}
+            type="service"
           />
         </>
       ) : (
@@ -613,7 +778,6 @@ const RequestDetail = () => {
           visible={showReviewModal}
           onClose={() => setShowReviewModal(false)}
           onSubmit={handleSubmitReview}
-          idRequestService={requestData?.id}
           type="service"
         />
       )}

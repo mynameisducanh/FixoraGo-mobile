@@ -99,6 +99,13 @@ export default function RootLayout() {
               name="profile/detailProfile"
               options={{ headerShown: false }}
             />
+            <Stack.Screen
+              name="profile/editProfile"
+              options={{
+                headerTitle: "Chỉnh sửa thông tin",
+                headerBackTitle: "Trở lại",
+              }}
+            />
              <Stack.Screen
               name="service/requestSuccess"
               options={{ headerShown: false }}

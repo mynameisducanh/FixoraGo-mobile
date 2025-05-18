@@ -36,11 +36,7 @@ const Activate = () => {
       console.log(error);
     }
   };
-  const statusInfo = statusMap[activeData?.status] || {
-    label: activeData?.status || "Không xác định",
-    color: "text-gray-500",
-    icon: "help-circle-outline",
-  };
+ 
   useEffect(() => {
     const fetchData = async () => {
       await fetchDataActive();
