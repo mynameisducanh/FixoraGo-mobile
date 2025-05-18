@@ -44,8 +44,7 @@ interface ReviewModalProps {
     type: string;
     fixerId?: string;
   }) => void;
-  idRequestService: string;
-  type: "service" | "staff";
+  type: "service" | "fixer";
   fixerId?: string;
 }
 
@@ -53,7 +52,6 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
   visible,
   onClose,
   onSubmit,
-  idRequestService,
   type,
   fixerId,
 }) => {
@@ -80,7 +78,6 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
         : comment;
 
     onSubmit({
-      idRequestService,
       rating,
       comment: finalComment,
       type,

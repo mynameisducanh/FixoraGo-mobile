@@ -32,12 +32,15 @@ import LoadingOverlay from "@/components/default/loading";
 import ProposeRepairModal from "@/components/staff/ProposeRepairModal";
 import ActivityLogApi from "@/api/activityLogApi";
 import CheckInModal from "@/components/staff/CheckInModal";
+import HistoryRequestServiceApi from "@/api/historyRequestServiceApi";
+import ReviewApi from "@/api/reviewApi";
+import UserApi from "@/api/userApi";
 
 interface ActivityHistory {
   id: string;
-  status: string;
-  timestamp: string;
-  note: string;
+  type: string;
+  createAt: string;
+  name: string;
 }
 
 type StatusType =
@@ -91,6 +94,9 @@ const RequestDetail = () => {
   const router = useRouter();
   const requestServiceApi = new RequestServiceApi();
   const ativityLogApi = new ActivityLogApi();
+  const reviewApi = new ReviewApi();
+  const userApi = new UserApi();
+  const historyRequestServiceApi = new HistoryRequestServiceApi();
   const { idRequest } = useLocalSearchParams();
   const [requestData, setRequestData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -102,27 +108,20 @@ const RequestDetail = () => {
   const [showReviewModal2, setShowReviewModal2] = useState(false);
   const [fixerChecked, setFixerChecked] = useState(false);
   const [images, setImages] = useState<string[]>([]);
-  const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([
-    {
-      id: "1",
-      status: "pending",
-      timestamp: new Date().toISOString(),
-      note: "Yêu cầu dịch vụ đã được tạo",
-    },
-    {
-      id: "2",
-      status: "processing",
-      timestamp: new Date().toISOString(),
-      note: "Đang xử lý yêu cầu",
-    },
-  ]);
+  const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([]);
   const [showTechnicianModal, setShowTechnicianModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [fixerData, setFixerData] = useState();
+  const [userData, setUserData] = useState();
 
   const fetchDataRequestDetail = async () => {
     try {
       setLoading(true);
       const res = await requestServiceApi.getById(idRequest as string);
+      const activityRes = await historyRequestServiceApi.getHistory(
+        idRequest as string
+      );
+      console.log(activityRes);
       if (res) {
         setRequestData(res);
         if (res.fileImage) {
@@ -136,10 +135,32 @@ const RequestDetail = () => {
           }
         }
       }
+      if (activityRes) {
+        setActivityHistory(activityRes);
+      }
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      const resUser = await userApi.getByUserId(requestData.userId);
+      console.log(resUser)
+      if (requestData?.fixerId) {
+        const resFixer = await userApi.getByUserId(requestData.fixerId);
+        if (resFixer) {
+          console.log(resFixer)
+          setFixerData(resFixer);
+        }
+      }
+      if (resUser) {
+        setUserData(resUser);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -181,6 +202,9 @@ const RequestDetail = () => {
   };
   useEffect(() => {
     checkFixerCheckIn();
+    if(requestData){
+      fetchUserData();
+    }
   }, []);
   const handleSubmitStaffReview = (review) => {
     handleSubmitReview(review); // Gửi đánh giá dịch vụ
@@ -206,6 +230,18 @@ const RequestDetail = () => {
     setShowReviewModal2(false);
   };
   const handleSubmitReview = (review) => {
+    try {
+      const payLoad = {
+        idRequestService: idRequest,
+        rating: review.rating || 5,
+        comment: review.comment,
+        fixerId: "",
+        userId: "",
+        temp: "test",
+        type: "test",
+      };
+      const res = reviewApi.createReview(review);
+    } catch (error) {}
     // Gọi API để gửi đánh giá
     console.log(review);
   };
@@ -540,31 +576,36 @@ const RequestDetail = () => {
           )}
         </View>
         {/* Activity History Section */}
-        <View className="px-4">
-          <Text className="text-lg font-semibold mb-4">Lịch sử hoạt động</Text>
-          <View className="bg-gray-50 rounded-2xl p-4">
-            {activityHistory.map((activity, index) => (
-              <View key={activity.id} className="flex-row mb-4 last:mb-0">
-                <View className="mr-4 items-center w-2 justify-center ">
-                  <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
-                  {index !== activityHistory.length - 1 && (
-                    <View className="w-0.5 h-12 bg-gray-300" />
-                  )}
+        {activityHistory?.length > 0 && (
+          <View className="px-4">
+            <Text className="text-lg font-semibold mb-4">
+              Lịch sử hoạt động
+            </Text>
+            <View className="bg-gray-50 rounded-2xl p-4">
+              {activityHistory?.map((activity, index) => (
+                <View key={activity.id} className="flex-row mb-4 last:mb-0">
+                  <View className="mr-4 items-center w-2 justify-center ">
+                    <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                    {index !== activityHistory.length - 1 && (
+                      <View className="w-0.5 h-12 bg-gray-300" />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <Text className="font-semibold text-gray-900">
+                      {/* {statusMapTyped[activity.status as StatusType]?.label ||
+                      activity.status} */}
+                      {activity.type}
+                    </Text>
+                    <Text className="text-sm text-gray-500 mb-1">
+                      {formatDateTimeVN(activity.createAt)}
+                    </Text>
+                    <Text className="text-gray-600">{activity.name}</Text>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className="font-semibold text-gray-900">
-                    {statusMapTyped[activity.status as StatusType]?.label ||
-                      activity.status}
-                  </Text>
-                  <Text className="text-sm text-gray-500 mb-1">
-                    {formatDateTimeVN(activity.timestamp)}
-                  </Text>
-                  <Text className="text-gray-600">{activity.note}</Text>
-                </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
       {/* Image Modal */}
       <Modal
@@ -634,15 +675,13 @@ const RequestDetail = () => {
             visible={showReviewModal2}
             onClose={() => setShowReviewModal2(false)}
             onSubmit={handleSubmitServiceReview}
-            idRequestService={requestData?.id}
             type="service"
           />
           <ReviewModal
             visible={showReviewModal}
             onClose={() => setShowReviewModal(false)}
             onSubmit={handleSubmitStaffReview}
-            idRequestService={requestData?.id}
-            type="staff"
+            type="fixer"
             fixerId={requestData?.fixerId}
           />
         </>
