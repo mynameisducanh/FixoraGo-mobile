@@ -11,7 +11,7 @@ interface AvatarProps {
 }
 
 const Avatar: React.FC<AvatarProps> = ({
-  size = 40,
+  size,
   fullName,
   username,
   email,
@@ -27,7 +27,7 @@ const Avatar: React.FC<AvatarProps> = ({
         {
           width: size,
           height: size,
-          borderRadius: size / 2,
+          borderRadius: 999,
           backgroundColor: bgColor,
         },
       ]}

@@ -9,8 +9,10 @@ class UserApi extends Api {
     return this.request("get", `/${id}`);
   }
 
-  async verifyOtp(email: string, otp: string) {
-    return this.request("post", "/validate", { email, otp });
+  async updateUser(data: any, id: string) {
+    return this.request("PATCH", `/profile/${id}`, data, {
+      "Content-Type": "multipart/form-data",
+    });
   }
 }
 
