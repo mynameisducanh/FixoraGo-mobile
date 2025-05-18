@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   Image,
   StyleSheet,
@@ -6,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Text,
+  RefreshControl,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import Header from "@/components/default/header";
@@ -16,12 +18,22 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import ListService from "@/components/services/listService";
-import { useState } from "react";
 import NewsRow from "@/components/news/newsRow";
 import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // Thêm logic refresh ở đây, ví dụ:
+    // fetchData().then(() => setRefreshing(false));
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
+
   return (
     <View className="flex-1 bg-background">
       <StatusBar style="dark" />
@@ -29,6 +41,18 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 50 }}
         className="space-y-6 pt-14"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#FFC107"]}
+            tintColor="#FFC107"
+            progressViewOffset={20}
+            progressBackgroundColor="#ffffff"
+            title="Đang tải..."
+            titleColor="#FFC107"
+          />
+        }
       >
         <Header />
         <SearchBar />

@@ -19,8 +19,8 @@ import EvilIcons from "@expo/vector-icons/EvilIcons";
 import { useUserStore } from "@/stores/user-store";
 
 const DetailProfile = () => {
-    const { user } = useUserStore();
-  console.log(user)
+  const { user } = useUserStore();
+  console.log(user);
   return (
     <ScrollView style={{ width: wp(100) }} className="flex-1 bg-white">
       <View className="h-[300px] relative items-center">
@@ -41,7 +41,9 @@ const DetailProfile = () => {
       </View>
 
       <View className="items-center px-4 mt-[68px]">
-        <Text className="text-2xl font-bold text-gray-800">{user?.fullName}</Text>
+        <Text className="text-2xl font-bold text-gray-800">
+          {user?.fullName}
+        </Text>
         <Text className="text-base text-gray-500 mt-1">@{user?.username}</Text>
       </View>
 
