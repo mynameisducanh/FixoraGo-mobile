@@ -12,7 +12,9 @@ export default {
     ios: {
       supportsTablet: true,
       infoPlist: {
-        NSPhotoLibraryUsageDescription: "Ứng dụng cần quyền truy cập thư viện ảnh để bạn có thể chọn ảnh gửi kèm dịch vụ."
+        NSPhotoLibraryUsageDescription: "Ứng dụng cần quyền truy cập thư viện ảnh để bạn có thể chọn ảnh gửi kèm dịch vụ.",
+        NSLocationWhenInUseUsageDescription: "Ứng dụng cần quyền truy cập vị trí để có thể theo dõi vị trí của bạn và cung cấp các dịch vụ liên quan đến vị trí.",
+        NSLocationAlwaysUsageDescription: "Ứng dụng cần quyền truy cập vị trí để có thể theo dõi vị trí của bạn và cung cấp các dịch vụ liên quan đến vị trí."
       }
     },
     android: {
@@ -20,6 +22,10 @@ export default {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
+      permissions: [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     web: {
       bundler: "metro",
@@ -45,6 +51,7 @@ export default {
       API_URL: process.env.API_URL ||'http://localhost:3333/api',
       API_NETWORK: process.env.API_NETWORK || 'http://192.168.80.220:3333/api',
       SOCKET_URL: process.env.SOCKET_URL || 'http://192.168.1.6:3333',
+      MAPBOX_ACCESS_TOKEN: process.env.MAPBOX_ACCESS_TOKEN || 'YOUR_MAPBOX_ACCESS_TOKEN',
     },
   },
 };
