@@ -76,13 +76,13 @@ const HomeUser = () => {
             mode="route"
             destinationAddress=" đường Ngô Sĩ Liên , phường Hòa Khánh Băc , quận Liên Chiểu"
           /> */}
-      {showMap ? (
+      {/* {showMap ? (
         <CustomMapView
           mode="current-location"
           visible={showMap}
           onClose={() => setShowMap(false)}
         />
-      ) : (
+      ) : ( */}
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 50 }}
@@ -96,14 +96,14 @@ const HomeUser = () => {
           <View className="mt-5">
             <NewsRow />
           </View>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             className="mx-5 mt-5 bg-blue-500 p-4 rounded-lg items-center"
             onPress={() => setShowMap(true)}
           >
             <Text className="text-white font-bold text-base">Mở Bản Đồ</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </ScrollView>
-      )}
+      {/* )}. */}
     </View>
   );
 };
