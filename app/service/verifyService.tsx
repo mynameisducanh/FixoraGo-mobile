@@ -299,6 +299,7 @@ const VerifyService = () => {
             </Text>
             <DropdownTimeComponent
               data={timeCategoriesList}
+              type={"time"}
               onSelect={(unit: any) => setSelectedValue(unit)}
             />
             <TextArea placeholder="Nhập mô tả ..." onChangeText={setText} />

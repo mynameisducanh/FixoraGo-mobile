@@ -59,6 +59,10 @@ export default function RootLayout() {
               name="service/listServiceForUser"
               options={{ headerShown: false }}
             />
+             <Stack.Screen
+              name="notification/success"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="service/verifyService"
               options={{
