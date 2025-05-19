@@ -51,7 +51,6 @@ const VerifyOtp = () => {
       let email = await AsyncStorage.getItem(TEMP_EMAIL_REGISTER);
       if (email) {
         const res = await otpApi.verifyOtp(email, otpCode);
-        console.log(res)
         if (res) {
           setVerified(true);
         } else {

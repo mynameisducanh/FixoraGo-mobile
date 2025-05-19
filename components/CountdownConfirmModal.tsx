@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Modal, TouchableOpacity, ScrollView } from "react-native";
+import React from "react";
+import { View, Text, Modal, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Entypo } from "@expo/vector-icons";
-import LottieView from "lottie-react-native";
 
 interface CountdownConfirmModalProps {
   visible: boolean;
@@ -21,7 +18,6 @@ interface CountdownConfirmModalProps {
     calender: string;
     note: string;
   };
-  countdownSetup: number;
 }
 
 const CountdownConfirmModal: React.FC<CountdownConfirmModalProps> = ({
@@ -31,30 +27,7 @@ const CountdownConfirmModal: React.FC<CountdownConfirmModalProps> = ({
   title = "Xác nhận",
   message = "Bạn có chắc chắn muốn thực hiện hành động này?",
   data,
-  countdownSetup
 }) => {
-  const [countdown, setCountdown] = useState(countdownSetup);
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
-    if (visible && countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    } else if (countdown === 0) {
-      onConfirm();
-      onClose();
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [visible, countdown]);
-
-  useEffect(() => {
-    if (visible) {
-      setCountdown(countdownSetup);
-    }
-  }, [visible]);
-
   return (
     <Modal
       visible={visible}
@@ -71,30 +44,6 @@ const CountdownConfirmModal: React.FC<CountdownConfirmModalProps> = ({
               <TouchableOpacity onPress={onClose}>
                 <Ionicons name="close" size={24} color="#FFC107" />
               </TouchableOpacity>
-            </View>
-            <View className="flex-col items-center">
-              <Text className="text-primary ml-2">Tự động xác nhận sau:</Text>
-              <View style={{ width: 45, height: 45, position: "relative" }}>
-                <LottieView
-                  source={require("@/assets/icons/loading-icon.json")}
-                  autoPlay
-                  loop
-                  style={{ width: 45, height: 45 }}
-                />
-                <Text
-                  className="text-center"
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: [{ translateX: -10 }, { translateY: -10 }],
-                    fontSize: 14,
-                    fontWeight: "bold",
-                  }}
-                >
-                  {countdown}s
-                </Text>
-              </View>
             </View>
           </View>
           <Text className="text-base text-gray-600 mb-4">{message}</Text>

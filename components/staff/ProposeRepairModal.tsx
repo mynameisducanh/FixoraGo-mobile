@@ -90,10 +90,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
   const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loading2, setLoading2] = useState(false);
+  const [idReuqestConfirmTotal, setIdReuqestConfirmTotal] = useState();
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
   const [checkAccpet, setCheckAccpet] = useState("null");
-
   const requestConfirmServiceApi = new RequestConfirmServiceApi();
   // Calculate total price
   const totalPrice = repairHistory.reduce((sum, repair) => {
@@ -115,6 +115,8 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
             { type: "total" }
           );
           if (response2) {
+            setIdReuqestConfirmTotal(response2[0].id);
+
             if (response2[0].userAccept) {
               setCheckAccpet("Accepted");
             } else {
@@ -148,7 +150,21 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
 
     fetchRepairProposals();
   }, [visible, requestServiceId]);
-
+  const handleFinalUserConfirm = async () => {
+    try {
+      const res = await requestConfirmServiceApi.userAccept(
+        idReuqestConfirmTotal
+      );
+      if (res) {
+        setShowSummaryModal(false);
+        onClose();
+        Alert.alert("Thông báo", "Đã chấp nhận đề xuất");
+        onSuccess?.();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   // Function to check if form data has changed
   const hasFormChanged = () => {
     if (editingIndex === null) {
@@ -188,26 +204,42 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
   };
 
   const handleConfirmRequestTotal = async () => {
-    try {
-      setLoading2(true);
-      const formData = new FormData();
-      formData.append("price", totalPrice.toString());
-      formData.append("type", "total");
-      formData.append("requestServiceId", requestServiceId);
-      formData.append("name", "Đề xuất sửa chữa của nhân viên");
-      const res = await requestConfirmServiceApi.createRequest(formData);
-      if (res) {
+    if (user?.roles === "system_fixer") {
+      try {
+        setLoading2(true);
+        const formData = new FormData();
+        formData.append("price", totalPrice.toString());
+        formData.append("type", "total");
+        formData.append("userId", user?.id);
+        formData.append("requestServiceId", requestServiceId);
+        formData.append("name", "Đề xuất sửa chữa của nhân viên");
+        const res = await requestConfirmServiceApi.createRequest(formData);
+        if (res) {
+          setShowSummaryModal(false);
+          onClose();
+          Alert.alert("Thông báo", "Đã gửi đề xuất tới người dùng");
+          onSuccess?.();
+        }
+      } catch (error) {
         setShowSummaryModal(false);
         onClose();
-        Alert.alert("Thông báo", "Đã gửi đề xuất tới người dùng");
-        onSuccess?.();
+        console.log(error);
+      } finally {
+        setLoading2(false);
       }
-    } catch (error) {
-      setShowSummaryModal(false);
-      onClose();
-      console.log(error);
-    } finally {
-      setLoading2(false);
+    }
+    if (user?.roles === "system_user") {
+      try {
+        setLoading2(true);
+
+        const res = await requestConfirmServiceApi.userAccept(requestServiceId);
+        if (res) {
+          setShowSummaryModal(false);
+          onClose();
+          Alert.alert("Thông báo", "Đã xác nhận");
+          onSuccess?.();
+        }
+      } catch (error) {}
     }
   };
   // Update hasChanges whenever form data changes
@@ -324,7 +356,6 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
           formData,
           repair.id
         );
-        console.log(res);
         if (res) {
           setRepairHistory((prev) => {
             const updated = [...prev];
@@ -335,7 +366,6 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
       } else {
         // Create new repair
         const res = await requestConfirmServiceApi.createRequest(formData);
-        console.log(res);
         if (res && res.id) {
           setRepairHistory((prev) => [...prev, { ...newRepair, id: res.id }]);
         }
@@ -471,42 +501,79 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                     </View>
                   </TouchableOpacity>
                 ))}
-                {checkAccpet !== "Accepted" && (
-                  <TouchableOpacity
-                    onPress={() => setShowForm(true)}
-                    className="py-4 rounded-lg w-full border border-dashed border-primary mt-3"
-                  >
-                    <Text className="text-primary text-center font-semibold">
-                      Thêm đề xuất
-                    </Text>
-                  </TouchableOpacity>
+                {checkAccpet !== "Accepted" &&
+                  user?.roles === "system_fixer" && (
+                    <TouchableOpacity
+                      onPress={() => setShowForm(true)}
+                      className="py-4 rounded-lg w-full border border-dashed border-primary mt-3"
+                    >
+                      <Text className="text-primary text-center font-semibold">
+                        Thêm đề xuất
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                {user?.roles === "system_fixer" && (
+                  <View>
+                    {checkAccpet === "Pending" && (
+                      <Text className="mt-2">
+                        Note : Yêu cầu của bạn đã được gửi, vui lòng chờ người
+                        dùng chấp nhận yêu cầu của bạn, và trong lúc này bạn
+                        cũng có thể sửa đổi nếu muốn
+                      </Text>
+                    )}
+                    {checkAccpet === "Accepted" && (
+                      <Text className="mt-2">
+                        Note : Người dùng đã chấp nhận yêu cầu của bạn
+                      </Text>
+                    )}
+                    {checkAccpet !== "Accepted" && (
+                      <TouchableOpacity
+                        disabled={checkAccpet === "Accepted"}
+                        onPress={handleFinalConfirm}
+                        className="bg-green-500 py-4 rounded-lg w-full mt-5"
+                      >
+                        <Text className="text-white text-center font-semibold">
+                          {checkAccpet === "Pending"
+                            ? "Gửi lại yêu cầu"
+                            : "Gửi yêu cầu"}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 )}
-
-                {checkAccpet === "Pending" && (
-                  <Text className="mt-2">
-                    Note : Yêu cầu của bạn đã được gửi, vui lòng chờ người dùng
-                    chấp nhận yêu cầu của bạn, và trong lúc này bạn cũng có thể
-                    sửa đổi nếu muốn
-                  </Text>
-                )}
-                {checkAccpet === "Accepted" && (
-                  <Text className="mt-2">
-                    Note : Yêu cầu của bạn đã được chấp nhận, lúc này sẽ không
-                    thể sửa đổi yêu cầu, chúc bạn làm việc vui vẻ
-                  </Text>
-                )}
-                {checkAccpet !== "Accepted" && (
-                  <TouchableOpacity
-                    disabled={checkAccpet === "Accepted"}
-                    onPress={handleFinalConfirm}
-                    className="bg-green-500 py-4 rounded-lg w-full mt-5"
-                  >
-                    <Text className="text-white text-center font-semibold">
-                      {checkAccpet === "Pending"
-                        ? "Gửi lại yêu cầu"
-                        : "Gửi yêu cầu"}
-                    </Text>
-                  </TouchableOpacity>
+                {user?.roles === "system_user" && (
+                  <View>
+                    <View className=" p-2 rounded-lg">
+                      <Text className="text-gray-600 text-center mb-2">
+                        Tổng giá tiền
+                      </Text>
+                      <Text className="text-2xl font-bold text-center text-primary">
+                        {formatPrice(totalPrice)} VNĐ
+                      </Text>
+                    </View>
+                    {checkAccpet !== "Accepted" && (
+                      <Text className="mt-2">
+                        Note : Đây là các yêu cầu sửa chữa của nhân viên, nếu
+                        bạn với nhân viên đã thỏa thuận xong hãy nhấn xác nhận
+                      </Text>
+                    )}
+                    {checkAccpet === "Accepted" && (
+                      <Text className="mt-2">
+                        Note :Bạn đã chấp nhận yêu cầu này
+                      </Text>
+                    )}
+                    {checkAccpet !== "Accepted" && (
+                      <TouchableOpacity
+                        disabled={checkAccpet === "Accepted"}
+                        onPress={handleFinalUserConfirm}
+                        className="bg-green-500 py-4 rounded-lg w-full mt-5"
+                      >
+                        <Text className="text-white text-center font-semibold">
+                          Chấp nhận yêu cầu
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 )}
               </View>
             ) : (

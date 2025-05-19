@@ -36,6 +36,8 @@ import HistoryRequestServiceApi from "@/api/historyRequestServiceApi";
 import ReviewApi from "@/api/reviewApi";
 import UserApi from "@/api/userApi";
 import Avatar from "@/components/others/Avatar";
+import CompleteRequestModal from "@/components/staff/CompleteRequestModal";
+import RequestConfirmServiceApi from "@/api/requestConfirmServiceApi";
 
 interface ActivityHistory {
   id: string;
@@ -44,18 +46,18 @@ interface ActivityHistory {
   name: string;
 }
 
-type StatusType =
-  | "pending"
-  | "completed"
-  | "guarantee"
-  | "rejected"
-  | "approved";
+type StatusType = "pending" | "done" | "guarantee" | "rejected" | "approved";
 
 interface StatusInfo {
   label: string;
   color: string;
   icon: string;
   bgColor: string;
+}
+
+interface ReviewData {
+  rating?: number;
+  comment?: string;
 }
 
 const statusMapTyped: Record<StatusType, StatusInfo> = {
@@ -65,7 +67,7 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
     icon: "time-outline",
     bgColor: "bg-yellow-50",
   },
-  completed: {
+  done: {
     label: "Hoàn thành",
     color: "#16a34a",
     icon: "checkmark-circle-outline",
@@ -84,7 +86,7 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
     bgColor: "bg-red-50",
   },
   approved: {
-    label: "Đã duyệt",
+    label: "Đã được nhận",
     color: "#22c55e",
     icon: "clipboard-user",
     bgColor: "bg-green-50",
@@ -94,6 +96,7 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
 const RequestDetail = () => {
   const router = useRouter();
   const requestServiceApi = new RequestServiceApi();
+  const requestConfirmServiceApi = new RequestConfirmServiceApi();
   const ativityLogApi = new ActivityLogApi();
   const reviewApi = new ReviewApi();
   const userApi = new UserApi();
@@ -114,12 +117,15 @@ const RequestDetail = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [fixerData, setFixerData] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
-  const [averageFixer, setAverageFixer] = useState<number>(0);
+  const [confirmCompleted, setConfirmCompleted] = useState(false);
   const [fixerSkills, setFixerSkills] = useState<string[]>([]);
   const [fixerExperience, setFixerExperience] = useState<string>("");
   const [fixerRating, setFixerRating] = useState<number>(0);
   const [fixerTotalReviews, setFixerTotalReviews] = useState<number>(0);
   const [checkUserReview, setCheckUserReview] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCompleteModal2, setShowCompleteModal2] = useState(false);
+  const [fixerCompleteData, setFixerCompleteData] = useState<any>(null);
 
   const fetchDataRequestDetail = async () => {
     try {
@@ -128,7 +134,6 @@ const RequestDetail = () => {
       const activityRes = await historyRequestServiceApi.getHistory(
         idRequest as string
       );
-      console.log(activityRes);
       if (res) {
         setRequestData(res);
         if (res.fileImage) {
@@ -157,11 +162,9 @@ const RequestDetail = () => {
     try {
       if (requestData.userId) {
         const resUser = await userApi.getByUserId(requestData.userId);
-        console.log(resUser);
         if (requestData?.fixerId) {
           const resFixer = await userApi.getByUserId(requestData.fixerId);
           if (resFixer) {
-            console.log(resFixer);
             setFixerData(resFixer);
             setFixerSkills([
               "Sửa điện",
@@ -177,6 +180,22 @@ const RequestDetail = () => {
           if (average) {
             setFixerRating(average.average);
             setFixerTotalReviews(average.count);
+          }
+
+          const response2 = await requestConfirmServiceApi.checkFixerCompleted(
+            requestData.id
+          );
+          if (response2) {
+            if (response2.hasCompleted === true) {
+              setConfirmCompleted(true);
+              const response = await requestConfirmServiceApi.getByRequestId(
+                requestData.id,
+                { type: "completed" }
+              );
+              if (response) {
+                setFixerCompleteData(response);
+              }
+            }
           }
         }
 
@@ -217,15 +236,12 @@ const RequestDetail = () => {
   const checkFixerCheckIn = async () => {
     try {
       const res = await ativityLogApi.CheckFixerCheckIn(idRequest as string);
-      console.log(user?.id, res, res.hasCheckin);
       if (res.hasCheckin === true) {
         setFixerChecked(true);
       }
       const res2 = await reviewApi.checkUserReview(idRequest as string);
-      console.log(res2);
       if (res2) {
         if (res2.hasReviewed === true) {
-          console.log("vào");
           setCheckUserReview(true);
         }
       }
@@ -236,7 +252,7 @@ const RequestDetail = () => {
   useEffect(() => {
     checkFixerCheckIn();
   }, []);
-  const handleSubmitStaffReview = (review) => {
+  const handleSubmitStaffReview = (review: ReviewData) => {
     handleSubmitReview(review);
     setShowReviewModal(false);
     setTimeout(() => {
@@ -249,17 +265,19 @@ const RequestDetail = () => {
     setShowImageModal3(true);
   };
 
-  const handleSubmitProposeRepairModalProps = () => {};
+  const handleSubmitProposeRepairModalProps = () => {
+    reloadData();
+  };
   const handleSubmitCheckInModalProps = () => {
     fetchDataRequestDetail();
     checkFixerCheckIn();
     setShowCheckInModal(false);
   };
-  const handleSubmitServiceReview = (review) => {
-    handleSubmitReview2(review); // Gửi đánh giá dịch vụ
+  const handleSubmitServiceReview = (review: ReviewData) => {
+    handleSubmitReview2(review);
     setShowReviewModal2(false);
   };
-  const handleSubmitReview = async (review) => {
+  const handleSubmitReview = async (review: ReviewData) => {
     try {
       const payLoad = {
         idRequestService: idRequest,
@@ -270,12 +288,11 @@ const RequestDetail = () => {
         type: "userReviewFixer",
       };
       const res = await reviewApi.createReview(payLoad);
-      console.log("1", res);
     } catch (error) {
       console.log(error);
     }
   };
-  const handleSubmitReview2 = async (review) => {
+  const handleSubmitReview2 = async (review: ReviewData) => {
     try {
       const payLoad = {
         idRequestService: idRequest,
@@ -284,8 +301,7 @@ const RequestDetail = () => {
         userId: user?.id,
         type: "userReviewService",
       };
-      const res = await reviewApi.createReview(payLoad);
-      console.log("2", res);
+      await reviewApi.createReview(payLoad);
     } catch (error) {
       console.log(error);
     }
@@ -299,9 +315,43 @@ const RequestDetail = () => {
     handleFixerApproved();
   };
 
+  const reloadData = async () => {
+    await fetchDataRequestDetail();
+    await checkFixerCheckIn();
+  };
+
+  const handleShowCompleteModal = () => {
+    setShowCompleteModal(true);
+  };
+
+  const handleCompleteRequest = async () => {
+    try {
+      // TODO: Call API to complete request
+      // const res = await requestServiceApi.completeRequest(requestData.id);
+      // if (res) {
+      //   reloadData();
+      // }
+      reloadData();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     fetchDataRequestDetail();
   }, []);
+
+  if (loading) {
+    return <LoadingOverlay />;
+  }
+
+  if (!requestData) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-gray-500">Không tìm thấy thông tin yêu cầu</Text>
+      </View>
+    );
+  }
 
   const statusInfo = statusMapTyped[requestData?.status as StatusType] || {
     label: requestData?.status || "Không xác định",
@@ -323,10 +373,6 @@ const RequestDetail = () => {
     experience: "5 năm kinh nghiệm",
     skills: ["Sửa điện", "Sửa nước", "Lắp đặt thiết bị", "Bảo trì"],
   };
-
-  if (loading) {
-    return <LoadingOverlay />;
-  }
 
   return (
     <View className="flex-1 bg-white">
@@ -377,7 +423,7 @@ const RequestDetail = () => {
                     />
                   </View>
                   <Text className="text-gray-700 font-medium text-center">
-                    Đang tìm kiếm thợ
+                    Đang tìm kiếm nhân viên
                   </Text>
                 </View>
               )}
@@ -404,7 +450,7 @@ const RequestDetail = () => {
                     style={{ color: statusInfo.color }}
                     className="text-green-500 font-bold text-lg -ml-1 mb-1"
                   >
-                    Thông tin thợ đã nhận yêu cầu
+                    Thông tin nhân viên đã nhận yêu cầu
                   </Text>
                 ) : (
                   <Text
@@ -457,7 +503,7 @@ const RequestDetail = () => {
                         <View className="flex-row items-center ml-3">
                           <Ionicons name="star" size={16} color="#eab308" />
                           <Text className="text-gray-600 ml-1">
-                            {fixerRating || 5}
+                            {fixerRating || "Chưa có đánh giá"}
                           </Text>
                         </View>
                       </View>
@@ -514,8 +560,10 @@ const RequestDetail = () => {
                       Ngày nhận: {formatDateTimeVN(requestData?.approvedTime)}
                     </Text>
                     {(requestData?.status === "guarantee" ||
-                      requestData?.status === "completed") && (
-                      <Text>Hạn BH : {"21/5/2025"}</Text>
+                      requestData?.status === "done") && (
+                      <Text>
+                        Hạn BH : {formatDateTimeVN(requestData?.guaranteeTime)}
+                      </Text>
                     )}
                   </View>
                 </View>
@@ -583,79 +631,116 @@ const RequestDetail = () => {
             <InfoRow label="Mã yêu cầu" value={requestData?.id} />
           </View>
         </View>
-        <View style={{ width: wp(100) }} className="flex-row justify-center">
-          {((requestData?.status === "rejected" &&
-            user?.roles === "system_user") ||
-            (requestData?.status === "approved" &&
-              user?.roles === "system_fixer") ||
-            (requestData?.status === "pending" &&
-              user?.roles === "system_user")) && (
-            <View className="items-center p-2">
-              <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">
-                <Text className="text-red-500 font-semibold text-center">
-                  Hủy yêu cầu
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          {((requestData?.status === "guarantee" &&
-            user?.roles === "system_user") ||
-            (requestData?.status === "completed" &&
-              checkUserReview === false)) && (
-            <View className="items-center p-2">
-              <TouchableOpacity
-                onPress={() => {
-                  setShowReviewModal(true);
-                }}
-                className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
-              >
-                <Text className="text-primary font-semibold text-center">
-                  Đánh giá
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          {requestData?.status === "pending" &&
-            user?.roles === "system_fixer" && (
+        <View style={{ width: wp(100) }} className="flex-col gap-1">
+          <View className="flex-row justify-center">
+            {((requestData?.status === "rejected" &&
+              user?.roles === "system_user") ||
+              (requestData?.status === "approved" &&
+                user?.roles === "system_fixer") ||
+              (requestData?.status === "pending" &&
+                user?.roles === "system_user")) && (
               <View className="items-center p-2">
-                <TouchableOpacity
-                  onPress={handleShowConfirmModal}
-                  className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
-                >
-                  <Text className="text-primary font-semibold text-center">
-                    Nhận yêu cầu
+                <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">
+                  <Text className="text-red-500 font-semibold text-center">
+                    Hủy yêu cầu
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
-          {requestData?.status === "approved" &&
-            user?.roles === "system_fixer" &&
-            fixerChecked === true && (
+            {((requestData?.status === "guarantee" &&
+              user?.roles === "system_user") ||
+              (requestData?.status === "done" &&
+                checkUserReview === false)) && (
               <View className="items-center p-2">
                 <TouchableOpacity
-                  onPress={handleShowProposeRepairModalProps}
+                  onPress={() => {
+                    setShowReviewModal(true);
+                  }}
                   className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
                 >
                   <Text className="text-primary font-semibold text-center">
-                    Đề xuất sửa
+                    Đánh giá
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
-          {fixerChecked === false && user?.roles === "system_fixer" && (
-            <View className="items-center p-2">
-              <TouchableOpacity
-                onPress={() => {
-                  setShowCheckInModal(true);
-                }}
-                className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
-              >
-                <Text className="text-primary font-semibold text-center">
-                  Check-In
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            {(requestData?.status === "approved" ||
+              requestData?.status === "guarantee") &&
+              fixerChecked === true && (
+                <View className="items-center p-2">
+                  <TouchableOpacity
+                    onPress={handleShowProposeRepairModalProps}
+                    className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                  >
+                    <Text className="text-primary font-semibold text-center">
+                      Đề xuất sửa
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            {requestData?.status === "pending" &&
+              user?.roles === "system_fixer" && (
+                <View className="items-center p-2">
+                  <TouchableOpacity
+                    onPress={handleShowConfirmModal}
+                    className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                  >
+                    <Text className="text-primary font-semibold text-center">
+                      Nhận yêu cầu
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+          </View>
+          <View className="flex-row justify-center">
+            {requestData?.status === "approved" &&
+              user?.roles === "system_fixer" &&
+              fixerChecked === true &&
+              confirmCompleted !== true && (
+                <View className="items-center p-2">
+                  <TouchableOpacity
+                    onPress={handleShowCompleteModal}
+                    className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                  >
+                    <Text className="text-primary font-semibold text-center">
+                      Hoàn thành
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            {fixerChecked === false &&
+              user?.roles === "system_fixer" &&
+              requestData?.status === "approved" && (
+                <View className="items-center p-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowCheckInModal(true);
+                    }}
+                    className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                  >
+                    <Text className="text-primary font-semibold text-center">
+                      Check-In
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            {(requestData?.status === "approved" ||
+              requestData?.status === "guarantee") &&
+              confirmCompleted === true && (
+                <View className="items-center p-2">
+                  <TouchableOpacity
+                    onPress={() => setShowCompleteModal2(true)}
+                    className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                  >
+                    <Text className="text-primary font-semibold text-center">
+                      {requestData?.status === "guarantee"
+                        ? "Xem lại xác nhận hoàn thành"
+                        : "Xác nhận hoàn thành"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+          </View>
         </View>
         {/* Activity History Section */}
         {activityHistory && activityHistory.length > 0 ? (
@@ -669,7 +754,7 @@ const RequestDetail = () => {
                   <View className="mr-4 items-center w-2 justify-center ">
                     <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
                     {index !== activityHistory.length - 1 && (
-                      <View className="w-0.5 h-12 bg-gray-300" />
+                      <View className="w-0.5 h-12 mt-2 bg-gray-300" />
                     )}
                   </View>
                   <View className="flex-1">
@@ -727,20 +812,23 @@ const RequestDetail = () => {
       <TechnicianDetailModal
         visible={showTechnicianModal}
         onClose={() => setShowTechnicianModal(false)}
-        technician={fixerData || {}}
+        technician={
+          user?.roles === "system_user" ? fixerData || {} : userData || {}
+        }
         skills={fixerSkills}
         experience={fixerExperience}
         rating={fixerRating}
         totalReviews={fixerTotalReviews}
         bgColor={statusInfo.bgColor}
         color={statusInfo.color}
+        roles={user?.roles as string}
       />
       <ProposeRepairModal
         visible={showImageModal3}
         requestServiceId={requestData.id}
         onClose={() => setShowImageModal3(false)}
         onSubmit={handleSubmitProposeRepairModalProps}
-        onSuccess={fetchDataRequestDetail}
+        onSuccess={reloadData}
       />
       <CountdownConfirmModal
         visible={showConfirmModal}
@@ -749,7 +837,6 @@ const RequestDetail = () => {
         title="Xác nhận nhận yêu cầu"
         message="Bạn có chắc chắn muốn nhận yêu cầu này?"
         data={requestData}
-        countdownSetup={9}
       />
       <CheckInModal
         visible={showCheckInModal}
@@ -781,6 +868,19 @@ const RequestDetail = () => {
           type="service"
         />
       )}
+      <CompleteRequestModal
+        visible={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        onSuccess={handleCompleteRequest}
+        requestId={requestData?.id}
+      />
+      <CompleteRequestModal
+        visible={showCompleteModal2}
+        onClose={() => setShowCompleteModal2(false)}
+        onSuccess={handleCompleteRequest}
+        requestId={requestData?.id}
+        fixerData={fixerCompleteData?.[0] || null}
+      />
     </View>
   );
 };
@@ -795,7 +895,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
       {label}
     </Text>
     <Text
-      numberOfLines={2}
+      numberOfLines={3}
       ellipsizeMode="tail"
       className="text-gray-900 font-semibold max-w-[65%] text-right"
     >

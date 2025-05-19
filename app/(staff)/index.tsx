@@ -177,9 +177,7 @@ const HomeStaff = () => {
       const res = await requestService.getApprovedServiceByFixerId(
         user?.id as string
       );
-      console.log(res.statusForFixer);
       if (res.statusForFixer === "success") {
-        console.log(res.data);
         setApprovedRequest(res.data);
         return;
       } else {
