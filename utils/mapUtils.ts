@@ -46,14 +46,14 @@ export const getCoordinatesFromAddress = async (address: string) => {
         state: context.find((c: any) => c.id.startsWith('region'))?.text || '',
         country: context.find((c: any) => c.id.startsWith('country'))?.text || '',
       };
-
+      console.log(addressInfo)
       // Xử lý địa chỉ chi tiết
       let detailedAddress = '';
       
       // Thêm số nhà nếu có
-      if (addressInfo.houseNumber) {
-        detailedAddress += addressInfo.houseNumber + ' ';
-      }
+      // if (addressInfo.houseNumber) {
+      //   detailedAddress += addressInfo.houseNumber + ' ';
+      // }
       
       // Thêm tên đường
       if (addressInfo.road) {
@@ -203,11 +203,9 @@ export const getAddressFromCoordinates = async (latitude: number, longitude: num
   try {
     console.log('Coordinates:', { latitude, longitude });
 
-    // Thêm tham số để lấy thông tin chi tiết hơn
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_ACCESS_TOKEN}&language=vi&types=address,poi,neighborhood,place,locality,district,region,country&limit=1&autocomplete=true`;
 
     const response = await fetch(url);
-
     const data = await response.json();
     
     if (!response.ok) {
@@ -218,67 +216,25 @@ export const getAddressFromCoordinates = async (latitude: number, longitude: num
       const feature = data.features[0];
       const context = feature.context || [];
       
-      // Tách thông tin địa chỉ từ context và text
-      const address = {
-        fullAddress: feature.place_name,
-        houseNumber: feature.address || '',
-        road: feature.text || '',
-        suburb: context.find((c: any) => c.id.startsWith('neighborhood'))?.text || '',
-        quarter: context.find((c: any) => c.id.startsWith('neighborhood'))?.text || '',
-        neighbourhood: context.find((c: any) => c.id.startsWith('neighborhood'))?.text || '',
-        district: context.find((c: any) => c.id.startsWith('district'))?.text || '',
-        city: context.find((c: any) => c.id.startsWith('place'))?.text || '',
-        state: context.find((c: any) => c.id.startsWith('region'))?.text || '',
-        country: context.find((c: any) => c.id.startsWith('country'))?.text || '',
-      };
-
-      // Xử lý địa chỉ chi tiết
-      let detailedAddress = '';
+      // Lấy tên đường từ place_name và chỉ lấy phần bắt đầu từ "Đường"
+      const fullAddress = feature.place_name_vi || '';
+      const streetMatch = fullAddress.match(/Đường[^,]+/);
+      const street = streetMatch ? streetMatch[0] : '';
       
-      // Thêm số nhà nếu có
-      if (address.houseNumber) {
-        detailedAddress += address.houseNumber + ' ';
-      }
+      const neighborhood = context.find((item: any) => item.id.startsWith('neighborhood'))?.text_vi || '';
+      const district = context.find((item: any) => item.id.startsWith('locality'))?.text_vi || '';
+      const city = context.find((item: any) => item.id.startsWith('region'))?.text_vi || '';
       
-      // Thêm tên đường
-      if (address.road) {
-        detailedAddress += address.road;
-      }
-
-      // Thêm các thông tin khác
-      const additionalInfo = [
-        address.suburb || address.quarter || address.neighbourhood,
-        address.district,
-        address.city,
-        address.state
-      ].filter(Boolean).join(', ');
-
-      if (additionalInfo) {
-        detailedAddress += ', ' + additionalInfo;
-      }
-
-      // Tạo địa chỉ ngắn gọn
-      const shortAddress = [
-        detailedAddress,
-        address.district,
-        address.city,
-        address.state
-      ].filter(Boolean).join(', ');
-
+      const detailedAddressCurrent = `${street}, ${neighborhood}, ${district}, ${city}`;
+      console.log(detailedAddressCurrent)
       return {
-        fullAddress: address.fullAddress,
-        shortAddress,
-        detailedAddress,
-        details: {
-          ...address,
-          detailedAddress
-        },
-        rawData: data
+        details: feature,
+        detailedAddress: detailedAddressCurrent
       };
     }
-    throw new Error('Không tìm thấy địa chỉ trong response');
+    throw new Error('Không tìm thấy địa chỉ');
   } catch (error) {
-    console.error('Full error:', error);
-    throw new Error(`Lỗi khi tìm kiếm địa chỉ: ${error.message}`);
+    console.error('Error getting address:', error);
+    throw error;
   }
 }; 

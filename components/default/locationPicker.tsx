@@ -15,6 +15,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
+import {
+  getCurrentLocation,
+  getAddressFromCoordinates,
+  getCoordinatesFromAddress,
+} from "@/utils/mapUtils";
+import { useLocationStore } from "@/stores/location-store";
 
 interface Location {
   code: string;
@@ -24,12 +30,7 @@ interface Location {
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSelect: (address: {
-    province: Location | null;
-    district: Location | null;
-    ward: Location | null;
-    detail: string;
-  }) => void;
+  onSelect: (address: string) => void;
 }
 
 const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
@@ -39,20 +40,19 @@ const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [districts, setDistricts] = useState<Location[]>([]);
   const [wards, setWards] = useState<Location[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState<Location | null>(
-    null
-  );
-  const [selectedDistrict, setSelectedDistrict] = useState<Location | null>(
-    null
-  );
+  const [selectedProvince, setSelectedProvince] = useState<Location | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<Location | null>(null);
   const [selectedWard, setSelectedWard] = useState<Location | null>(null);
+  const [address, setAddress] = useState<string>('');
   const [detailAddress, setDetailAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [showMainPicker, setShowMainPicker] = useState(false);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     if (visible) {
       setShowMainPicker(false);
+      setError('');
     }
   }, [visible]);
 
@@ -119,18 +119,28 @@ const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
   };
 
   const handleConfirm = () => {
-    onSelect({
-      province: selectedProvince,
-      district: selectedDistrict,
-      ward: selectedWard,
-      detail: detailAddress,
-    });
+    if (!detailAddress.trim()) {
+      setError('Vui lòng nhập địa chỉ chi tiết');
+      return;
+    }
+    
+    const fullAddress = `${detailAddress}, ${address}`;
+    onSelect(fullAddress);
     onClose();
   };
 
-  const handleCurrentLocation = () => {
-    Alert.alert("Thông báo", "Tính năng đang phát triển");
-    onClose();
+  const handleCurrentLocation = async () => {
+    try {
+      const location = await getCurrentLocation();
+      const addressData = await getAddressFromCoordinates(
+        location.lat,
+        location.lon
+      );
+      console.log(addressData);
+      setAddress(addressData.detailedAddress);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   let locations: Location[] = [];
@@ -200,30 +210,43 @@ const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
                             : "text-gray-950 "
                         }`}
                       >
-                        {!selectedProvince ? (
-                          "Quận/Huyện, Phường/Xã tại Đà Nẵng"
-                        ) : (
-                          <>
-                            <Text className=" text-base font-bold mb-1">
-                              Địa điểm đã chọn:
-                            </Text>
-                            {selectedWard?.name && `${selectedWard.name}, `}
-                            {selectedDistrict?.name &&
-                              `${selectedDistrict.name}, `}
-                            {selectedProvince?.name}
-                          </>
-                        )}
+                          {address ? (
+                            <>
+                              <Text className="text-base font-bold mb-1">
+                                Địa điểm đã chọn:
+                              </Text>
+                              {address}
+                            </>
+                          ) : selectedProvince ? (
+                            <>
+                              <Text className="text-base font-bold mb-1">
+                                Địa điểm đã chọn:
+                              </Text>
+                              {selectedWard?.name && `${selectedWard.name}, `}
+                              {selectedDistrict?.name &&
+                                `${selectedDistrict.name}, `}
+                              {selectedProvince?.name}
+                            </>
+                          ) : (
+                            "Quận/Huyện, Phường/Xã tại Đà Nẵng"
+                          )}
                       </Text>
                     </TouchableOpacity>
 
                     <View className="space-y-2 mb-4">
                       <TextInput
-                        className="border-b-2 border-gray-100 p-3"
+                        className={`border-b-2 ${error ? 'border-red-500' : 'border-gray-100'} p-3`}
                         placeholder="Tên đường, Tòa nhà, Số nhà, Thôn, Ngõ ,..."
                         value={detailAddress}
-                        onChangeText={setDetailAddress}
+                        onChangeText={(text) => {
+                          setDetailAddress(text);
+                          setError('');
+                        }}
                         multiline
                       />
+                      {error ? (
+                        <Text className="text-red-500 text-sm">{error}</Text>
+                      ) : null}
                     </View>
 
                     <TouchableOpacity

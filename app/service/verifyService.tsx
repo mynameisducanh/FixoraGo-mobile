@@ -37,6 +37,12 @@ import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import LocationPicker from "@/components/default/locationPicker";
 import { useUserStore } from "@/stores/user-store";
+import {
+  getCurrentLocation,
+  getAddressFromCoordinates,
+  getCoordinatesFromAddress,
+} from "@/utils/mapUtils";
+import { useLocationStore } from "@/stores/location-store";
 
 interface Location {
   code: string;
@@ -62,7 +68,7 @@ const VerifyService = () => {
   const [detailAddress, setDetailAddress] = useState("");
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const { user } = useUserStore();
-
+  const { latitude, longitude, errorMsg, loading } = useLocationStore();
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
 
@@ -74,6 +80,7 @@ const VerifyService = () => {
   const requestServiceApi = new RequestServiceApi();
   const [text, setText] = useState("");
   const router = useRouter();
+  const [address, setAddress] = useState<any>();
   const [service, setService] = useState<ServiceInterface>();
   const [priceService, setPrice] = useState<PricesServiceInterface>();
   const [listDetailService, setListDetailService] =
@@ -159,14 +166,23 @@ const VerifyService = () => {
       fetchDataService();
     }
   }, [unit]);
-
+  const handleGetCurrentLocation = async () => {
+    try {
+      const location = await getCurrentLocation();
+      const address = await getAddressFromCoordinates(
+        location.lat,
+        location.lon
+      );
+      setAddress(address.details);
+    } catch (error) {}
+  };
   const requestService = async () => {
     if (!selectedDate || !selectedTime) {
       Alert.alert("Lỗi", "Vui lòng chọn ngày và giờ hẹn.");
       return;
     }
 
-    if (!selectedProvince || !selectedDistrict || !selectedWard) {
+    if (!detailAddress) {
       Alert.alert(
         "Lỗi",
         "Vui lòng chọn đầy đủ địa chỉ và nhập địa chỉ chi tiết."
@@ -190,11 +206,7 @@ const VerifyService = () => {
     formData.append("listDetailService", listDetailService?.name || "");
     formData.append("priceService", priceService?.name || "");
     formData.append("typeEquipment", selectedValue || "");
-    formData.append(
-      "address",
-      `${detailAddress} ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}` ||
-        ""
-    );
+    formData.append("address", `${detailAddress}` || "");
     formData.append(
       "calender",
       `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`
@@ -256,7 +268,7 @@ const VerifyService = () => {
       );
       return;
     }
-    if (!selectedProvince || !selectedDistrict || !selectedWard) {
+    if (!detailAddress) {
       Alert.alert(
         "Thông báo",
         "Vui lòng chọn địa chỉ đầy đủ trước khi xác nhận."
@@ -415,20 +427,14 @@ const VerifyService = () => {
                 className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-full"
                 onPress={() => setIsLocationModalVisible(true)}
               >
-                <Text numberOfLines={1} className="">
-                  {selectedWard
-                    ? `${selectedWard.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}`
-                    : selectedDistrict
-                    ? `${selectedDistrict.name}, ${selectedProvince?.name}`
-                    : selectedProvince
-                    ? selectedProvince.name
-                    : "Chọn địa điểm"}
+                <Text numberOfLines={2} className="w-[90%]">
+                  {detailAddress ? detailAddress : "Chọn địa điểm"}
                 </Text>
                 <LottieView
                   source={require("@/assets/icons/location-icon.json")}
                   autoPlay={false}
                   loop={false}
-                  style={{ width: 20, height: 20 }}
+                  style={{ width: 30, height: 30 }}
                 />
               </TouchableOpacity>
               {detailAddress && (
@@ -507,7 +513,7 @@ const VerifyService = () => {
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Địa chỉ:</Text>
                       <Text className="font-medium text-right flex-1 ml-2">
-                        {`${detailAddress} ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}`}
+                        {`${detailAddress}`}
                       </Text>
                     </View>
 
@@ -566,11 +572,8 @@ const VerifyService = () => {
       <LocationPicker
         visible={isLocationModalVisible}
         onClose={() => setIsLocationModalVisible(false)}
-        onSelect={(address) => {
-          setSelectedProvince(address.province);
-          setSelectedDistrict(address.district);
-          setSelectedWard(address.ward);
-          setDetailAddress(address.detail);
+        onSelect={(fullAddress) => {
+          setDetailAddress(fullAddress);
         }}
       />
     </View>

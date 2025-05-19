@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import { useUserStore } from "@/stores/user-store";
 import RequestServiceApi from "@/api/requestService";
 import { formatDateTimeVN } from "@/utils/dateFormat";
+import { CustomMapView } from "@/components/MapView";
 
 interface RequestData {
   id: string;
@@ -151,6 +152,7 @@ const HomeStaff = () => {
   const [activeData, setActiveData] = useState<RequestData[]>([]);
   const { user } = useUserStore();
   const [approvedRequest, setApprovedRequest] = useState<RequestData>();
+  const [showMap, setShowMap] = useState(false);
 
   const onCatChanged = (category: string) => {
     console.log(category);
@@ -241,7 +243,15 @@ const HomeStaff = () => {
                   </Text>
                 </View>
               </View>
-
+             <View className="flex-row justify-between">
+               <TouchableOpacity
+                className="bg-green-500 p-3 rounded-lg"
+                onPress={() => setShowMap(true)}
+              >
+                <Text className="text-white font-semibold text-center">
+                  Xem chỉ dẫn trên Map
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 className="bg-primary p-3 rounded-lg"
                 onPress={() => {
@@ -256,6 +266,7 @@ const HomeStaff = () => {
                   Xem chi tiết
                 </Text>
               </TouchableOpacity>
+             </View>
             </View>
           </View>
         ) : (
@@ -288,6 +299,12 @@ const HomeStaff = () => {
           </View>
         )}
       </ScrollView>
+      <CustomMapView
+        mode="route"
+        visible={showMap}
+        onClose={() => setShowMap(false)}
+        destinationAddress={approvedRequest?.calender}
+      />
     </View>
   );
 };
