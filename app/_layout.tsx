@@ -15,6 +15,7 @@ import { UserStoreProviderProps } from "@/stores/user-store";
 import { PaperProvider } from "react-native-paper";
 import CustomAlertProvider from "@/components/others/CustomAlertProvider";
 import Animated from "react-native-reanimated";
+import { useLocation } from "@/hooks/useLocation";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -23,6 +24,9 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
+  // Khởi tạo GPS
+  useLocation();
 
   useEffect(() => {
     if (loaded) {
