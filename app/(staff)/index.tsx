@@ -12,6 +12,7 @@ import {
 } from "@expo/vector-icons";
 import Overview from "@/components/staff/overview";
 import Categories from "@/components/staff/Categories";
+import RequestCard from "@/components/staff/RequestCard";
 import { useRouter } from "expo-router";
 import { useUserStore } from "@/stores/user-store";
 import RequestServiceApi from "@/api/requestService";
@@ -67,85 +68,6 @@ const statusMap: Record<RequestData["status"], StatusInfo> = {
   },
 };
 
-interface RequestCardProps {
-  data: RequestData;
-  onPress: () => void;
-}
-
-const RequestCard: React.FC<RequestCardProps> = ({ data, onPress }) => {
-  const status = statusMap[data.status] || {
-    label: data.status,
-    color: "#6b7280",
-    icon: "help-circle-outline",
-  };
-
-  let imageUrl = null;
-  if (data.fileImage) {
-    try {
-      const arr = JSON.parse(data.fileImage);
-      if (Array.isArray(arr) && arr.length > 0) imageUrl = arr[0];
-    } catch {}
-  }
-
-  return (
-    <TouchableOpacity
-      key={data.id}
-      className="bg-white rounded-xl p-4 mb-3"
-      onPress={onPress}
-      style={{
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-      }}
-    >
-      <View className="flex-row justify-between items-start mb-2">
-        <View className="flex-1 mr-3">
-          <Text
-            className="text-lg font-bold text-gray-900 mb-1"
-            numberOfLines={1}
-          >
-            {data.nameService}
-          </Text>
-          <Text className="text-gray-500 text-sm mb-1" numberOfLines={1}>
-            {data.listDetailService} - {data.priceService}
-          </Text>
-        </View>
-      </View>
-
-      <View className="flex-row items-start mb-2">
-        <Ionicons
-          name="location-outline"
-          size={18}
-          color="#6b7280"
-          style={{ marginTop: 2 }}
-        />
-        <Text className="text-gray-600 text-sm flex-1 ml-2" numberOfLines={2}>
-          {data.address}
-        </Text>
-      </View>
-
-      <View className="flex-row items-center mb-2">
-        <Ionicons name="calendar-outline" size={18} color="#6b7280" />
-        <Text className="text-gray-600 text-sm ml-2">{data.calender}</Text>
-      </View>
-
-      <View className="flex-row items-start">
-        <Ionicons
-          name="chatbubble-outline"
-          size={18}
-          color="#6b7280"
-          style={{ marginTop: 2 }}
-        />
-        <Text className="text-gray-500 text-sm ml-2 flex-1" numberOfLines={2}>
-          {data.note ? data.note : "Trống"}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
 const HomeStaff = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
@@ -153,6 +75,7 @@ const HomeStaff = () => {
   const { user } = useUserStore();
   const [approvedRequest, setApprovedRequest] = useState<RequestData>();
   const [showMap, setShowMap] = useState(false);
+  const [dataAddress, setDataAddress] = useState("");
 
   const onCatChanged = (category: string) => {
     console.log(category);
@@ -192,7 +115,6 @@ const HomeStaff = () => {
 
   useEffect(() => {
     getApprovedServiceByFixerId();
-    // fetchDataActive();
   }, []);
 
   return (
@@ -217,57 +139,20 @@ const HomeStaff = () => {
               </Text>
             </View>
 
-            <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-              <View className="flex-row justify-between items-start mb-3">
-                <View className="flex-1">
-                  <Text className="text-lg font-semibold text-gray-900">
-                    {approvedRequest?.nameService}
-                  </Text>
-                  <Text className="text-gray-500 mt-1">
-                    {approvedRequest?.listDetailService}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="space-y-2 mb-4">
-                <View className="flex-row items-center">
-                  <Ionicons name="location" size={20} color="#6b7280" />
-                  <Text className="text-gray-600 ml-2 flex-1">
-                    {approvedRequest?.address}
-                  </Text>
-                </View>
-                <View className="flex-row items-center">
-                  <Ionicons name="calendar" size={20} color="#6b7280" />
-                  <Text className="text-gray-600 ml-2">
-                    {approvedRequest?.calender}
-                  </Text>
-                </View>
-              </View>
-             <View className="flex-row justify-between">
-               <TouchableOpacity
-                className="bg-green-500 p-3 rounded-lg"
-                onPress={() => setShowMap(true)}
-              >
-                <Text className="text-white font-semibold text-center">
-                  Xem chỉ dẫn trên Map
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="bg-primary p-3 rounded-lg"
-                onPress={() => {
-                  if (approvedRequest.id) {
-                    router.push(
-                      `/requestService/detail?idRequest=${approvedRequest.id}`
-                    );
-                  }
-                }}
-              >
-                <Text className="text-white font-semibold text-center">
-                  Xem chi tiết
-                </Text>
-              </TouchableOpacity>
-             </View>
-            </View>
+            <RequestCard
+              data={approvedRequest}
+              onPress={() => {
+                if (approvedRequest.id) {
+                  router.push(
+                    `/requestService/detail?idRequest=${approvedRequest.id}`
+                  );
+                }
+              }}
+              onShowMap={(address) => {
+                setDataAddress(address);
+                setShowMap(true)
+              }}
+            />
           </View>
         ) : (
           <View key="request-list" className="px-4 mt-3">
@@ -293,6 +178,10 @@ const HomeStaff = () => {
                   onPress={() =>
                     router.push(`/requestService/detail?idRequest=${item.id}`)
                   }
+                  onShowMap={(address) => {
+                    setDataAddress(address);
+                    setShowMap(true)
+                  }}
                 />
               ))}
             </View>
@@ -303,7 +192,7 @@ const HomeStaff = () => {
         mode="route"
         visible={showMap}
         onClose={() => setShowMap(false)}
-        destinationAddress={approvedRequest?.address}
+        destinationAddress={dataAddress}
       />
     </View>
   );
