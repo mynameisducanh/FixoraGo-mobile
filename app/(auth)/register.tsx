@@ -33,7 +33,7 @@ const Register = () => {
     username: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    confirmPassword: ""
   });
   const router = useRouter();
 
@@ -52,7 +52,13 @@ const Register = () => {
 
       if (res.statusCode === 200) {
         await AsyncStorage.setItem(TEMP_EMAIL_REGISTER, form.email);
-        router.push("/verifyOtp");
+
+        router.push({
+          pathname: "/verifyOtp",
+          params: {
+            email: form.email,
+          },
+        });
       } else {
         showAlert("Lỗi đăng ký", res.message);
       }
@@ -81,7 +87,7 @@ const Register = () => {
             style={{ height: hp(100), width: wp(100) }}
             className="flex-1 justify-center items-center bg-white p-4"
           >
-             <BackButton />
+            <BackButton />
             <Image
               source={require("@/assets/images/auth-screen.png")}
               className="w-[80%] h-[30%] object-contain"
@@ -93,8 +99,10 @@ const Register = () => {
             <Text className="text-base text-gray-500 mb-2">
               Vui lòng đăng ký để tiếp tục
             </Text>
-            <View className="w-full space-y-3 mt-4">
-              <View className="flex-row items-center border border-gray-300 rounded-full px-2">
+
+            <View className="w-full space-y-3 ">
+              
+              <View className="flex-row items-center border border-gray-300 rounded-full px-2 mt-3">
                 <Ionicons name="person-outline" size={20} color="#888" />
                 <TextInput
                   className="flex-1 ml-2 text-lg justify-center"
@@ -106,6 +114,7 @@ const Register = () => {
                   onChangeText={(text) => handleChange("username", text)}
                 />
               </View>
+
               <View className="flex-row items-center border border-gray-300 rounded-full px-2 mt-3">
                 <Ionicons name="mail-outline" size={20} color="#888" />
                 <TextInput

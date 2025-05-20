@@ -303,7 +303,7 @@ const HomeStaff = () => {
         mode="route"
         visible={showMap}
         onClose={() => setShowMap(false)}
-        destinationAddress={approvedRequest?.calender}
+        destinationAddress={approvedRequest?.address}
       />
     </View>
   );

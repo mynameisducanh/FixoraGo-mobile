@@ -88,12 +88,47 @@ const VerifyService = () => {
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [otherDevice, setOtherDevice] = useState("");
   const handleConfirmDate = (date: any) => {
+    const selected = new Date(date);
+    const now = new Date();
+
+    // Đặt thời gian của 'now' về 00:00:00 để so sánh chỉ theo ngày
+    now.setHours(0, 0, 0, 0);
+
+    // Giới hạn trên là ngày hiện tại + 10 ngày
+    const maxDate = new Date(now);
+    maxDate.setDate(now.getDate() + 10);
+
+    // So sánh
+    if (selected < now) {
+      Alert.alert("Thông báo","Không được chọn ngày trong quá khứ.");
+      return;
+    }
+
+    if (selected > maxDate) {
+      Alert.alert("Thông báo","Chỉ được chọn ngày trong vòng 10 ngày tới.");
+      return;
+    }
+
+    // Nếu hợp lệ
     console.log(date, "  ");
     setSelectedDate(date);
     hideDatePicker();
   };
 
   const handleConfirmTime = (time: any) => {
+    const selected = new Date(time);
+    const now = new Date();
+
+    // Thời gian hiện tại + 1 tiếng
+    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+
+    // So sánh
+    if (selected < oneHourFromNow) {
+      Alert.alert("Thông báo","Vui lòng chọn thời gian cách hiện tại ít nhất 1 tiếng.");
+      return;
+    }
+
+    // Nếu hợp lệ
     setSelectedTime(time);
     console.log(time, " ", formatTime(time));
     hideTimePicker();
@@ -166,16 +201,7 @@ const VerifyService = () => {
       fetchDataService();
     }
   }, [unit]);
-  const handleGetCurrentLocation = async () => {
-    try {
-      const location = await getCurrentLocation();
-      const address = await getAddressFromCoordinates(
-        location.lat,
-        location.lon
-      );
-      setAddress(address.details);
-    } catch (error) {}
-  };
+
   const requestService = async () => {
     if (!selectedDate || !selectedTime) {
       Alert.alert("Lỗi", "Vui lòng chọn ngày và giờ hẹn.");
@@ -241,11 +267,6 @@ const VerifyService = () => {
     } catch (err) {
       console.error("Lỗi upload:", err);
     }
-  };
-
-  const handleSelectCurrentLocation = () => {
-    // TODO: Implement current location selection
-    console.log("Selecting current location...");
   };
 
   const handleConfirmRequest = () => {
@@ -437,11 +458,6 @@ const VerifyService = () => {
                   style={{ width: 30, height: 30 }}
                 />
               </TouchableOpacity>
-              {detailAddress && (
-                <Text className="text-gray-600 text-sm mt-2">
-                  Địa chỉ chi tiết: {detailAddress}
-                </Text>
-              )}
             </View>
 
             <TouchableOpacity
