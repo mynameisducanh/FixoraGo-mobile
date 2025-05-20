@@ -38,6 +38,7 @@ interface MapViewProps {
   }) => void;
   visible: boolean;
   onClose: () => void;
+  onMapLoaded?: () => void;
 }
 
 export const CustomMapView: React.FC<MapViewProps> = ({
@@ -47,6 +48,7 @@ export const CustomMapView: React.FC<MapViewProps> = ({
   onLocationSelect,
   visible,
   onClose,
+  onMapLoaded,
 }) => {
   const mapRef = useRef<MapView>(null);
   const [loading, setLoading] = useState(true);
@@ -69,6 +71,7 @@ export const CustomMapView: React.FC<MapViewProps> = ({
   } | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const [showDirections, setShowDirections] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Lấy vị trí hiện tại
   const getCurrentPosition = async () => {
@@ -103,6 +106,7 @@ export const CustomMapView: React.FC<MapViewProps> = ({
       setError("Lỗi khi lấy vị trí hiện tại");
     } finally {
       setLoading(false);
+      if (onMapLoaded) onMapLoaded();
     }
   };
 
@@ -144,6 +148,8 @@ export const CustomMapView: React.FC<MapViewProps> = ({
 
         // Cập nhật tọa độ tuyến đường
         setRouteCoordinates(route.geometry.coordinates);
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      await delay(2000);
 
         // Cập nhật thông tin tuyến đường
         setRouteInfo({
@@ -159,7 +165,7 @@ export const CustomMapView: React.FC<MapViewProps> = ({
           ];
 
           mapRef.current.fitToCoordinates(coordinates, {
-            edgePadding: { top: 100, right: 50, bottom: 100, left: 50 },
+            edgePadding: { top: 250, right: 150, bottom: 200, left: 150 },
             animated: true,
           });
         }
@@ -169,10 +175,12 @@ export const CustomMapView: React.FC<MapViewProps> = ({
       setError(error.message || "Lỗi khi tính toán tuyến đường");
     } finally {
       setLoading(false);
+      if (onMapLoaded) onMapLoaded();
     }
   };
 
   const handleGetDirections = async () => {
+    setLoading(true);
     try {
       if (
         currentLocation?.lat !== undefined &&
@@ -195,18 +203,21 @@ export const CustomMapView: React.FC<MapViewProps> = ({
       }
     } catch (error: any) {
       setError(error.message || "Lỗi khi lấy chỉ dẫn chi tiết");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (mode === "current-location") {
-      console.log(mode, " vao current-location");
-      handleCurrentLocationMode();
-    } else if (mode === "route") {
-      console.log(mode, " vao route");
-      handleRouteMode();
+    if (visible) {
+      setLoading(true);
+      if (mode === "current-location") {
+        handleCurrentLocationMode();
+      } else if (mode === "route") {
+        handleRouteMode();
+      }
     }
-  }, [mode, destinationAddress]);
+  }, [mode, destinationAddress, visible]);
 
   const speakStep = (instruction: string) => {
     Speech.speak(instruction);
@@ -248,6 +259,7 @@ export const CustomMapView: React.FC<MapViewProps> = ({
                   : undefined
               }
               onMapReady={() => {
+                setIsMapReady(true);
                 if (currentLocation && destination) {
                   mapRef.current?.fitToCoordinates(
                     [
@@ -255,7 +267,7 @@ export const CustomMapView: React.FC<MapViewProps> = ({
                       { latitude: destination.lat, longitude: destination.lon },
                     ],
                     {
-                      edgePadding: { top: 100, right: 50, bottom: 100, left: 50 },
+                      edgePadding: { top: 250, right: 150, bottom: 200, left: 150 },
                       animated: true,
                     }
                   );
@@ -301,10 +313,18 @@ export const CustomMapView: React.FC<MapViewProps> = ({
                 />
               )}
             </MapView>
+
+            {/* Loading Overlay */}
+            {loading && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0000ff" />
+                <Text style={styles.loadingText}>Đang tải bản đồ...</Text>
+              </View>
+            )}
           </View>
 
           {/* Route Info */}
-          {routeInfo && (
+          {routeInfo && !loading && (
             <View style={styles.routeInfo}>
               <Text style={styles.routeText}>
                 Khoảng cách dự tính: {(routeInfo.distance / 1000).toFixed(1)} km
@@ -316,8 +336,10 @@ export const CustomMapView: React.FC<MapViewProps> = ({
                 mode="contained" 
                 onPress={handleGetDirections}
                 style={styles.directionsButton}
+                loading={loading}
+                disabled={loading}
               >
-                Xem chỉ dẫn đường đi
+                {loading ? "Đang tải..." : "Xem chỉ dẫn đường đi"}
               </Button>
             </View>
           )}
@@ -338,26 +360,13 @@ export const CustomMapView: React.FC<MapViewProps> = ({
                 {steps.map((step) => (
                   <View key={step.id} style={styles.step}>
                     <Text style={styles.stepText}>{step.instruction}</Text>
-                    {/* <Button 
-                      mode="contained" 
-                      onPress={() => speakStep(step.instruction)}
-                      style={styles.speakButton}
-                    >
-                      Phát âm
-                    </Button> */}
                   </View>
                 ))}
               </ScrollView>
             </View>
           )}
 
-          {/* Loading and Error states */}
-          {loading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#0000ff" />
-            </View>
-          )}
-
+          {/* Error state */}
           {error && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
@@ -368,7 +377,6 @@ export const CustomMapView: React.FC<MapViewProps> = ({
     </Modal>
   );
 };
-
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
@@ -454,6 +462,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#0000ff",
+  },
   errorContainer: {
     position: "absolute",
     bottom: 20,
@@ -522,7 +535,5 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 10,
   },
-  speakButton: {
-    backgroundColor: '#4CAF50',
-  },
 });
+
