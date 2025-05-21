@@ -1,4 +1,4 @@
-import { Text, View, ScrollView, TouchableOpacity, Image } from "react-native";
+import { Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
 import React, { useEffect, useState } from "react";
 import {
   widthPercentageToDP as wp,
@@ -18,6 +18,8 @@ import { useUserStore } from "@/stores/user-store";
 import RequestServiceApi from "@/api/requestService";
 import { formatDateTimeVN } from "@/utils/dateFormat";
 import { CustomMapView } from "@/components/MapView";
+import { getCurrentLocation, getCoordinatesFromAddress, calculateDistance } from "@/utils/mapUtils";
+import FilterModal from "@/components/staff/FilterModal";
 
 interface RequestData {
   id: string;
@@ -35,39 +37,6 @@ interface RequestData {
   fixerId: string | null;
 }
 
-type IconName =
-  | "time-outline"
-  | "close-circle-outline"
-  | "checkmark-circle-outline"
-  | "shield-checkmark-outline"
-  | "help-circle-outline";
-
-interface StatusInfo {
-  label: string;
-  color: string;
-  icon: IconName;
-}
-
-const statusMap: Record<RequestData["status"], StatusInfo> = {
-  pending: { label: "Chờ xử lý", color: "#facc15", icon: "time-outline" },
-  rejected: { label: "Đã hủy", color: "#ef4444", icon: "close-circle-outline" },
-  approved: {
-    label: "Đã duyệt",
-    color: "#22c55e",
-    icon: "checkmark-circle-outline",
-  },
-  completed: {
-    label: "Hoàn thành",
-    color: "#16a34a",
-    icon: "checkmark-circle-outline",
-  },
-  guarantee: {
-    label: "Bảo hành",
-    color: "#3b82f6",
-    icon: "shield-checkmark-outline",
-  },
-};
-
 const HomeStaff = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
@@ -76,24 +45,109 @@ const HomeStaff = () => {
   const [approvedRequest, setApprovedRequest] = useState<RequestData>();
   const [showMap, setShowMap] = useState(false);
   const [dataAddress, setDataAddress] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState("nearest");
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<{
+    districts: string[];
+    services: string[];
+    priceRange: string;
+    status: string[];
+    isUrgent: boolean;
+    bonusAmount: string;
+  }>({
+    districts: [],
+    services: [],
+    priceRange: "Tất cả",
+    status: [],
+    isUrgent: false,
+    bonusAmount: "",
+  });
 
-  const onCatChanged = (category: string) => {
+  const onCatChanged = async (category: string) => {
     console.log(category);
+    setCurrentCategory(category);
+    await fetchDataActive(category);
   };
 
-  const fetchDataActive = async () => {
-    try {
-      const filterParams = {
-        nameService: "Điều hòa",
-        sortTime: "NEWEST",
-      };
+  const handleFilterApply = async (filters: {
+    districts: string[];
+    services: string[];
+    priceRange: string;
+    status: string[];
+    isUrgent: boolean;
+    bonusAmount: string;
+  }) => {
+    setActiveFilters(filters);
+    await fetchDataActive(currentCategory, filters);
+  };
 
+  const fetchDataActive = async (
+    category: string = currentCategory,
+    filters: typeof activeFilters = activeFilters
+  ) => {
+    try {
+      setIsLoading(true);
+      const filterParams = {
+        nameService: filters.services.length > 0 ? filters.services[0] : "",
+        sortTime: category ? category : "nearest",
+        districts: filters.districts,
+        priceRange: filters.priceRange,
+        isUrgent: filters.isUrgent,
+      };
+      console.log("Filter params:", filterParams);
       const res = await requestService.getAllPendingOrRejected(filterParams);
-      if (res) {
+      console.log("API Response:", res);
+      
+      if (!res || !Array.isArray(res)) {
+        console.log("Invalid response format:", res);
+        setActiveData([]);
+        return;
+      }
+
+      if (category !== "newest") {
+        // Get user's current location
+        const location = await getCurrentLocation();
+        setUserLocation(location);
+
+        // Get coordinates for each request and calculate distances
+        const requestsWithDistance = await Promise.all(
+          res.map(async (request: RequestData) => {
+            try {
+              const coordinates = await getCoordinatesFromAddress(request.address);
+              const distance = calculateDistance(
+                location.lat,
+                location.lon,
+                coordinates.lat,
+                coordinates.lon
+              );
+              return {
+                ...request,
+                distance,
+              };
+            } catch (error) {
+              console.error(`Error getting coordinates for address: ${request.address}`, error);
+              return {
+                ...request,
+                distance: Infinity, // If we can't get coordinates, put it at the end
+              };
+            }
+          })
+        );
+
+        // Sort requests by distance
+        const sortedRequests = requestsWithDistance.sort((a, b) => a.distance - b.distance);
+        setActiveData(sortedRequests);
+      } else {
+        // For "newest" category, just use the API response as is
         setActiveData(res);
       }
     } catch (error) {
       console.log("Lỗi khi fetch:", error);
+      setActiveData([]); // Set empty array on error
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -160,34 +214,56 @@ const HomeStaff = () => {
               <Text className="text-xl font-bold text-gray-900">
                 Danh sách yêu cầu
               </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/post/ListPost")}
-                className="bg-blue-50 p-3 items-center rounded-full"
-              >
-                <Text className="text-blue-600 font-semibold">Xem thêm</Text>
-              </TouchableOpacity>
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  onPress={() => setShowFilterModal(true)}
+                  className="bg-blue-50 p-3 items-center rounded-full"
+                >
+                  <Ionicons name="filter" size={20} color="#3b82f6" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/post/ListPost")}
+                  className="bg-blue-50 p-3 items-center rounded-full"
+                >
+                  <Text className="text-blue-600 font-semibold">Xem thêm</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             <Categories onCategoryChanged={onCatChanged} />
 
             <View className="mt-4">
-              {activeData.map((item) => (
-                <RequestCard
-                  key={item.id}
-                  data={item}
-                  onPress={() =>
-                    router.push(`/requestService/detail?idRequest=${item.id}`)
-                  }
-                  onShowMap={(address) => {
-                    setDataAddress(address);
-                    setShowMap(true)
-                  }}
-                />
-              ))}
+              {isLoading ? (
+                <View className="flex-1 items-center justify-center py-8">
+                  <ActivityIndicator size="large" color="#3b82f6" />
+                  <Text className="text-gray-600 mt-2">Đang tải dữ liệu...</Text>
+                </View>
+              ) : (
+                activeData.map((item) => (
+                  <RequestCard
+                    key={item.id}
+                    data={item}
+                    onPress={() =>
+                      router.push(`/requestService/detail?idRequest=${item.id}`)
+                    }
+                    onShowMap={(address) => {
+                      setDataAddress(address);
+                      setShowMap(true)
+                    }}
+                  />
+                ))
+              )}
             </View>
           </View>
         )}
       </ScrollView>
+
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleFilterApply}
+      />
+
       <CustomMapView
         mode="route"
         visible={showMap}
