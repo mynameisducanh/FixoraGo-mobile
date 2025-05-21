@@ -43,11 +43,20 @@ import {
   getCoordinatesFromAddress,
 } from "@/utils/mapUtils";
 import { useLocationStore } from "@/stores/location-store";
+import { Switch } from "react-native-paper";
 
 interface Location {
   code: string;
   name: string;
 }
+const MONEY_BONUS = [
+  "10.000",
+  "20.000",
+  "30.000",
+  "40.000",
+  "50.000",
+  "100.000",
+];
 
 const VerifyService = () => {
   const { unit, serviceId, typeServiceId } = useLocalSearchParams();
@@ -58,12 +67,9 @@ const VerifyService = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
-  const [selectedProvince, setSelectedProvince] = useState<Location | null>(
-    null
-  );
-  const [selectedDistrict, setSelectedDistrict] = useState<Location | null>(
-    null
-  );
+  const [isUrgent, setIsUrgent] = useState(false);
+  const [selectedPriceRange, setSelectedPriceRange] = useState("10.000");
+
   const [selectedWard, setSelectedWard] = useState<Location | null>(null);
   const [detailAddress, setDetailAddress] = useState("");
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
@@ -87,6 +93,7 @@ const VerifyService = () => {
     useState<ListDetailServiceInterface>();
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [otherDevice, setOtherDevice] = useState("");
+  const [checkDate, setCheckDate] = useState(false);
   const handleConfirmDate = (date: any) => {
     const selected = new Date(date);
     const now = new Date();
@@ -96,16 +103,21 @@ const VerifyService = () => {
 
     // Giới hạn trên là ngày hiện tại + 10 ngày
     const maxDate = new Date(now);
-    maxDate.setDate(now.getDate() + 10);
+    maxDate.setDate(now.getDate() + 50);
+    console.log("first",  (selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
+    if ( (selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) > 1) {
+      console.log("first");
+      setCheckDate(true);
+    }
     // So sánh
     if (selected < now) {
-      Alert.alert("Thông báo","Không được chọn ngày trong quá khứ.");
+      Alert.alert("Thông báo", "Không được chọn ngày trong quá khứ.");
       return;
     }
 
     if (selected > maxDate) {
-      Alert.alert("Thông báo","Chỉ được chọn ngày trong vòng 10 ngày tới.");
+      Alert.alert("Thông báo", "Chỉ được chọn ngày trong vòng 10 ngày tới.");
       return;
     }
 
@@ -117,15 +129,25 @@ const VerifyService = () => {
 
   const handleConfirmTime = (time: any) => {
     const selected = new Date(time);
+    const selectedHour = selected.getHours();
     const now = new Date();
+    console.log(checkDate);
+     if (selectedHour < 8 || selectedHour > 20) {
+    Alert.alert("Thông báo", "Fixer chỉ hoạt động trong khoảng thời gian từ 8h sáng đến 20h tối.");
+    return;
+  }
+    if (!checkDate) {
+      // Thời gian hiện tại + 1 tiếng
+      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
-    // Thời gian hiện tại + 1 tiếng
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-
-    // So sánh
-    if (selected < oneHourFromNow) {
-      Alert.alert("Thông báo","Vui lòng chọn thời gian cách hiện tại ít nhất 1 tiếng.");
-      return;
+      // So sánh
+      if (selected < oneHourFromNow) {
+        Alert.alert(
+          "Thông báo",
+          "Vui lòng chọn thời gian cách hiện tại ít nhất 1 tiếng."
+        );
+        return;
+      }
     }
 
     // Nếu hợp lệ
@@ -233,6 +255,8 @@ const VerifyService = () => {
     formData.append("priceService", priceService?.name || "");
     formData.append("typeEquipment", selectedValue || "");
     formData.append("address", `${detailAddress}` || "");
+    formData.append("isUrgent", `${isUrgent}` || "");
+    formData.append("bonus", `${selectedPriceRange}` || "");
     formData.append(
       "calender",
       `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`
@@ -313,7 +337,7 @@ const VerifyService = () => {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView className="px-4 pt-3 bg-white ">
+          <ScrollView className="px-4 pt-3 pb-5 bg-white ">
             {listDetailService?.name === "Khác" && (
               <View>
                 <Text className="pb-2 font-bold text-lg">
@@ -442,6 +466,51 @@ const VerifyService = () => {
                 />
               </TouchableOpacity>
             </View>
+            <View className="flex-row gap-3 items-center mt-2">
+              <Text className="text-lg font-semibold">Yêu cầu cần gấp</Text>
+              <Switch
+                value={isUrgent}
+                onValueChange={setIsUrgent}
+                trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
+                thumbColor={isUrgent ? "#FFFFFF" : "#FFFFFF"}
+              />
+            </View>
+            {isUrgent && (
+              <View>
+                <Text className="mt-2">
+                  Với lựa chọn cần gấp, nhân viên sẽ cố gắng đến sớm nhất có thể
+                  (thường đến trước giờ hẹn) vậy nên để khích lệ tinh thần hơn
+                  hãy thưởng thêm cho sự nỗ lực của nhân viên nhé
+                </Text>
+                <Text className="text-lg font-semibold my-2">
+                  Bo thêm cho nhân viên
+                </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {MONEY_BONUS.map((range) => (
+                    <TouchableOpacity
+                      key={range}
+                      onPress={() => setSelectedPriceRange(range)}
+                      className={`px-4 py-2 rounded-full border ${
+                        selectedPriceRange === range
+                          ? "bg-blue-600 border-blue-600"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <Text
+                        className={`${
+                          selectedPriceRange === range
+                            ? "text-white"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {range}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
             <Text className="py-2 font-bold text-lg">Xác nhận địa chỉ</Text>
             <View className="">
               <TouchableOpacity
@@ -463,6 +532,7 @@ const VerifyService = () => {
             <TouchableOpacity
               onPress={handleConfirmRequest}
               className="mt-6 bg-primary py-5 px-4 rounded-lg"
+              style={{ marginBottom: 100 }}
             >
               <Text className="text-white text-center font-bold">
                 Xác nhận đặt dịch vụ
@@ -525,6 +595,16 @@ const VerifyService = () => {
                         {selectedTime ? formatTime(selectedTime) : ""}
                       </Text>
                     </View>
+                    {isUrgent && (
+                      <View className="flex-row justify-between">
+                        <Text className="text-gray-600">
+                          Xác nhận là cần gấp
+                        </Text>
+                        <Text className="font-medium text-right flex-1 ml-2">
+                          Tiền bo {`${selectedPriceRange}`} VNĐ
+                        </Text>
+                      </View>
+                    )}
 
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Địa chỉ:</Text>

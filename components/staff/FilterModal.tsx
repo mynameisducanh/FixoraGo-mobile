@@ -231,7 +231,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               </View>
               <View className="mb-6">
                 <View className="flex-row gap-3 items-center">
-                  <Text className="text-lg font-semibold">Cần gấp</Text>
+                  <Text className="text-lg font-semibold">Các yêu cầu cần gấp</Text>
                   <Switch
                     value={isUrgent}
                     onValueChange={setIsUrgent}

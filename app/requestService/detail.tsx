@@ -604,6 +604,24 @@ const RequestDetail = () => {
             <InfoRow label="Ghi chú" value={requestData?.note} />
             <InfoRow label="Địa chỉ" value={requestData?.address} />
             <InfoRow label="Lịch hẹn" value={requestData?.calender} />
+            {requestData?.bouns && (
+              <View className="flex-row justify-between py-2 border-b border-gray-200 last:border-b-0">
+                <Text
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                  className="text-gray-500 font-medium max-w-[35%] text-left"
+                >
+                  Tình trạng
+                </Text>
+
+                <Text
+                  style={{ color: statusInfo.color }}
+                  className={`font-semibold max-w-[65%] text-right ${statusInfo.color}`}
+                >
+                  {statusInfo?.label}
+                </Text>
+              </View>
+            )}
             <InfoRow
               label="Ngày tạo"
               value={formatDateTimeVN(requestData?.createAt)}
