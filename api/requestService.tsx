@@ -29,7 +29,7 @@ class RequestServiceApi extends Api {
   }
 
   async getAllPendingOrRejected(params: any) {
-    return this.request("GET", `/filter`, null, params); // null cho body, params là query string
+    return this.request("GET", `/filter?sortTime=${params.sortTime}&nameService=${params.nameService}&districts=${params.districts}&time=${params.priceRange}&isUrgent=${params.isUrgent}`); 
   }
 
   async getOneByUnit(unit: string) {

@@ -22,6 +22,7 @@ import {
 } from "react-native-responsive-screen";
 import BackButton from "@/components/buttonDefault/backButton";
 import { ActivityIndicator } from "react-native-paper";
+import { useLocationStore } from "@/stores/location-store";
 
 const Login = () => {
   const { login } = useUserStore();
@@ -31,7 +32,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { showAlert } = useAppAlert();
-
+  const { latitude, longitude } = useLocationStore();
   const handleLogin = async () => {
     const errorMessage = validateLoginForm({ username, password });
     if (errorMessage) {
@@ -40,7 +41,12 @@ const Login = () => {
     }
     setIsLoading(true);
     try {
-      await login({ username, password });
+      await login({ 
+        username, 
+        password, 
+        latitude: latitude ?? 0, 
+        longitude: longitude ?? 0 
+      });
     } catch (error) {
       showAlert("Đăng nhập thất bại", "Vui lòng kiểm tra lại thông tin.");
     } finally {
@@ -120,7 +126,7 @@ const Login = () => {
               style={{ opacity: isLoading ? 0.7 : 1 }}
             >
               {isLoading ? (
-                <ActivityIndicator color="#fff" size={20}/>
+                <ActivityIndicator color="#fff" size={20} />
               ) : (
                 <Text className="text-white font-semibold text-base">
                   Đăng nhập
