@@ -1,10 +1,11 @@
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import ApiOtp from "@/api/otpApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TEMP_EMAIL_REGISTER } from "@/constants";
 import { useAppAlert } from "@/hooks/useAppAlert";
+import BackButton from "@/components/buttonDefault/backButton";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -14,7 +15,7 @@ const VerifyOtp = () => {
   const [countdown, setCountdown] = useState(5);
   const otpApi = new ApiOtp();
   const { showAlert } = useAppAlert();
-
+  const {  email } = useLocalSearchParams();
   useEffect(() => {
     if (verified) {
       const timer = setInterval(() => {
@@ -51,11 +52,9 @@ const VerifyOtp = () => {
       let email = await AsyncStorage.getItem(TEMP_EMAIL_REGISTER);
       if (email) {
         const res = await otpApi.verifyOtp(email, otpCode);
-        console.log(res)
         if (res) {
           setVerified(true);
         } else {
-
           showAlert("Lỗi đăng ký", res.message);
         }
       }
@@ -79,11 +78,11 @@ const VerifyOtp = () => {
 
   return (
     <View className="flex-1 items-center justify-center bg-white px-6">
-      <Text className="text-2xl font-bold text-primary mb-4">
-        Xác thực OTP
-      </Text>
+      <BackButton />
+      <Text className="text-2xl font-bold text-primary mb-4">Xác thực OTP</Text>
       <Text className="text-gray-600 mb-6 text-center">
-        Nhập mã OTP 6 số đã gửi đến email hoặc số điện thoại của bạn.
+        Chúng tôi vừa gửi OTP xác thực tới địa chỉ {email}{" "}
+        của bạn , vui lòng nhập mã OTP để hoàn tất đăng ký
       </Text>
 
       <View className="flex-row justify-center mb-6">

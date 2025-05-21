@@ -75,7 +75,7 @@ const NotificationPage = () => {
           <LottieView
             source={getAnimationSource()}
             autoPlay
-            loop={false}
+            loop
             style={{ width: "100%", height: "100%" }}
           />
         </View>

@@ -1,6 +1,8 @@
 export interface SignInInterface {
   username: string;
   password: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface RegisterInterface {

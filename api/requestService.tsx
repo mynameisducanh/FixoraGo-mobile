@@ -19,24 +19,45 @@ class RequestServiceApi extends Api {
   async getListServiceByUserId(id: string) {
     return this.request("GET", `/allbyuserid/${id}`);
   }
+
   async getListServiceByFixerId(id: string) {
     return this.request("GET", `/getallbyfixerid/${id}`);
   }
+
   async getById(id: string) {
     return this.request("GET", `/${id}`);
   }
+
   async getAllPendingOrRejected(params: any) {
-    return this.request("GET", `/filter`, null, params); // null cho body, params là query string
+    return this.request("GET", `/filter?sortTime=${params.sortTime}&nameService=${params.nameService}&districts=${params.districts}&time=${params.priceRange}&isUrgent=${params.isUrgent}`); 
   }
+
   async getOneByUnit(unit: string) {
     return this.request("GET", `/unit/${unit}`);
   }
+
   async fixerReceiveRequest(body: any) {
-    return this.request("PATCH", `/fixer-approval`,  body );
+    return this.request("PATCH", `/fixer-approval`, body);
   }
-    async getApprovedServiceByFixerId(id: string) {
-    return this.request("GET", `/approved-service/${id}` );
+
+  async getApprovedServiceByFixerId(id: string) {
+    return this.request("GET", `/approved-service/${id}`);
   }
+
+  async rejectByFixer(fixerId: string) {
+    return this.request("GET", `/fixer/${fixerId}/stats`);
+  }
+
+  async rejectByUser(id: string) {
+    return this.request("delete", `/${id}`);
+  }
+
+  async updateRequest(data: any, id: string) {
+    return this.request("PATCH", `/${id}`, data, {
+      "Content-Type": "multipart/form-data",
+    });
+  }
+  
 }
 
 export default RequestServiceApi;

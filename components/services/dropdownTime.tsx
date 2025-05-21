@@ -3,7 +3,7 @@ import { View, Text } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import LottieView from "lottie-react-native";
 
-const DropdownTimeComponent = ({ data, onSelect }) => {
+const DropdownTimeComponent = ({ data, onSelect , type}) => {
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
   const [playIcon, setPlayIcon] = useState(false);
@@ -24,7 +24,7 @@ const DropdownTimeComponent = ({ data, onSelect }) => {
             isFocus ? "text-blue-500" : "text-gray-500"
           } bg-white`}
         >
-          Thời điểm tôi lắp đặt/mua thiết bị
+          {type === "time" ? "Thời điểm tôi lắp đặt/mua thiết bị " : "Xác nhận thời gian bảo hành"}
         </Text>
       );
     }

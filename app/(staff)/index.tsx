@@ -1,4 +1,4 @@
-import { Text, View, ScrollView, TouchableOpacity, Image } from "react-native";
+import { Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
 import React, { useEffect, useState } from "react";
 import {
   widthPercentageToDP as wp,
@@ -12,10 +12,14 @@ import {
 } from "@expo/vector-icons";
 import Overview from "@/components/staff/overview";
 import Categories from "@/components/staff/Categories";
+import RequestCard from "@/components/staff/RequestCard";
 import { useRouter } from "expo-router";
 import { useUserStore } from "@/stores/user-store";
 import RequestServiceApi from "@/api/requestService";
 import { formatDateTimeVN } from "@/utils/dateFormat";
+import { CustomMapView } from "@/components/MapView";
+import { getCurrentLocation, getCoordinatesFromAddress, calculateDistance } from "@/utils/mapUtils";
+import FilterModal from "@/components/staff/FilterModal";
 
 interface RequestData {
   id: string;
@@ -33,142 +37,117 @@ interface RequestData {
   fixerId: string | null;
 }
 
-type IconName =
-  | "time-outline"
-  | "close-circle-outline"
-  | "checkmark-circle-outline"
-  | "shield-checkmark-outline"
-  | "help-circle-outline";
-
-interface StatusInfo {
-  label: string;
-  color: string;
-  icon: IconName;
-}
-
-const statusMap: Record<RequestData["status"], StatusInfo> = {
-  pending: { label: "Chờ xử lý", color: "#facc15", icon: "time-outline" },
-  rejected: { label: "Đã hủy", color: "#ef4444", icon: "close-circle-outline" },
-  approved: {
-    label: "Đã duyệt",
-    color: "#22c55e",
-    icon: "checkmark-circle-outline",
-  },
-  completed: {
-    label: "Hoàn thành",
-    color: "#16a34a",
-    icon: "checkmark-circle-outline",
-  },
-  guarantee: {
-    label: "Bảo hành",
-    color: "#3b82f6",
-    icon: "shield-checkmark-outline",
-  },
-};
-
-interface RequestCardProps {
-  data: RequestData;
-  onPress: () => void;
-}
-
-const RequestCard: React.FC<RequestCardProps> = ({ data, onPress }) => {
-  const status = statusMap[data.status] || {
-    label: data.status,
-    color: "#6b7280",
-    icon: "help-circle-outline",
-  };
-
-  let imageUrl = null;
-  if (data.fileImage) {
-    try {
-      const arr = JSON.parse(data.fileImage);
-      if (Array.isArray(arr) && arr.length > 0) imageUrl = arr[0];
-    } catch {}
-  }
-
-  return (
-    <TouchableOpacity
-      key={data.id}
-      className="bg-white rounded-xl p-4 mb-3"
-      onPress={onPress}
-      style={{
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-      }}
-    >
-      <View className="flex-row justify-between items-start mb-2">
-        <View className="flex-1 mr-3">
-          <Text
-            className="text-lg font-bold text-gray-900 mb-1"
-            numberOfLines={1}
-          >
-            {data.nameService}
-          </Text>
-          <Text className="text-gray-500 text-sm mb-1" numberOfLines={1}>
-            {data.listDetailService} - {data.priceService}
-          </Text>
-        </View>
-      </View>
-
-      <View className="flex-row items-start mb-2">
-        <Ionicons
-          name="location-outline"
-          size={18}
-          color="#6b7280"
-          style={{ marginTop: 2 }}
-        />
-        <Text className="text-gray-600 text-sm flex-1 ml-2" numberOfLines={2}>
-          {data.address}
-        </Text>
-      </View>
-
-      <View className="flex-row items-center mb-2">
-        <Ionicons name="calendar-outline" size={18} color="#6b7280" />
-        <Text className="text-gray-600 text-sm ml-2">{data.calender}</Text>
-      </View>
-
-      <View className="flex-row items-start">
-        <Ionicons
-          name="chatbubble-outline"
-          size={18}
-          color="#6b7280"
-          style={{ marginTop: 2 }}
-        />
-        <Text className="text-gray-500 text-sm ml-2 flex-1" numberOfLines={2}>
-          {data.note ? data.note : "Trống"}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
 const HomeStaff = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
   const [activeData, setActiveData] = useState<RequestData[]>([]);
   const { user } = useUserStore();
   const [approvedRequest, setApprovedRequest] = useState<RequestData>();
+  const [showMap, setShowMap] = useState(false);
+  const [dataAddress, setDataAddress] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState("nearest");
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<{
+    districts: string[];
+    services: string[];
+    priceRange: string;
+    status: string[];
+    isUrgent: boolean;
+    bonusAmount: string;
+  }>({
+    districts: [],
+    services: [],
+    priceRange: "Tất cả",
+    status: [],
+    isUrgent: false,
+    bonusAmount: "",
+  });
 
-  const onCatChanged = (category: string) => {
+  const onCatChanged = async (category: string) => {
     console.log(category);
+    setCurrentCategory(category);
+    await fetchDataActive(category);
   };
 
-  const fetchDataActive = async () => {
-    try {
-      const filterParams = {
-        nameService: "Điều hòa",
-        sortTime: "NEWEST",
-      };
+  const handleFilterApply = async (filters: {
+    districts: string[];
+    services: string[];
+    priceRange: string;
+    status: string[];
+    isUrgent: boolean;
+    bonusAmount: string;
+  }) => {
+    setActiveFilters(filters);
+    await fetchDataActive(currentCategory, filters);
+  };
 
+  const fetchDataActive = async (
+    category: string = currentCategory,
+    filters: typeof activeFilters = activeFilters
+  ) => {
+    try {
+      setIsLoading(true);
+      const filterParams = {
+        nameService: filters.services.length > 0 ? filters.services[0] : "",
+        sortTime: category ? category : "nearest",
+        districts: filters.districts,
+        priceRange: filters.priceRange,
+        isUrgent: filters.isUrgent,
+      };
+      console.log("Filter params:", filterParams);
       const res = await requestService.getAllPendingOrRejected(filterParams);
-      if (res) {
+      console.log("API Response:", res);
+      
+      if (!res || !Array.isArray(res)) {
+        console.log("Invalid response format:", res);
+        setActiveData([]);
+        return;
+      }
+
+      if (category !== "newest") {
+        // Get user's current location
+        const location = await getCurrentLocation();
+        setUserLocation(location);
+
+        // Get coordinates for each request and calculate distances
+        const requestsWithDistance = await Promise.all(
+          res.map(async (request: RequestData) => {
+            try {
+              const coordinates = await getCoordinatesFromAddress(request.address);
+              const distance = calculateDistance(
+                location.lat,
+                location.lon,
+                coordinates.lat,
+                coordinates.lon
+              );
+              return {
+                ...request,
+                distance,
+              };
+            } catch (error) {
+              console.error(`Error getting coordinates for address: ${request.address}`, error);
+              return {
+                ...request,
+                distance: Infinity, // If we can't get coordinates, put it at the end
+              };
+            }
+          })
+        );
+
+        // Sort requests by distance
+        const sortedRequests = requestsWithDistance.sort((a, b) => a.distance - b.distance);
+        setActiveData(sortedRequests);
+      } else {
+        // For "newest" category, just use the API response as is
         setActiveData(res);
       }
     } catch (error) {
       console.log("Lỗi khi fetch:", error);
+      setActiveData([]); // Set empty array on error
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -177,9 +156,7 @@ const HomeStaff = () => {
       const res = await requestService.getApprovedServiceByFixerId(
         user?.id as string
       );
-      console.log(res.statusForFixer);
       if (res.statusForFixer === "success") {
-        console.log(res.data);
         setApprovedRequest(res.data);
         return;
       } else {
@@ -192,7 +169,6 @@ const HomeStaff = () => {
 
   useEffect(() => {
     getApprovedServiceByFixerId();
-    // fetchDataActive();
   }, []);
 
   return (
@@ -217,48 +193,20 @@ const HomeStaff = () => {
               </Text>
             </View>
 
-            <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-              <View className="flex-row justify-between items-start mb-3">
-                <View className="flex-1">
-                  <Text className="text-lg font-semibold text-gray-900">
-                    {approvedRequest?.nameService}
-                  </Text>
-                  <Text className="text-gray-500 mt-1">
-                    {approvedRequest?.listDetailService}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="space-y-2 mb-4">
-                <View className="flex-row items-center">
-                  <Ionicons name="location" size={20} color="#6b7280" />
-                  <Text className="text-gray-600 ml-2 flex-1">
-                    {approvedRequest?.address}
-                  </Text>
-                </View>
-                <View className="flex-row items-center">
-                  <Ionicons name="calendar" size={20} color="#6b7280" />
-                  <Text className="text-gray-600 ml-2">
-                    {approvedRequest?.calender}
-                  </Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                className="bg-primary p-3 rounded-lg"
-                onPress={() => {
-                  if (approvedRequest.id) {
-                    router.push(
-                      `/requestService/detail?idRequest=${approvedRequest.id}`
-                    );
-                  }
-                }}
-              >
-                <Text className="text-white font-semibold text-center">
-                  Xem chi tiết
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <RequestCard
+              data={approvedRequest}
+              onPress={() => {
+                if (approvedRequest.id) {
+                  router.push(
+                    `/requestService/detail?idRequest=${approvedRequest.id}`
+                  );
+                }
+              }}
+              onShowMap={(address) => {
+                setDataAddress(address);
+                setShowMap(true)
+              }}
+            />
           </View>
         ) : (
           <View key="request-list" className="px-4 mt-3">
@@ -266,30 +214,62 @@ const HomeStaff = () => {
               <Text className="text-xl font-bold text-gray-900">
                 Danh sách yêu cầu
               </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/post/ListPost")}
-                className="bg-blue-50 p-3 items-center rounded-full"
-              >
-                <Text className="text-blue-600 font-semibold">Xem thêm</Text>
-              </TouchableOpacity>
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  onPress={() => setShowFilterModal(true)}
+                  className="bg-blue-50 p-3 items-center rounded-full"
+                >
+                  <Ionicons name="filter" size={20} color="#3b82f6" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/post/ListPost")}
+                  className="bg-blue-50 p-3 items-center rounded-full"
+                >
+                  <Text className="text-blue-600 font-semibold">Xem thêm</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             <Categories onCategoryChanged={onCatChanged} />
 
             <View className="mt-4">
-              {activeData.map((item) => (
-                <RequestCard
-                  key={item.id}
-                  data={item}
-                  onPress={() =>
-                    router.push(`/requestService/detail?idRequest=${item.id}`)
-                  }
-                />
-              ))}
+              {isLoading ? (
+                <View className="flex-1 items-center justify-center py-8">
+                  <ActivityIndicator size="large" color="#3b82f6" />
+                  <Text className="text-gray-600 mt-2">Đang tải dữ liệu...</Text>
+                </View>
+              ) : (
+                activeData.map((item) => (
+                  <RequestCard
+                    key={item.id}
+                    data={item}
+                    onPress={() =>
+                      router.push(`/requestService/detail?idRequest=${item.id}`)
+                    }
+                    onShowMap={(address) => {
+                      setDataAddress(address);
+                      setShowMap(true)
+                    }}
+                  />
+                ))
+              )}
             </View>
           </View>
         )}
       </ScrollView>
+
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleFilterApply}
+      />
+
+      <CustomMapView
+        mode="route"
+        visible={showMap}
+        onClose={() => setShowMap(false)}
+        destinationAddress={dataAddress}
+      />
     </View>
   );
 };

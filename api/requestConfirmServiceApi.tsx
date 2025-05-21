@@ -20,6 +20,12 @@ class RequestConfirmServiceApi extends Api {
   async getByRequestId(id: string, params: any) {
     return this.request("get", `/confirm/${id}?type=${params.type}`);
   }
+  async userAccept(id: string) {
+    return this.request("Patch", `/accept/${id}`);
+  }
+  async checkFixerCompleted(requestId: string) {
+    return this.request("get", `/check-fixer-completed/${requestId}`);
+  }
   async deleteRequest(id: string) {
     return this.request("DELETE", `/${id}`);
   }

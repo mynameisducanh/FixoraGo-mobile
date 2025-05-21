@@ -32,6 +32,7 @@ interface TechnicianDetailModalProps {
   experience: string;
   rating: number;
   totalReviews: number;
+  roles: string;
 }
 
 const TechnicianDetailModal = ({
@@ -44,6 +45,7 @@ const TechnicianDetailModal = ({
   experience,
   rating,
   totalReviews,
+  roles,
 }: TechnicianDetailModalProps) => {
   return (
     <Modal
@@ -80,15 +82,17 @@ const TechnicianDetailModal = ({
               <Text className="text-2xl font-bold text-gray-900 mb-1 mt-3">
                 {technician.fullName || technician.username}
               </Text>
-              <View className="flex-row items-center">
-                <Ionicons name="star" size={20} color="#eab308" />
-                <Text className="text-gray-700 font-semibold ml-1">
-                  {rating || 5}
-                </Text>
-                <Text className="text-gray-500 ml-1">
-                  ({totalReviews || 1} đánh giá)
-                </Text>
-              </View>
+              {roles === "system_user" && (
+                <View className="flex-row items-center">
+                  <Ionicons name="star" size={20} color="#eab308" />
+                  <Text className="text-gray-700 font-semibold ml-1">
+                    {rating || "Chưa có đánh giá"}
+                  </Text>
+                  <Text className="text-gray-500 ml-1">
+                    ({totalReviews || "chưa có"} đánh giá)
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Action Buttons */}

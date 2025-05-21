@@ -37,14 +37,12 @@ const DetailService = () => {
     const fetchDataService = async () => {
       try {
         setLoading(true);
-        console.log(idService);
 
         const res = await serviceApi.getId(idService as string);
         const dataListService = await listDetailServiceApi.getListService(
           idService as string
         );
 
-        console.log(res, dataListService);
 
         if (res) {
           setService(res);
@@ -64,11 +62,9 @@ const DetailService = () => {
 
   useEffect(() => {
     if (selectedValue) {
-      console.log(selectedValue);
       const fetchDataPackageSelect = async () => {
         const res = await priceServiceApi.getByUnit(selectedValue);
         if (res) {
-          console.log(res);
           setOption(res);
         }
       };

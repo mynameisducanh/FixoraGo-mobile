@@ -3,153 +3,75 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
   Modal,
   TouchableWithoutFeedback,
-  Alert,
   TextInput,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
-
-interface Location {
-  code: string;
-  name: string;
-}
+import {
+  getCurrentLocation,
+  getAddressFromCoordinates,
+} from "@/utils/mapUtils";
+import { useLocationStore } from "@/stores/location-store";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSelect: (address: {
-    province: Location | null;
-    district: Location | null;
-    ward: Location | null;
-    detail: string;
-  }) => void;
+  onSelect: (address: string) => void;
 }
 
 const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
-  const [currentStep, setCurrentStep] = useState<
-    "province" | "district" | "ward"
-  >("province");
-  const [provinces, setProvinces] = useState<Location[]>([]);
-  const [districts, setDistricts] = useState<Location[]>([]);
-  const [wards, setWards] = useState<Location[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState<Location | null>(
-    null
-  );
-  const [selectedDistrict, setSelectedDistrict] = useState<Location | null>(
-    null
-  );
-  const [selectedWard, setSelectedWard] = useState<Location | null>(null);
   const [detailAddress, setDetailAddress] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showMainPicker, setShowMainPicker] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [currentLocation, setCurrentLocation] = useState("");
+  const { latitude, longitude, errorMsg } = useLocationStore();
 
   useEffect(() => {
     if (visible) {
-      setShowMainPicker(false);
+      setError("");
+      if (!currentLocation) {
+        fetchCurrentLocation();
+      }
     }
   }, [visible]);
 
-  const fetchProvinces = async () => {
+  const fetchCurrentLocation = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("https://provinces.open-api.vn/api/p/");
-      const daNang = res.data.find(
-        (province: Location) => province.name === "Thành phố Đà Nẵng"
+      const location = await getCurrentLocation();
+      const addressData = await getAddressFromCoordinates(
+        location.lat,
+        location.lon
       );
-      setProvinces(daNang ? [daNang] : []);
+      console.log(addressData.detailedAddress)
+      setCurrentLocation(addressData.detailedAddress);
+    } catch (error) {
+      console.log(error);
+      setError("Không thể lấy vị trí hiện tại");
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchDistricts = async (provinceCode: string) => {
-    setLoading(true);
-    try {
-      const res = await axios.get(
-        `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`
-      );
-      setDistricts(res.data.districts);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchWards = async (districtCode: string) => {
-    setLoading(true);
-    try {
-      const res = await axios.get(
-        `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`
-      );
-      setWards(res.data.wards);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSelectProvince = (province: Location) => {
-    setSelectedProvince(province);
-    setSelectedDistrict(null);
-    setSelectedWard(null);
-    setCurrentStep("district");
-    fetchDistricts(province.code);
-  };
-
-  const handleSelectDistrict = (district: Location) => {
-    setSelectedDistrict(district);
-    setSelectedWard(null);
-    setCurrentStep("ward");
-    fetchWards(district.code);
-  };
-
-  const handleSelectWard = (ward: Location) => {
-    setSelectedWard(ward);
-    setShowMainPicker(false);
-  };
-
-  const handleBack = () => {
-    if (currentStep === "ward") setCurrentStep("district");
-    else if (currentStep === "district") setCurrentStep("province");
   };
 
   const handleConfirm = () => {
-    onSelect({
-      province: selectedProvince,
-      district: selectedDistrict,
-      ward: selectedWard,
-      detail: detailAddress,
-    });
+    if (!detailAddress.trim()) {
+      setError("Vui lòng nhập địa chỉ chi tiết");
+      return;
+    }
+
+    if (!currentLocation) {
+      setError("Không thể lấy vị trí hiện tại");
+      return;
+    }
+
+    const fullAddress = `${detailAddress}, ${currentLocation}`;
+    onSelect(fullAddress);
     onClose();
   };
-
-  const handleCurrentLocation = () => {
-    Alert.alert("Thông báo", "Tính năng đang phát triển");
-    onClose();
-  };
-
-  let locations: Location[] = [];
-  let title = "";
-
-  switch (currentStep) {
-    case "province":
-      locations = provinces;
-      title = "Chọn tỉnh/thành phố";
-      break;
-    case "district":
-      locations = districts;
-      title = "Chọn quận/huyện";
-      break;
-    case "ward":
-      locations = wards;
-      title = "Chọn phường/xã";
-      break;
-  }
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
@@ -161,69 +83,49 @@ const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
           <View className="flex-1 bg-black/40 justify-center items-center px-6">
             <TouchableWithoutFeedback>
               <View className="bg-white w-full rounded-xl p-6 space-y-4">
-                {!showMainPicker ? (
+                <View className="flex-row items-center justify-between mb-4">
+                  <Text className="text-lg font-bold text-center flex-1">
+                    Chọn địa chỉ
+                  </Text>
+                  <TouchableOpacity onPress={onClose}>
+                    <Ionicons name="close" size={18} color="#000" />
+                  </TouchableOpacity>
+                </View>
+
+                {loading ? (
+                  <View className="items-center justify-center py-8">
+                    <ActivityIndicator size="large" color="#2563EB" />
+                    <Text className="text-gray-600 mt-2">
+                      Đang lấy vị trí...
+                    </Text>
+                  </View>
+                ) : currentLocation ? (
                   <>
-                    <View className="flex-row items-center justify-between mb-4">
-                      <Text className="text-lg font-bold text-center flex-1">
-                        Chọn địa chỉ tại Đà Nẵng
+                    <View className="bg-blue-50 p-4 rounded-lg mb-4">
+                      <Text className="text-blue-800 font-medium mb-1">
+                        Vị trí hiện tại:
                       </Text>
-                      <TouchableOpacity onPress={onClose}>
-                        <Ionicons name="close" size={18} color="#000" />
-                      </TouchableOpacity>
+                      <Text className="text-blue-800">
+                        {currentLocation}
+                      </Text>
                     </View>
-
-                    <TouchableOpacity
-                      onPress={handleCurrentLocation}
-                      className="flex-row items-center gap-2 border border-primary rounded-lg p-4 mb-4"
-                    >
-                      <Ionicons name="locate" size={20} color="#2563EB" />
-                      <Text className="text-primary text-base">
-                        Chọn vị trí hiện tại
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={() => {
-                        setShowMainPicker(true);
-                        fetchProvinces();
-                      }}
-                      className={`flex-row items-center gap-2 py-4 mb-4 ${
-                        !selectedProvince
-                          ? "border-b-2 border-gray-100"
-                          : "border border-primary rounded-lg p-4"
-                      }`}
-                    >
-                      <Text
-                        className={`text-base  ${
-                          !selectedProvince
-                            ? "text-gray-400 "
-                            : "text-gray-950 "
-                        }`}
-                      >
-                        {!selectedProvince ? (
-                          "Quận/Huyện, Phường/Xã tại Đà Nẵng"
-                        ) : (
-                          <>
-                            <Text className=" text-base font-bold mb-1">
-                              Địa điểm đã chọn:
-                            </Text>
-                            {selectedWard?.name && `${selectedWard.name}, `}
-                            {selectedDistrict?.name &&
-                              `${selectedDistrict.name}, `}
-                            {selectedProvince?.name}
-                          </>
-                        )}
-                      </Text>
-                    </TouchableOpacity>
 
                     <View className="space-y-2 mb-4">
                       <TextInput
-                        className="border-b-2 border-gray-100 p-3"
-                        placeholder="Tên đường, Tòa nhà, Số nhà, Thôn, Ngõ ,..."
+                        className={`border-b-2 ${
+                          error ? "border-red-500" : "border-gray-100"
+                        } p-3`}
+                        placeholder="Số nhà, Tòa nhà, Thôn, Ngõ,..."
                         value={detailAddress}
-                        onChangeText={setDetailAddress}
+                        onChangeText={(text) => {
+                          setDetailAddress(text);
+                          setError("");
+                        }}
                         multiline
                       />
+                      {error && (
+                        <Text className="text-red-500 text-sm">{error}</Text>
+                      )}
                     </View>
 
                     <TouchableOpacity
@@ -236,50 +138,16 @@ const LocationPicker: React.FC<Props> = ({ visible, onClose, onSelect }) => {
                     </TouchableOpacity>
                   </>
                 ) : (
-                  <View className="h-[70vh]">
-                    <View className="flex-row items-center justify-between mb-4">
-                      {currentStep !== "province" ? (
-                        <TouchableOpacity onPress={handleBack}>
-                          <Ionicons name="arrow-back" size={24} color="#000" />
-                        </TouchableOpacity>
-                      ) : (
-                        <View style={{ width: 24 }} />
-                      )}
-                      <Text className="text-lg font-semibold">{title}</Text>
-                      <TouchableOpacity
-                        onPress={() => setShowMainPicker(false)}
-                      >
-                        <Ionicons name="close" size={24} color="#000" />
-                      </TouchableOpacity>
-                    </View>
-
-                    <ScrollView className="flex-1">
-                      {loading ? (
-                        <ActivityIndicator
-                          size="large"
-                          color="#3B82F6"
-                          className="mt-4"
-                        />
-                      ) : (
-                        locations.map((location) => (
-                          <TouchableOpacity
-                            key={location.code}
-                            className="p-4 border-b border-gray-100"
-                            onPress={() => {
-                              if (currentStep === "province")
-                                handleSelectProvince(location);
-                              else if (currentStep === "district")
-                                handleSelectDistrict(location);
-                              else handleSelectWard(location);
-                            }}
-                          >
-                            <Text className="text-base text-gray-800">
-                              {location.name}
-                            </Text>
-                          </TouchableOpacity>
-                        ))
-                      )}
-                    </ScrollView>
+                  <View className="items-center justify-center py-8">
+                    <Text className="text-red-500 text-center">
+                      {error || "Không thể lấy vị trí hiện tại"}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={fetchCurrentLocation}
+                      className="mt-4 bg-primary rounded-lg px-4 py-2"
+                    >
+                      <Text className="text-white">Thử lại</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
               </View>

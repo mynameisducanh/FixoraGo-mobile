@@ -16,9 +16,7 @@ const Activate = () => {
   const requestService = new RequestServiceApi();
   const [activeData, setActiveData] = useState([]);
   const { user } = useUserStore();
-  console.log(user?.id);
   const handleReorder = (item) => {
-    console.log("đã chọn ", item.id);
     router.push({
       pathname: "/requestService/detail",
       params: { idRequest: item.id },
@@ -28,7 +26,6 @@ const Activate = () => {
   const fetchDataActive = async () => {
     try {
       const res = await requestService.getListServiceByFixerId(user?.id as string);
-      console.log(res)
       if (res) {
         setActiveData(res);
       }
@@ -129,9 +126,9 @@ const Activate = () => {
       <TouchableOpacity className="w-full mt-4">
         <Text
           onPress={() => {
-            // router.push({
-            //   pathname: "/requestService/listRequestSerivce",
-            // });
+            router.push({
+              pathname: "/requestService/listRequestSerivce",
+            });
           }}
           className="text-blue-500 text-lg font-semibold text-center "
         >
