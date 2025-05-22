@@ -58,7 +58,7 @@ const HomeStaff = () => {
     bonusAmount: string;
   }>({
     districts: [],
-    services: [],
+    services: user?.authdata ? [user.authdata] : [],
     priceRange: "Tất cả",
     status: [],
     isUrgent: false,
@@ -79,6 +79,7 @@ const HomeStaff = () => {
     isUrgent: boolean;
     bonusAmount: string;
   }) => {
+    console.log("Applying filters:", filters);
     setActiveFilters(filters);
     await fetchDataActive(currentCategory, filters);
   };
@@ -90,7 +91,7 @@ const HomeStaff = () => {
     try {
       setIsLoading(true);
       const filterParams = {
-        nameService: filters.services.length > 0 ? filters.services[0] : "",
+        nameService: filters.services.join(','),
         sortTime: category ? category : "nearest",
         districts: filters.districts,
         priceRange: filters.priceRange,
@@ -262,6 +263,7 @@ const HomeStaff = () => {
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
         onApply={handleFilterApply}
+        initialFilters={activeFilters}
       />
 
       <CustomMapView
