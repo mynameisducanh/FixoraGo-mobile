@@ -38,6 +38,8 @@ import UserApi from "@/api/userApi";
 import Avatar from "@/components/others/Avatar";
 import CompleteRequestModal from "@/components/staff/CompleteRequestModal";
 import RequestConfirmServiceApi from "@/api/requestConfirmServiceApi";
+import SkillFixerApi from "@/api/skillFixerApi";
+import FixerApi from "@/api/fixerApi";
 
 interface ActivityHistory {
   id: string;
@@ -99,6 +101,8 @@ const RequestDetail = () => {
   const requestConfirmServiceApi = new RequestConfirmServiceApi();
   const ativityLogApi = new ActivityLogApi();
   const reviewApi = new ReviewApi();
+  const skillFixerApi = new SkillFixerApi();
+  const fixerApi = new FixerApi();
   const userApi = new UserApi();
   const historyRequestServiceApi = new HistoryRequestServiceApi();
   const { idRequest } = useLocalSearchParams();
@@ -164,15 +168,17 @@ const RequestDetail = () => {
         const resUser = await userApi.getByUserId(requestData.userId);
         if (requestData?.fixerId) {
           const resFixer = await userApi.getByUserId(requestData.fixerId);
+          const skillFixer = await skillFixerApi.getByUserId(
+            requestData.fixerId
+          );
+          const fixerData = await fixerApi.getByUserId(requestData.fixerId);
           if (resFixer) {
             setFixerData(resFixer);
-            setFixerSkills([
-              "Sửa điện",
-              "Sửa nước",
-              "Lắp đặt thiết bị",
-              "Bảo trì",
-            ]);
-            setFixerExperience("5 năm kinh nghiệm");
+        
+          }
+          if (skillFixer) {
+            const fixerSkillNames = skillFixer.map((skill: any) => skill.name);
+            setFixerSkills(fixerSkillNames);
           }
           const average = await reviewApi.getReviewAverageByFixerId(
             requestData.fixerId

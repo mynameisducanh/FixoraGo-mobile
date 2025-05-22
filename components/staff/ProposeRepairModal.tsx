@@ -315,6 +315,9 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
       setLoading(true);
       const formData = new FormData();
       if (editingIndex !== null) {
+        if (user?.id) {
+          formData.append("userId", user.id);
+        }
         formData.append("name", newRepair.name);
         formData.append("type", newRepair.type);
         formData.append("price", newRepair.price);

@@ -25,6 +25,7 @@ interface TechnicianDetailModalProps {
     fullName: string;
     address: string;
     phonenumber: string;
+    authdata: string;
   };
   bgColor: string;
   color: string;
@@ -125,17 +126,20 @@ const TechnicianDetailModal = ({
                 value={technician.address}
                 color={color}
               />
+              
               <InfoItem
                 icon="call"
                 title="Số điện thoại"
                 value={technician.phonenumber}
                 color={color}
               />
+
               <InfoItem
-                icon="time"
-                title="Kinh nghiệm"
-                value={experience}
+                icon="hammer"
+                title="Kĩ năng chính"
+                value={technician.authdata}
                 color={color}
+                iconType="MaterialCommunityIcons"
               />
 
               {/* Skills */}
@@ -168,16 +172,25 @@ const InfoItem = ({
   title,
   value,
   color,
+  iconType = "Ionicons",
 }: {
   icon: string;
   title: string;
   value: string;
   color: string;
+  iconType?: "Ionicons" | "MaterialCommunityIcons";
 }) => (
   <View className="flex-row items-center">
-    <View className=" p-2 rounded-full mr-3">
-      <Ionicons name={icon as any} size={20} color={color} />
+    <View className="p-2 rounded-full mr-3">
+      {iconType === "Ionicons" ? (
+        <Ionicons name={icon as any} size={20} color={color} />
+      ) : (
+        <MaterialCommunityIcons name={icon as any} size={20} color={color} />
+      )}
     </View>
+        {/* <View className="">
+      <Text className="text-gray-900 font-medium">{title} :{" "}</Text>
+    </View> */}
     <View className="flex-1 flex-row">
       <Text className="text-gray-900 font-medium">{value}</Text>
     </View>

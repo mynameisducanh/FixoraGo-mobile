@@ -54,8 +54,7 @@ export const statusMap = {
 };
 // Array of 13 predefined colors for avatar backgrounds
 export const AVATAR_COLORS = [
-  "#FFEEAD", // Yellow
-  "#F1C40F", // Yellow
+  "#FFC107", // Yellow
 ];
 
 // Function to get random color from AVATAR_COLORS
