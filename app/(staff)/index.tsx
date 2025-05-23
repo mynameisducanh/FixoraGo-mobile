@@ -1,4 +1,11 @@
-import { Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import {
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import {
   widthPercentageToDP as wp,
@@ -18,8 +25,13 @@ import { useUserStore } from "@/stores/user-store";
 import RequestServiceApi from "@/api/requestService";
 import { formatDateTimeVN } from "@/utils/dateFormat";
 import { CustomMapView } from "@/components/MapView";
-import { getCurrentLocation, getCoordinatesFromAddress, calculateDistance } from "@/utils/mapUtils";
+import {
+  getCurrentLocation,
+  getCoordinatesFromAddress,
+  calculateDistance,
+} from "@/utils/mapUtils";
 import FilterModal from "@/components/staff/FilterModal";
+import { getRouteInfo } from "@/utils/mapUtils";
 
 interface RequestData {
   id: string;
@@ -45,7 +57,10 @@ const HomeStaff = () => {
   const [approvedRequest, setApprovedRequest] = useState<RequestData>();
   const [showMap, setShowMap] = useState(false);
   const [dataAddress, setDataAddress] = useState("");
-  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState("nearest");
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -89,60 +104,83 @@ const HomeStaff = () => {
     filters: typeof activeFilters = activeFilters
   ) => {
     try {
-      setIsLoading(true);
-      const filterParams = {
-        nameService: filters.services.join(','),
-        sortTime: category ? category : "nearest",
-        districts: filters.districts,
-        priceRange: filters.priceRange,
-        isUrgent: filters.isUrgent,
-      };
-      console.log("Filter params:", filterParams);
-      const res = await requestService.getAllPendingOrRejected(filterParams);
-      console.log("API Response:", res);
-      
-      if (!res || !Array.isArray(res)) {
-        console.log("Invalid response format:", res);
-        setActiveData([]);
-        return;
-      }
+      if (user?.roles === "system_fixer") {
+        setIsLoading(true);
+        const filterParams = {
+          nameService: filters.services.join(","),
+          sortTime: category ? category : "nearest",
+          districts: filters.districts,
+          priceRange: filters.priceRange,
+          isUrgent: filters.isUrgent,
+        };
+        console.log("Filter params:", filterParams);
+        const res = await requestService.getAllPendingOrRejected(filterParams);
+        console.log("API Response:", res);
 
-      if (category !== "newest") {
-        // Get user's current location
-        const location = await getCurrentLocation();
-        setUserLocation(location);
+        if (!res || !Array.isArray(res)) {
+          console.log("Invalid response format:", res);
+          setActiveData([]);
+          return;
+        }
+        console.log(category)
+        if (category !== "newest") {
+          console.log("vào chọn ngắn nhất")
+          // Get user's current location
+          const location = await getCurrentLocation();
+          setUserLocation(location);
 
-        // Get coordinates for each request and calculate distances
-        const requestsWithDistance = await Promise.all(
-          res.map(async (request: RequestData) => {
-            try {
-              const coordinates = await getCoordinatesFromAddress(request.address);
-              const distance = calculateDistance(
-                location.lat,
-                location.lon,
-                coordinates.lat,
-                coordinates.lon
-              );
-              return {
-                ...request,
-                distance,
-              };
-            } catch (error) {
-              console.error(`Error getting coordinates for address: ${request.address}`, error);
-              return {
-                ...request,
-                distance: Infinity, // If we can't get coordinates, put it at the end
-              };
-            }
-          })
-        );
+          // Get coordinates for each request and calculate distances
+          const requestsWithDistance = await Promise.all(
+            res.map(async (request: RequestData) => {
+              try {
+                const coordinates = await getCoordinatesFromAddress(
+                  request.address
+                );
+                
+                // Get actual driving distance using Mapbox Directions API
+                const routeInfo = await getRouteInfo(
+                  location.lat,
+                  location.lon,
+                  coordinates.lat,
+                  coordinates.lon
+                );
+                
+                const distance = routeInfo.distance / 1000; // Convert to kilometers
+                console.log(`Actual driving distance for ${request.address}: ${distance}km`);
+                
+                return {
+                  ...request,
+                  distance,
+                };
+              } catch (error) {
+                console.error(
+                  `Error getting route info for address: ${request.address}`,
+                  error
+                );
+                return {
+                  ...request,
+                  distance: Infinity,
+                };
+              }
+            })
+          );
 
-        // Sort requests by distance
-        const sortedRequests = requestsWithDistance.sort((a, b) => a.distance - b.distance);
-        setActiveData(sortedRequests);
-      } else {
-        // For "newest" category, just use the API response as is
-        setActiveData(res);
+          // Sort requests by distance
+          const sortedRequests = requestsWithDistance.sort((a, b) => {
+            console.log(`Comparing distances: ${a.distance}km vs ${b.distance}km`);
+            return a.distance - b.distance;
+          });
+          
+          console.log("Sorted distances:", sortedRequests.map(r => ({
+            address: r.address,
+            distance: r.distance
+          })));
+          
+          setActiveData(sortedRequests);
+        } else {
+          // For "newest" category, just use the API response as is
+          setActiveData(res);
+        }
       }
     } catch (error) {
       console.log("Lỗi khi fetch:", error);
@@ -205,7 +243,7 @@ const HomeStaff = () => {
               }}
               onShowMap={(address) => {
                 setDataAddress(address);
-                setShowMap(true)
+                setShowMap(true);
               }}
             />
           </View>
@@ -237,7 +275,9 @@ const HomeStaff = () => {
               {isLoading ? (
                 <View className="flex-1 items-center justify-center py-8">
                   <ActivityIndicator size="large" color="#3b82f6" />
-                  <Text className="text-gray-600 mt-2">Đang tải dữ liệu...</Text>
+                  <Text className="text-gray-600 mt-2">
+                    Đang tải dữ liệu...
+                  </Text>
                 </View>
               ) : (
                 activeData.map((item) => (
@@ -249,7 +289,7 @@ const HomeStaff = () => {
                     }
                     onShowMap={(address) => {
                       setDataAddress(address);
-                      setShowMap(true)
+                      setShowMap(true);
                     }}
                   />
                 ))

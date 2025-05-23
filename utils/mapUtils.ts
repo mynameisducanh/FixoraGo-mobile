@@ -226,7 +226,7 @@ export const getAddressFromCoordinates = async (
 
     const response = await fetch(url);
     const data = await response.json();
-
+    console.log(data);
     if (!response.ok) {
       throw new Error(`Mapbox API error: ${data.message || "Unknown error"}`);
     }
@@ -235,19 +235,28 @@ export const getAddressFromCoordinates = async (
       const feature = data.features[0];
       const context = feature.context || [];
 
+      const fullPlaceName = data.features[0].place_name_vi;
+      const parts = fullPlaceName.split(",").map((part) => part.trim());
+      const street = parts.slice(0, 2).join(", ");
       // Tên đường từ text_vi
-      const street = feature.text_vi || "";
+      // const street = feature.place_name_vi || "";
 
       // Phường/Xã
-      const ward = context.find((item: any) => item.id.startsWith("place"))?.text_vi || "";
+      // const ward = context.find((item: any) => item.id.startsWith("place_name_vi"))?.text_vi || "";
 
       // Quận/Huyện
-      const district = context.find((item: any) => item.id.startsWith("district") || item.id.startsWith("locality"))?.text_vi || "";
+      const district =
+        context.find(
+          (item: any) =>
+            item.id.startsWith("district") || item.id.startsWith("locality")
+        )?.text_vi || "";
 
       // Thành phố/Tỉnh
-      const city = context.find((item: any) => item.id.startsWith("region"))?.text_vi || "";
+      const city =
+        context.find((item: any) => item.id.startsWith("region"))?.text_vi ||
+        "";
 
-      const detailedAddressCurrent = `${street}, ${ward}, ${district}, ${city}`;
+      const detailedAddressCurrent = `${street}, ${district}, ${city}`;
       console.log("Địa chỉ chi tiết:", detailedAddressCurrent);
 
       return {
@@ -262,7 +271,6 @@ export const getAddressFromCoordinates = async (
     throw error;
   }
 };
-
 
 export const fetchDataStepByStep = async (
   startLat: number,

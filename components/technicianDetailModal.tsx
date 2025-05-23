@@ -144,9 +144,9 @@ const TechnicianDetailModal = ({
 
               {/* Skills */}
               <View className="mb-4 mt-2">
-                <Text className="text-gray-700 font-semibold mb-2">
+                {/* <Text className="text-gray-700 font-semibold mb-2">
                   Kỹ năng
-                </Text>
+                </Text> */}
                 <View className="flex-row flex-wrap">
                   {skills.map((skill, index) => (
                     <View

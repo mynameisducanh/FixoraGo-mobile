@@ -613,7 +613,7 @@ const VerifyService = () => {
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Tiền bo:</Text>
                       <Text className="font-medium">
-                        {selectedPriceRange ? `${selectedPriceRange}` : "0 VNĐ"}{" "}
+                        {selectedPriceRange ? `${selectedPriceRange}` : "0"}{" "}
                         VNĐ
                       </Text>
                     </View>
