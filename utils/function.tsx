@@ -41,6 +41,11 @@ export const statusMap = {
     color: "text-red-500",
     icon: "close-circle-outline",
   },
+  deleted: {
+    label: "Đã bị hủy",
+    color: "text-red-500",
+    icon: "close-circle-outline",
+  },
   guarantee: {
     label: "Đang bảo hành",
     color: "text-blue-500",

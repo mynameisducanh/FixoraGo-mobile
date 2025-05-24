@@ -6,7 +6,7 @@ class ActivityLogApi extends Api {
     super("activity-logs");
   }
 
-  async checkin(data: any) {
+  async createRes(data: any) {
     return this.request("POST", "", data, {
       "Content-Type": "multipart/form-data",
     });

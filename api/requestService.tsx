@@ -29,7 +29,10 @@ class RequestServiceApi extends Api {
   }
 
   async getAllPendingOrRejected(params: any) {
-    return this.request("GET", `/filter?sortTime=${params.sortTime}&nameService=${params.nameService}&districts=${params.districts}&time=${params.priceRange}&isUrgent=${params.isUrgent}`); 
+    return this.request(
+      "GET",
+      `/filter?sortTime=${params.sortTime}&nameService=${params.nameService}&districts=${params.districts}&time=${params.priceRange}&isUrgent=${params.isUrgent}`
+    );
   }
 
   async getOneByUnit(unit: string) {
@@ -52,12 +55,22 @@ class RequestServiceApi extends Api {
     return this.request("delete", `/${id}`);
   }
 
+  async cancelRequest(id: string) {
+    return this.request("PATCH", `/user-cancel/${id}`);
+  }
+
+  async reportRequest(payload: { requestId: string; reasons: string[]; note: string }) {
+    return this.request("POST", `/report/${payload.requestId}`, {
+      reasons: payload.reasons,
+      note: payload.note,
+    });
+  }
+
   async updateRequest(data: any, id: string) {
     return this.request("PATCH", `/${id}`, data, {
       "Content-Type": "multipart/form-data",
     });
   }
-  
 }
 
 export default RequestServiceApi;
