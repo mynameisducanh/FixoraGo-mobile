@@ -655,13 +655,14 @@ const RequestDetail = () => {
             <InfoRow label="Mã yêu cầu" value={requestData?.id} />
           </View>
         </View>
+        
         <View style={{ width: wp(100) }} className="flex-col gap-1">
           <View className="flex-row justify-center">
             {((requestData?.status === "rejected" &&
               user?.roles === "system_user") ||
               (requestData?.status === "approved" &&
                 user?.roles === "system_fixer") ||
-              (requestData?.status === "pending" &&
+              (
                 user?.roles === "system_user")) && (
               <View className="items-center p-2">
                 <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">

@@ -29,35 +29,6 @@ const NotificationPage = () => {
     buttonText = "Tiếp tục",
   } = params;
 
-  const getAnimationSource = () => {
-    switch (type) {
-      case "success":
-        return require("@/assets/icons/success-icon.json");
-      case "error":
-        return require("@/assets/icons/success-icon.json");
-      case "warning":
-        return require("@/assets/icons/success-icon.json");
-      case "info":
-        return require("@/assets/icons/success-icon.json");
-      default:
-        return require("@/assets/icons/success-icon.json");
-    }
-  };
-
-  const getIconColor = () => {
-    switch (type) {
-      case "success":
-        return "#16a34a";
-      case "error":
-        return "#ef4444";
-      case "warning":
-        return "#f59e0b";
-      case "info":
-        return "#3b82f6";
-      default:
-        return "#16a34a";
-    }
-  };
 
   const handleContinue = () => {
     if (redirectTo) {
@@ -73,7 +44,7 @@ const NotificationPage = () => {
         {/* Animation */}
         <View style={{ width: wp(50), height: wp(50) }}>
           <LottieView
-            source={getAnimationSource()}
+            source={require("../../assets/icons/success-icon.json")}
             autoPlay
             loop
             style={{ width: "100%", height: "100%" }}
