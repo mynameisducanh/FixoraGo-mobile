@@ -12,6 +12,7 @@ interface ChatRoomItemProps {
   updatedAt: string;
   onPress: () => void;
   currentUserId: string;
+  userName: string;
 }
 
 const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
@@ -23,6 +24,7 @@ const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
   updatedAt,
   onPress,
   currentUserId,
+  userName,
 }) => {
   const isActive = status === 'active';
   const timeAgo = formatDistanceToNow(new Date(updatedAt), {
@@ -38,7 +40,7 @@ const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
       <View className="flex-row justify-between items-center">
         <View className="flex-1">
           <Text className="text-gray-800 font-medium">
-            Phòng chat với {currentUserId === userId ? 'Nhân viên' : 'Khách hàng'}
+            {userName}
           </Text>
           <Text className="text-gray-500 text-sm mt-1">
             Cập nhật {timeAgo}

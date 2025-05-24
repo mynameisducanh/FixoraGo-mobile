@@ -31,8 +31,8 @@ const RequestSuccess = () => {
       <View className=" rounded-2xl p-6 w-100 h-100 items-center">
         <LottieView
           source={require("@/assets/icons/success-icon.json")}
-          autoPlay={false}
-          loop={false}
+          autoPlay
+          loop
           style={{ width: 100, height: 100 }}
         />
         <Text className="text-2xl font-bold text-green-500 mt-4 mb-2 text-center">

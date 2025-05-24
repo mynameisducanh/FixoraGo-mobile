@@ -51,6 +51,7 @@ const ChatDetail = () => {
   const [chatLog, setChatLog] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataSender, setDataSender] = useState<any>(null);
+  const [roomStatus, setRoomStatus] = useState<string>("active");
 
   const fetchDataUser = async (id: string) => {
     try {
@@ -66,11 +67,10 @@ const ChatDetail = () => {
     try {
       setIsLoading(true);
       const response = await chatApi.getDetailByChatRoomId(roomId);
-      console.log(response)
       if (response?.data) {
         const { room, messages } = response.data;
         setChatLog(messages);
-        console.log(room);
+        setRoomStatus(room.status);
         // Set sender and receiver IDs based on user role
         if (user?.roles === "system_user") {
           setSenderId(room.userId);
@@ -167,8 +167,7 @@ const ChatDetail = () => {
             <Text className="text-blue-500">←</Text>
           </TouchableOpacity>
           <Text className="text-lg font-semibold">
-            Phòng chat với{" "}
-            {user?.roles === "system_user" ? "Nhân viên" : "Khách hàng"}
+            {dataSender?.fullName || dataSender?.username || "Đang tải..."}
           </Text>
         </View>
 
@@ -209,27 +208,37 @@ const ChatDetail = () => {
           )}
         </ScrollView>
 
-        <View
-          className="p-4 bg-white border-t border-gray-200"
-          style={{ paddingBottom: insets.bottom + 16 }}
-        >
-          <View className="flex-row">
-            <TextInput
-              className="flex-1 border border-gray-300 rounded-l-lg px-4 py-2"
-              placeholder="Nhập tin nhắn..."
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              onPress={handleSendMessage}
-              className="bg-blue-500 px-4 rounded-r-lg justify-center"
-            >
-              <Text className="text-white font-medium">Gửi</Text>
-            </TouchableOpacity>
+        {roomStatus === "cancel" ? (
+          <View className="p-4 bg-white border-t border-gray-200">
+            <View className="bg-red-50 p-4 rounded-lg">
+              <Text className="text-red-600 text-center">
+                Kênh chat này đã bị đóng
+              </Text>
+            </View>
           </View>
-        </View>
+        ) : (
+          <View
+            className="p-4 bg-white border-t border-gray-200"
+            style={{ paddingBottom: insets.bottom + 16 }}
+          >
+            <View className="flex-row">
+              <TextInput
+                className="flex-1 border border-gray-300 rounded-l-lg px-4 py-2"
+                placeholder="Nhập tin nhắn..."
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                maxLength={500}
+              />
+              <TouchableOpacity
+                onPress={handleSendMessage}
+                className="bg-blue-500 px-4 rounded-r-lg justify-center"
+              >
+                <Text className="text-white font-medium">Gửi</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
     </KeyboardAvoidingView>
   );

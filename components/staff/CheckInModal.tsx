@@ -105,7 +105,7 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
       // }
       formData.append("note", note);
       formData.append("requestServiceId", requestId);
-      const res = await ativityLogApi.checkin(formData);
+      const res = await ativityLogApi.createRes(formData);
       if (res) {
         onSubmit({
           images: images.filter((img) => img !== undefined),
