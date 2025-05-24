@@ -26,6 +26,15 @@ class RequestConfirmServiceApi extends Api {
   async checkFixerCompleted(requestId: string) {
     return this.request("get", `/check-fixer-completed/${requestId}`);
   }
+    async getRevenuaDashboash(userId: string) {
+    return this.request("get", `/revenue/user/${userId}`);
+  }
+    async checkFixerCompleted3(requestId: string) {
+    return this.request("get", `/check-fixer-completed/${requestId}`);
+  }
+    async checkFixerCompleted4(requestId: string) {
+    return this.request("get", `/check-fixer-completed/${requestId}`);
+  }
   async deleteRequest(id: string) {
     return this.request("DELETE", `/${id}`);
   }

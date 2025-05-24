@@ -41,6 +41,11 @@ export const statusMap = {
     color: "text-red-500",
     icon: "close-circle-outline",
   },
+  deleted: {
+    label: "Đã bị hủy",
+    color: "text-red-500",
+    icon: "close-circle-outline",
+  },
   guarantee: {
     label: "Đang bảo hành",
     color: "text-blue-500",
@@ -54,8 +59,7 @@ export const statusMap = {
 };
 // Array of 13 predefined colors for avatar backgrounds
 export const AVATAR_COLORS = [
-  "#FFEEAD", // Yellow
-  "#F1C40F", // Yellow
+  "#FFC107", // Yellow
 ];
 
 // Function to get random color from AVATAR_COLORS

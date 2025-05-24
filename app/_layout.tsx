@@ -124,6 +124,12 @@ export default function RootLayout() {
                 headerShown: false
               }}
             />
+            <Stack.Screen
+              name="message/[id]"
+              options={{
+                headerShown: false
+              }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />

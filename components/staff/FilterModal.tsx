@@ -10,6 +10,7 @@ import {
   TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useUserStore } from "@/stores/user-store";
 
 interface FilterModalProps {
   visible: boolean;
@@ -22,6 +23,14 @@ interface FilterModalProps {
     isUrgent: boolean;
     bonusAmount: string;
   }) => void;
+  initialFilters?: {
+    districts: string[];
+    services: string[];
+    priceRange: string;
+    status: string[];
+    isUrgent: boolean;
+    bonusAmount: string;
+  };
 }
 
 const DISTRICTS = [
@@ -42,13 +51,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
   visible,
   onClose,
   onApply,
+  initialFilters,
 }) => {
-  const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [selectedPriceRange, setSelectedPriceRange] = useState("Tất cả");
-  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
-  const [isUrgent, setIsUrgent] = useState(false);
-  const [bonusAmount, setBonusAmount] = useState("");
+  const { user } = useUserStore();
+  const [selectedDistricts, setSelectedDistricts] = useState<string[]>(initialFilters?.districts || []);
+  const [selectedServices, setSelectedServices] = useState<string[]>(initialFilters?.services || []);
+  const [selectedPriceRange, setSelectedPriceRange] = useState(initialFilters?.priceRange || "Tất cả");
+  const [selectedStatus, setSelectedStatus] = useState<string[]>(initialFilters?.status || []);
+  const [isUrgent, setIsUrgent] = useState(initialFilters?.isUrgent || false);
+  const [bonusAmount, setBonusAmount] = useState(initialFilters?.bonusAmount || "");
   const slideAnim = React.useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
@@ -78,11 +89,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
   };
 
   const toggleService = (service: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(service)
+    setSelectedServices((prev) => {
+      if (service === user?.authdata && prev.includes(service)) {
+        return prev;
+      }
+      
+      return prev.includes(service)
         ? prev.filter((s) => s !== service)
-        : [...prev, service]
-    );
+        : [...prev, service];
+    });
   };
 
   const toggleStatus = (status: string) => {
@@ -231,7 +246,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
               </View>
               <View className="mb-6">
                 <View className="flex-row gap-3 items-center">
-                  <Text className="text-lg font-semibold">Các yêu cầu cần gấp</Text>
+                  <Text className="text-lg font-semibold">
+                    Các yêu cầu cần gấp
+                  </Text>
                   <Switch
                     value={isUrgent}
                     onValueChange={setIsUrgent}

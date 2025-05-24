@@ -8,6 +8,7 @@ import {
   Modal,
   Image,
   Dimensions,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -38,6 +39,10 @@ import UserApi from "@/api/userApi";
 import Avatar from "@/components/others/Avatar";
 import CompleteRequestModal from "@/components/staff/CompleteRequestModal";
 import RequestConfirmServiceApi from "@/api/requestConfirmServiceApi";
+import SkillFixerApi from "@/api/skillFixerApi";
+import FixerApi from "@/api/fixerApi";
+import CancelRequestModal from "@/components/CancelRequestModal";
+import ReportModal from "@/components/ReportModal";
 
 interface ActivityHistory {
   id: string;
@@ -46,7 +51,13 @@ interface ActivityHistory {
   name: string;
 }
 
-type StatusType = "pending" | "done" | "guarantee" | "rejected" | "approved";
+type StatusType =
+  | "pending"
+  | "done"
+  | "guarantee"
+  | "rejected"
+  | "approved"
+  | "deleted";
 
 interface StatusInfo {
   label: string;
@@ -85,6 +96,12 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
     icon: "close-circle-outline",
     bgColor: "bg-red-50",
   },
+  deleted: {
+    label: "Đã hủy",
+    color: "#ef4444",
+    icon: "close-circle-outline",
+    bgColor: "bg-red-50",
+  },
   approved: {
     label: "Đã được nhận",
     color: "#22c55e",
@@ -99,6 +116,8 @@ const RequestDetail = () => {
   const requestConfirmServiceApi = new RequestConfirmServiceApi();
   const ativityLogApi = new ActivityLogApi();
   const reviewApi = new ReviewApi();
+  const skillFixerApi = new SkillFixerApi();
+  const fixerApi = new FixerApi();
   const userApi = new UserApi();
   const historyRequestServiceApi = new HistoryRequestServiceApi();
   const { idRequest } = useLocalSearchParams();
@@ -126,6 +145,8 @@ const RequestDetail = () => {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showCompleteModal2, setShowCompleteModal2] = useState(false);
   const [fixerCompleteData, setFixerCompleteData] = useState<any>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const fetchDataRequestDetail = async () => {
     try {
@@ -162,17 +183,22 @@ const RequestDetail = () => {
     try {
       if (requestData.userId) {
         const resUser = await userApi.getByUserId(requestData.userId);
+        if (resUser) {
+          console.log(resUser);
+          setUserData(resUser);
+        }
         if (requestData?.fixerId) {
           const resFixer = await userApi.getByUserId(requestData.fixerId);
+          const skillFixer = await skillFixerApi.getByUserId(
+            requestData.fixerId
+          );
+          const fixerData = await fixerApi.getByUserId(requestData.fixerId);
           if (resFixer) {
             setFixerData(resFixer);
-            setFixerSkills([
-              "Sửa điện",
-              "Sửa nước",
-              "Lắp đặt thiết bị",
-              "Bảo trì",
-            ]);
-            setFixerExperience("5 năm kinh nghiệm");
+          }
+          if (skillFixer) {
+            const fixerSkillNames = skillFixer.map((skill: any) => skill.name);
+            setFixerSkills(fixerSkillNames);
           }
           const average = await reviewApi.getReviewAverageByFixerId(
             requestData.fixerId
@@ -197,10 +223,6 @@ const RequestDetail = () => {
               }
             }
           }
-        }
-
-        if (resUser) {
-          setUserData(resUser);
         }
       }
     } catch (error) {
@@ -337,6 +359,70 @@ const RequestDetail = () => {
     }
   };
 
+  const handleCancelRequest = async (
+    selectedReasons: string[],
+    note: string
+  ) => {
+    try {
+      const payload = {
+        requestId: idRequest,
+        reasons: selectedReasons,
+        note: note,
+      };
+      const formData = new FormData();
+      if (user?.roles === "system_user") {
+        formData.append("activityType", "user_reject");
+        formData.append("userId", user.id);
+      }
+      if (user?.roles === "system_fixer") {
+        formData.append("activityType", "fixer_reject");
+        formData.append("userId", user.id);
+      }
+      formData.append("note", note);
+      formData.append("requestServiceId", idRequest as string);
+      const res = await requestServiceApi.cancelRequest(idRequest as string);
+      const res2 = await ativityLogApi.createRes(formData);
+      if (res) {
+        router.push({
+          pathname: "/notification/success",
+          params: {
+            type: "success",
+            title: "Hủy yêu cầu thành công",
+            message: "Yêu cầu của bạn đã được hủy thành công.",
+            redirectTo: "/(staff)",
+            buttonText: "Xem danh sách yêu cầu",
+          },
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi hủy yêu cầu");
+    }
+  };
+
+  const handleReportRequest = async (
+    selectedReasons: string[],
+    note: string
+  ) => {
+    try {
+      const payload = {
+        requestId: idRequest as string,
+        reasons: selectedReasons,
+        note: note,
+      };
+      const res = await requestServiceApi.reportRequest(payload);
+      if (res) {
+        Alert.alert(
+          "Thành công",
+          "Báo cáo của bạn đã được gửi thành công. Chúng tôi sẽ xem xét và phản hồi sớm nhất có thể."
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi gửi báo cáo");
+    }
+  };
+
   useEffect(() => {
     fetchDataRequestDetail();
   }, []);
@@ -358,20 +444,6 @@ const RequestDetail = () => {
     color: "text-gray-500",
     icon: "help-circle-outline",
     bgColor: "bg-gray-50",
-  };
-
-  // Mock data for technician
-  const technicianData = {
-    avatar:
-      "https://res.cloudinary.com/di6tygnb5/image/upload/w_1000,ar_16:9,c_fill,g_auto,e_sharpen/v1740975527/cld-sample-3.jpg",
-    name: "Nguyễn Văn A",
-    hometown:
-      "55 tran thanh, Phường Hòa Thọ Đông, Quận Cẩm Lệ, Thành phố Đà Nẵng",
-    phone: "0123456789",
-    rating: 5.0,
-    totalReviews: 128,
-    experience: "5 năm kinh nghiệm",
-    skills: ["Sửa điện", "Sửa nước", "Lắp đặt thiết bị", "Bảo trì"],
   };
 
   return (
@@ -442,6 +514,7 @@ const RequestDetail = () => {
             {(requestData?.status === "approved" ||
               requestData?.status === "guarantee" ||
               requestData?.status === "completed" ||
+              requestData?.status === "deleted" ||
               (requestData?.status === "pending" &&
                 user?.roles === "system_fixer")) && (
               <View className="flex-1 px-4 py-3">
@@ -541,24 +614,44 @@ const RequestDetail = () => {
                         color={statusInfo.color}
                       />
                     </TouchableOpacity>
-                    <TouchableOpacity className="">
-                      <Entypo
-                        name="message"
-                        size={26}
-                        color={statusInfo.color}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity className="">
-                      <Entypo name="phone" size={24} color={statusInfo.color} />
-                    </TouchableOpacity>
-                    <TouchableOpacity className=" ">
+                    {requestData?.status !== "pending" && (
+                      <>
+                        <TouchableOpacity className="">
+                          <Entypo
+                            name="message"
+                            size={26}
+                            color={statusInfo.color}
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity className="">
+                          <Entypo
+                            name="phone"
+                            size={24}
+                            color={statusInfo.color}
+                          />
+                        </TouchableOpacity>
+                      </>
+                    )}
+                    <TouchableOpacity
+                      className=""
+                      onPress={() => setShowReportModal(true)}
+                    >
                       <Entypo name="flag" size={24} color={statusInfo.color} />
                     </TouchableOpacity>
                   </View>
                   <View className="flex-col">
-                    <Text className="mt-4">
-                      Ngày nhận: {formatDateTimeVN(requestData?.approvedTime)}
-                    </Text>
+                    {requestData?.approvedTime && (
+                      <Text className="mt-4">
+                        Ngày nhận: {formatDateTimeVN(requestData?.approvedTime)}
+                      </Text>
+                    )}
+
+                     {requestData.deleteAt && (
+                      <Text className="">
+                        Ngày hủy: {formatDateTimeVN(requestData?.deleteAt)}
+                      </Text>
+                    )}
+
                     {(requestData?.status === "guarantee" ||
                       requestData?.status === "done") && (
                       <Text>
@@ -649,22 +742,26 @@ const RequestDetail = () => {
             <InfoRow label="Mã yêu cầu" value={requestData?.id} />
           </View>
         </View>
+
         <View style={{ width: wp(100) }} className="flex-col gap-1">
           <View className="flex-row justify-center">
             {((requestData?.status === "rejected" &&
               user?.roles === "system_user") ||
               (requestData?.status === "approved" &&
                 user?.roles === "system_fixer") ||
-              (requestData?.status === "pending" &&
-                user?.roles === "system_user")) && (
-              <View className="items-center p-2">
-                <TouchableOpacity className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70">
-                  <Text className="text-red-500 font-semibold text-center">
-                    Hủy yêu cầu
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
+              user?.roles === "system_user") &&
+              requestData?.status !== "deleted" && (
+                <View className="items-center p-2">
+                  <TouchableOpacity
+                    onPress={() => setShowCancelModal(true)}
+                    className="px-6 py-2 rounded-xl border border-red-500 active:opacity-70"
+                  >
+                    <Text className="text-red-500 font-semibold text-center">
+                      Hủy yêu cầu
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             {((requestData?.status === "guarantee" &&
               user?.roles === "system_user") ||
               (requestData?.status === "done" &&
@@ -898,6 +995,16 @@ const RequestDetail = () => {
         onSuccess={handleCompleteRequest}
         requestId={requestData?.id}
         fixerData={fixerCompleteData?.[0] || null}
+      />
+      <CancelRequestModal
+        visible={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onSubmit={handleCancelRequest}
+      />
+      <ReportModal
+        visible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleReportRequest}
       />
     </View>
   );

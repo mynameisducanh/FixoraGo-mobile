@@ -114,7 +114,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
             requestServiceId,
             { type: "total" }
           );
-          if (response2) {
+          if (Array.isArray(response2) && response2.length > 0) {
             setIdReuqestConfirmTotal(response2[0].id);
 
             if (response2[0].userAccept) {
@@ -155,6 +155,14 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
       const res = await requestConfirmServiceApi.userAccept(
         idReuqestConfirmTotal
       );
+      console.log(res);
+      if (res.statusCode === 500) {
+        Alert.alert("Thông báo", "Hiện chưa có yêu cầu nào");
+        setShowSummaryModal(false);
+        onClose();
+        onSuccess?.();
+        return;
+      }
       if (res) {
         setShowSummaryModal(false);
         onClose();
@@ -315,6 +323,9 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
       setLoading(true);
       const formData = new FormData();
       if (editingIndex !== null) {
+        if (user?.id) {
+          formData.append("userId", user.id);
+        }
         formData.append("name", newRepair.name);
         formData.append("type", newRepair.type);
         formData.append("price", newRepair.price);

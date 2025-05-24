@@ -68,7 +68,7 @@ const VerifyService = () => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
-  const [selectedPriceRange, setSelectedPriceRange] = useState("10.000");
+  const [selectedPriceRange, setSelectedPriceRange] = useState("");
 
   const [selectedWard, setSelectedWard] = useState<Location | null>(null);
   const [detailAddress, setDetailAddress] = useState("");
@@ -104,9 +104,12 @@ const VerifyService = () => {
     // Giới hạn trên là ngày hiện tại + 10 ngày
     const maxDate = new Date(now);
     maxDate.setDate(now.getDate() + 50);
-    console.log("first",  (selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    console.log(
+      "first",
+      (selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
-    if ( (selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) > 1) {
+    if ((selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) > 1) {
       console.log("first");
       setCheckDate(true);
     }
@@ -132,10 +135,13 @@ const VerifyService = () => {
     const selectedHour = selected.getHours();
     const now = new Date();
     console.log(checkDate);
-     if (selectedHour < 8 || selectedHour > 20) {
-    Alert.alert("Thông báo", "Fixer chỉ hoạt động trong khoảng thời gian từ 8h sáng đến 20h tối.");
-    return;
-  }
+    if (selectedHour < 8 || selectedHour > 20) {
+      Alert.alert(
+        "Thông báo",
+        "Fixer chỉ hoạt động trong khoảng thời gian từ 8h sáng đến 20h tối."
+      );
+      return;
+    }
     if (!checkDate) {
       // Thời gian hiện tại + 1 tiếng
       const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
@@ -478,39 +484,41 @@ const VerifyService = () => {
             {isUrgent && (
               <View>
                 <Text className="mt-2">
-                  Với lựa chọn cần gấp, nhân viên sẽ cố gắng đến sớm nhất có thể
-                  (thường đến trước giờ hẹn) vậy nên để khích lệ tinh thần hơn
-                  hãy thưởng thêm cho sự nỗ lực của nhân viên nhé
+                  Với lựa chọn 'Cần gấp', nhân viên sẽ cố gắng đến sớm nhất có
+                  thể (thường là trước giờ hẹn). Nếu bạn muốn khích lệ tinh thần
+                  và ghi nhận sự nỗ lực của nhân viên, bạn có thể cân nhắc
+                  thưởng thêm cho họ nhé!
                 </Text>
-                <Text className="text-lg font-semibold my-2">
-                  Bo thêm cho nhân viên
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {MONEY_BONUS.map((range) => (
-                    <TouchableOpacity
-                      key={range}
-                      onPress={() => setSelectedPriceRange(range)}
-                      className={`px-4 py-2 rounded-full border ${
-                        selectedPriceRange === range
-                          ? "bg-blue-600 border-blue-600"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      <Text
-                        className={`${
-                          selectedPriceRange === range
-                            ? "text-white"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {range}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
               </View>
             )}
-
+            <View className="mt-2">
+              <Text className="text-lg font-semibold my-2">
+                Bo thêm cho nhân viên
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {MONEY_BONUS.map((range) => (
+                  <TouchableOpacity
+                    key={range}
+                    onPress={() => setSelectedPriceRange(range)}
+                    className={`px-4 py-2 rounded-full border ${
+                      selectedPriceRange === range
+                        ? "bg-blue-600 border-blue-600"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <Text
+                      className={`${
+                        selectedPriceRange === range
+                          ? "text-white"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {range}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
             <Text className="py-2 font-bold text-lg">Xác nhận địa chỉ</Text>
             <View className="">
               <TouchableOpacity
@@ -596,16 +604,19 @@ const VerifyService = () => {
                       </Text>
                     </View>
                     {isUrgent && (
-                      <View className="flex-row justify-between">
+                      <View className="flex-row justify-end">
                         <Text className="text-gray-600">
-                          Xác nhận là cần gấp
-                        </Text>
-                        <Text className="font-medium text-right flex-1 ml-2">
-                          Tiền bo {`${selectedPriceRange}`} VNĐ
+                          Bạn đã đánh dấu xác nhận là cần gấp
                         </Text>
                       </View>
                     )}
-
+                    <View className="flex-row justify-between">
+                      <Text className="text-gray-600">Tiền bo:</Text>
+                      <Text className="font-medium">
+                        {selectedPriceRange ? `${selectedPriceRange}` : "0"}{" "}
+                        VNĐ
+                      </Text>
+                    </View>
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Địa chỉ:</Text>
                       <Text className="font-medium text-right flex-1 ml-2">
