@@ -29,7 +29,7 @@ const ListServiceForUser = () => {
 
   // Phân loại dịch vụ
   const popularServices = listIcons.slice(0, 3);
-  const newServices = listIcons.slice(0, 6); 
+  const newServices = listIcons.slice(0, 9); 
   const otherServices = listIcons.slice(10); 
 
   useEffect(() => {
@@ -144,9 +144,8 @@ const ListServiceForUser = () => {
           Danh sách dịch vụ
         </Text>
 
-        <ServiceSection title="Dịch vụ phổ biến" services={popularServices} />
-        <ServiceSection title="Dịch vụ mới" services={newServices} />
-        <ServiceSection title="Dịch vụ khác" services={otherServices} />
+        <ServiceSection title="Dịch vụ mới" services={popularServices} />
+        <ServiceSection title="Tất cả dịch vụ" services={newServices} />
       </ScrollView>
     </View>
   );

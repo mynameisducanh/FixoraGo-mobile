@@ -22,7 +22,7 @@ const NewsCard = ({ item }) => {
         router.push("/news/detailNews");
       }}
     >
-      <View style={{ width: wp(80) }} className="mr-6 bg-white max-w-[340px]">
+      <View style={{ width: wp(90) }} className="mr-6 bg-white max-w-[340px] mb-3">
         <Image
           className="h-44 w-full rounded-md"
           source={{ uri: item.image }}
