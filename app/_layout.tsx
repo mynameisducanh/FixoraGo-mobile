@@ -142,6 +142,18 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            <Stack.Screen
+              name="news/[id]"
+              options={{
+                headerShown: false,
+              }}
+            />
+             <Stack.Screen
+              name="notification/index"
+              options={{
+                headerShown: false,
+              }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />

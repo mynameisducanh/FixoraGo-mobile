@@ -69,6 +69,7 @@ const VerifyService = () => {
   const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
   const [selectedPriceRange, setSelectedPriceRange] = useState("");
+  const [isUrgentAvailable, setIsUrgentAvailable] = useState(false);
 
   const [selectedWard, setSelectedWard] = useState<Location | null>(null);
   const [detailAddress, setDetailAddress] = useState("");
@@ -94,6 +95,7 @@ const VerifyService = () => {
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [otherDevice, setOtherDevice] = useState("");
   const [checkDate, setCheckDate] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const handleConfirmDate = (date: any) => {
     const selected = new Date(date);
     const now = new Date();
@@ -128,6 +130,7 @@ const VerifyService = () => {
     console.log(date, "  ");
     setSelectedDate(date);
     hideDatePicker();
+    checkUrgentAvailability(date, selectedTime);
   };
 
   const handleConfirmTime = (time: any) => {
@@ -160,17 +163,32 @@ const VerifyService = () => {
     setSelectedTime(time);
     console.log(time, " ", formatTime(time));
     hideTimePicker();
+    checkUrgentAvailability(selectedDate, time);
   };
-  //  const [playIcon, setPlayIcon] = useState(false);
-  //   useEffect(() => {
-  //     setPlayIcon(true);
 
-  //     const timer = setTimeout(() => {
-  //       setPlayIcon(false);
-  //     }, 500);
+  const checkUrgentAvailability = (date: Date | null, time: Date | null) => {
+    if (!date || !time) {
+      setIsUrgentAvailable(false);
+      setIsUrgent(false);
+      return;
+    }
 
-  //     return () => clearTimeout(timer);
-  //   }, [value, isFocus]);
+    const selectedDateTime = new Date(date);
+    selectedDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
+    
+    const now = new Date();
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+
+    // Kiểm tra nếu thời gian hẹn cách hiện tại dưới 2 tiếng
+    const isAvailable = selectedDateTime <= twoHoursFromNow;
+    setIsUrgentAvailable(isAvailable);
+    
+    // Nếu không khả dụng, tắt chế độ urgent
+    if (!isAvailable) {
+      setIsUrgent(false);
+    }
+  };
+
   const selectImage = async (index: number) => {
     try {
       const permissionResult =
@@ -332,7 +350,12 @@ const VerifyService = () => {
 
   const handleSubmitRequest = async () => {
     setIsConfirmModalVisible(false);
-    await requestService();
+    setIsLoading(true);
+    try {
+      await requestService();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -473,12 +496,20 @@ const VerifyService = () => {
               </TouchableOpacity>
             </View>
             <View className="flex-row gap-3 items-center mt-2">
-              <Text className="text-lg font-semibold">Yêu cầu cần gấp</Text>
+              <View className="flex-1">
+                <Text className="text-lg font-semibold">Yêu cầu cần gấp</Text>
+                {!isUrgentAvailable && selectedDate && selectedTime && (
+                  <Text className="text-sm text-gray-500">
+                    Chức năng này chỉ khả dụng khi giờ hẹn của bạn dưới 2 giờ
+                  </Text>
+                )}
+              </View>
               <Switch
                 value={isUrgent}
                 onValueChange={setIsUrgent}
                 trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
                 thumbColor={isUrgent ? "#FFFFFF" : "#FFFFFF"}
+                disabled={!isUrgentAvailable}
               />
             </View>
             {isUrgent && (
@@ -541,10 +572,15 @@ const VerifyService = () => {
               onPress={handleConfirmRequest}
               className="mt-6 bg-primary py-5 px-4 rounded-lg"
               style={{ marginBottom: 100 }}
+              disabled={isLoading}
             >
-              <Text className="text-white text-center font-bold">
-                Xác nhận đặt dịch vụ
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white text-center font-bold">
+                  Xác nhận đặt dịch vụ
+                </Text>
+              )}
             </TouchableOpacity>
 
             <Modal
@@ -641,8 +677,13 @@ const VerifyService = () => {
                     <TouchableOpacity
                       onPress={handleSubmitRequest}
                       className="bg-primary py-3 px-6 rounded-lg"
+                      disabled={isLoading}
                     >
-                      <Text className="text-white">Xác nhận</Text>
+                      {isLoading ? (
+                        <ActivityIndicator color="white" />
+                      ) : (
+                        <Text className="text-white">Xác nhận</Text>
+                      )}
                     </TouchableOpacity>
                   </View>
                   <View className="mt-4">
