@@ -14,6 +14,7 @@ interface NotificationParams {
   message: string;
   redirectTo?: string;
   redirectParams?: string;
+  subParams: string;
   buttonText?: string;
 }
 
@@ -26,13 +27,15 @@ const NotificationPage = () => {
     message,
     redirectTo,
     redirectParams,
+    subParams,
     buttonText = "Tiếp tục",
   } = params;
 
-
   const handleContinue = () => {
     if (redirectTo) {
-      router.replace(redirectTo as any);
+      router.replace({
+        pathname: redirectTo as any,
+      });
     } else {
       router.back();
     }

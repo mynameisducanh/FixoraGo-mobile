@@ -40,7 +40,7 @@ const Overview = () => {
   const [isLastDayOfMonth, setIsLastDayOfMonth] = useState(false);
   const [showPaymentWarning, setShowPaymentWarning] = useState(false);
   const [fixerSkills, setFixerSkills] = useState<string[]>([]);
-const router = useRouter();
+  const router = useRouter();
   const { user } = useUserStore();
 
   const checkLastDayOfMonth = () => {
@@ -135,10 +135,10 @@ const router = useRouter();
             Xin chào {dataDetail2?.employeeCode}
           </Text>
           <View className="flex-row gap-5 mt-2">
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/notification")}>
               <FontAwesome name="bell-o" size={24} color="#1e40af" />
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/(staff)/messages")}>
               <Ionicons
                 name="chatbubble-ellipses-outline"
                 size={24}
@@ -198,7 +198,10 @@ const router = useRouter();
           </Text>
           <Text className="text-sm text-gray-500">Doanh thu tháng này</Text>
         </View>
-        <TouchableOpacity className="items-center" onPress={() => router.push("/review/list")}>
+        <TouchableOpacity
+          className="items-center"
+          onPress={() => router.push("/review/list")}
+        >
           <Text className="text-lg font-bold text-gray-700">
             ⭐ {totalReview?.average}
           </Text>
