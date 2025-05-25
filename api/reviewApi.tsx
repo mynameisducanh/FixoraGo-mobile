@@ -9,6 +9,14 @@ class ReviewApi extends Api {
     return this.request("post", "/", body);
   }
 
+  async getListReviewFixerId(fixerId: string) {
+    return this.request("get", `/fixer/${fixerId}`);
+  }  
+
+  async getListReviewUserId(userId: string) {
+    return this.request("get", `/user/${userId}`);
+  }
+  
   async getReviewAverageByFixerId(fixerId: string) {
     return this.request("get", `/fixer/${fixerId}/average`);
   }

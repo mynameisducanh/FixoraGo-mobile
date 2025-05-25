@@ -8,8 +8,10 @@ import {
 import React from "react";
 import { newsData } from "@/temp/service";
 import NewsCard from "@/components/news/newsCard";
+import { useRouter } from "expo-router";
 
 const NewsRow = () => {
+  const router = useRouter();
   return (
     <View>
       <View className="flex-row justify-between items-center px-4">
@@ -19,7 +21,7 @@ const NewsRow = () => {
             Tin tức mới của chúng tôi
           </Text>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/news/listNews")}>
           <Text className="font-semibold text-textBlue">Xem tất cả</Text>
         </TouchableOpacity>
       </View>

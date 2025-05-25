@@ -63,7 +63,7 @@ export default function RootLayout() {
               name="service/listServiceForUser"
               options={{ headerShown: false }}
             />
-             <Stack.Screen
+            <Stack.Screen
               name="notification/success"
               options={{ headerShown: false }}
             />
@@ -114,20 +114,32 @@ export default function RootLayout() {
                 headerBackTitle: "Trở lại",
               }}
             />
-             <Stack.Screen
+            <Stack.Screen
               name="service/requestSuccess"
               options={{ headerShown: false }}
             />
             <Stack.Screen
               name="requestService/detail"
               options={{
-                headerShown: false
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="news/listNews"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="review/list"
+              options={{
+                headerShown: false,
               }}
             />
             <Stack.Screen
               name="message/[id]"
               options={{
-                headerShown: false
+                headerShown: false,
               }}
             />
             <Stack.Screen name="+not-found" />

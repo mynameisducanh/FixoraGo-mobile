@@ -23,6 +23,7 @@ import FixerApi from "@/api/fixerApi";
 import UserApi from "@/api/userApi";
 import TechnicianDetailModal from "../technicianDetailModal";
 import SkillFixerApi from "@/api/skillFixerApi";
+import { useRouter } from "expo-router";
 
 const Overview = () => {
   const requestConfirmServiceApi = new RequestConfirmServiceApi();
@@ -39,7 +40,7 @@ const Overview = () => {
   const [isLastDayOfMonth, setIsLastDayOfMonth] = useState(false);
   const [showPaymentWarning, setShowPaymentWarning] = useState(false);
   const [fixerSkills, setFixerSkills] = useState<string[]>([]);
-
+const router = useRouter();
   const { user } = useUserStore();
 
   const checkLastDayOfMonth = () => {
@@ -52,18 +53,9 @@ const Overview = () => {
   };
 
   const handlePaymentPress = () => {
-    if (!isLastDayOfMonth) {
-      Alert.alert(
-        "Thông báo",
-        "Bạn chỉ có thể đóng phí vào ngày cuối cùng của tháng.",
-        [{ text: "OK" }]
-      );
-      return;
-    }
-    // Handle payment logic here
     Alert.alert(
       "Xác nhận đóng phí",
-      `Bạn có chắc chắn muốn đóng phí tháng này: ${revenue?.currentMonthFee}?`,
+      `Bạn có chắc chắn muốn đóng phí đượt này: ${revenue?.currentMonthFee}?`,
       [
         { text: "Hủy", style: "cancel" },
         { text: "Đóng phí", onPress: () => console.log("Process payment") },
@@ -110,7 +102,7 @@ const Overview = () => {
       const res = await userApi.getByUserId(user?.id as string);
       const res2 = await fixerApi.getByUserId(user?.id as string);
       const skillFixer = await skillFixerApi.getByUserId(user?.id as string);
-      
+
       if (res) {
         setDataDetail1(res);
       }
@@ -153,7 +145,11 @@ const Overview = () => {
                 color="#1e40af"
               />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => {fetchDataDetailFixer()}}>
+            <TouchableOpacity
+              onPress={() => {
+                fetchDataDetailFixer();
+              }}
+            >
               <Ionicons
                 name="person-circle-outline"
                 size={24}
@@ -164,34 +160,29 @@ const Overview = () => {
         </View>
         <View className="flex-col justify-end items-end">
           <Text className="text-blue-700 mt-1">
-            Phí tháng này: {revenue?.currentMonthFee} VNĐ
+            Tổng phí: {revenue?.currentMonthFee} VNĐ
           </Text>
 
           <TouchableOpacity
             onPress={handlePaymentPress}
-            className={`mt-2  rounded-md py-2 px-3 self-end ${
-              isLastDayOfMonth ? "bg-blue-600" : "bg-gray-400"
-            }`}
+            className="mt-2  rounded-md py-2 px-3 self-end bg-blue-600"
           >
             <Text className="text-white font-semibold">Đóng phí</Text>
           </TouchableOpacity>
         </View>
       </View>
-      {isLastDayOfMonth && (
-        <View className="mt-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-          <View className="flex-row items-center">
-            <MaterialCommunityIcons
-              name="alert-circle"
-              size={20}
-              color="#f59e0b"
-            />
-            <Text className="text-yellow-800 ml-2 flex-1">
-              Đã đến hạn nộp phí! Nếu không đóng trong 2 tháng, tài khoản sẽ bị
-              khóa.
-            </Text>
-          </View>
+      <View className="mt-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+        <View className="flex-row items-center">
+          {/* <MaterialCommunityIcons
+            name="alert-circle"
+            size={20}
+            color="#f59e0b"
+          /> */}
+          <Text className="text-yellow-800 ml-2 flex-1">
+            Trong vòng 1 tháng không đóng phí lần nào, tài khoản sẽ bị khóa.
+          </Text>
         </View>
-      )}
+      </View>
 
       <Text className="font-semibold text-blue-700 mt-2">Tổng quan</Text>
       <View className="flex-row justify-between p-1">
@@ -207,14 +198,14 @@ const Overview = () => {
           </Text>
           <Text className="text-sm text-gray-500">Doanh thu tháng này</Text>
         </View>
-        <View className="items-center">
+        <TouchableOpacity className="items-center" onPress={() => router.push("/review/list")}>
           <Text className="text-lg font-bold text-gray-700">
             ⭐ {totalReview?.average}
           </Text>
           <Text className="text-sm text-gray-500">
             Đánh giá({totalReview?.count} bài)
           </Text>
-        </View>
+        </TouchableOpacity>
       </View>
       <TechnicianDetailModal
         visible={showTechnicianModal}

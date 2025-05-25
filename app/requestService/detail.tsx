@@ -43,6 +43,7 @@ import SkillFixerApi from "@/api/skillFixerApi";
 import FixerApi from "@/api/fixerApi";
 import CancelRequestModal from "@/components/CancelRequestModal";
 import ReportModal from "@/components/ReportModal";
+import FixerReviewsModal from "@/components/review/FixerReviewsModal";
 
 interface ActivityHistory {
   id: string;
@@ -147,6 +148,7 @@ const RequestDetail = () => {
   const [fixerCompleteData, setFixerCompleteData] = useState<any>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
 
   const fetchDataRequestDetail = async () => {
     try {
@@ -380,7 +382,12 @@ const RequestDetail = () => {
       }
       formData.append("note", note);
       formData.append("requestServiceId", idRequest as string);
-      const res = await requestServiceApi.cancelRequest(idRequest as string);
+      let res;
+      if (user?.roles === "system_user") {
+        res = await requestServiceApi.userCancelRequest(idRequest as string);
+      } else if (user?.roles === "system_fixer") {
+        res = await requestServiceApi.fixerCancelRequest(idRequest as string);
+      }
       const res2 = await ativityLogApi.createRes(formData);
       if (res) {
         router.push({
@@ -623,21 +630,34 @@ const RequestDetail = () => {
                             color={statusInfo.color}
                           />
                         </TouchableOpacity>
-                        <TouchableOpacity className="">
-                          <Entypo
-                            name="phone"
-                            size={24}
-                            color={statusInfo.color}
-                          />
+                        {user?.roles === "system_user" ? (
+                          <TouchableOpacity 
+                            className=""
+                            onPress={() => setShowReviewsModal(true)}
+                          >
+                            <Ionicons
+                              name="star"
+                              size={24}
+                              color={statusInfo.color}
+                            />
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity className="">
+                            <Entypo
+                              name="phone"
+                              size={24}
+                              color={statusInfo.color}
+                            />
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                          className=""
+                          onPress={() => setShowReportModal(true)}
+                        >
+                          <Entypo name="flag" size={24} color={statusInfo.color} />
                         </TouchableOpacity>
                       </>
                     )}
-                    <TouchableOpacity
-                      className=""
-                      onPress={() => setShowReportModal(true)}
-                    >
-                      <Entypo name="flag" size={24} color={statusInfo.color} />
-                    </TouchableOpacity>
                   </View>
                   <View className="flex-col">
                     {requestData?.approvedTime && (
@@ -646,7 +666,7 @@ const RequestDetail = () => {
                       </Text>
                     )}
 
-                     {requestData.deleteAt && (
+                    {requestData.deleteAt && (
                       <Text className="">
                         Ngày hủy: {formatDateTimeVN(requestData?.deleteAt)}
                       </Text>
@@ -1006,6 +1026,13 @@ const RequestDetail = () => {
         onClose={() => setShowReportModal(false)}
         onSubmit={handleReportRequest}
       />
+      {user?.roles === "system_user" && (
+        <FixerReviewsModal
+          visible={showReviewsModal}
+          onClose={() => setShowReviewsModal(false)}
+          fixerId={fixerData?.id}
+        />
+      )}
     </View>
   );
 };
