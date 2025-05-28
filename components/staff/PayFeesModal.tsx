@@ -8,40 +8,39 @@ import {
   ScrollView,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useUserStore } from "@/stores/user-store";
 import ActivityLogApi from "@/api/activityLogApi";
-import CountdownConfirmModal from "../CountdownConfirmModal";
-import { ActivityIndicator } from "react-native-paper";
 
-interface CheckInModalProps {
+interface PayFeesModalProps {
   visible: boolean;
-  requestId: string;
   onClose: () => void;
   onSubmit: (data: {
     images: ImagePicker.ImagePickerAsset[];
     note: string;
   }) => void;
+  feeAmount: number;
 }
 
-const CheckInModal: React.FC<CheckInModalProps> = ({
+const PayFeesModal: React.FC<PayFeesModalProps> = ({
   visible,
-  requestId,
   onClose,
   onSubmit,
+  feeAmount,
 }) => {
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [note, setNote] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { user } = useUserStore();
-  const ativityLogApi = new ActivityLogApi();
+  const activityLogApi = new ActivityLogApi();
   const [isLoading, setIsLoading] = useState(false);
+
   const selectImage = async (index: number) => {
     try {
-      const permissionResult =
-        await ImagePicker.requestCameraPermissionsAsync();
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       if (!permissionResult.granted) {
         Alert.alert("Thông báo", "Bạn cần cấp quyền Camera để chụp ảnh!");
         return;
@@ -92,9 +91,10 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
       setIsLoading(true);
       const formData = new FormData();
       if (user?.id) {
-        formData.append("fixerId", user.id);
+        formData.append("userId", user.id);
       }
-      formData.append("activityType", "staff_checkin");
+      formData.append("activityType", "staff_payfee");
+      formData.append("note", note);
       const firstImage = images.find((img) => img !== undefined);
       if (firstImage) {
         formData.append("file", {
@@ -103,23 +103,23 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
           type: firstImage.type || "image/jpeg",
         });
       }
-      formData.append("note", note);
-      formData.append("requestServiceId", requestId);
-      const res = await ativityLogApi.createRes(formData);
+      const res = await activityLogApi.createRes(formData);
+      console.log(res)
       if (res) {
         onSubmit({
           images: images.filter((img) => img !== undefined),
           note,
         });
-        // Reset form
-        onClose();
         setImages([]);
         setNote("");
+        setIsLoading(false);
         setShowConfirmModal(false);
+        setTimeout(() => {
+          onClose();
+        }, 100);
       }
     } catch (error) {
       console.log(error);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -134,18 +134,25 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
       <View className="flex-1 bg-black/50 justify-center items-center">
         <View className="bg-white w-[90%] rounded-2xl p-4 max-h-[80%]">
           <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-xl font-bold">Xác nhận đã đến</Text>
+            <Text className="text-xl font-bold">Xác nhận đóng phí</Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color="#6B7280" />
             </TouchableOpacity>
           </View>
 
           <ScrollView className="space-y-4">
+            <View className="p-2 rounded-lg bg-gray-50">
+              <Text className="text-gray-600 text-center mb-2">Số tiền cần đóng</Text>
+              <Text className="text-2xl font-bold text-center text-primary">
+                {feeAmount.toLocaleString('vi-VN')} VNĐ
+              </Text>
+            </View>
+
             <View>
               <Text className="text-gray-700 mb-2">
                 Hình ảnh <Text className="text-red-500">*</Text>
               </Text>
-              <View className="flex-row gap-3">
+              <View className="flex-row flex-wrap gap-2">
                 {[0].map((index) => {
                   const img = images[index];
                   return (
@@ -176,8 +183,7 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
                 })}
               </View>
               <Text className="text-gray-500 text-sm mt-2">
-                Vui lòng chụp ảnh rõ nét và đảm bảo có thể xác định địa điểm rõ
-                ràng
+                Vui lòng chụp ảnh biên lai hoặc chứng từ thanh toán
               </Text>
             </View>
 
@@ -187,9 +193,7 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
                 className="border border-gray-300 rounded-lg p-3"
                 value={note}
                 onChangeText={setNote}
-                placeholder="Nhập ghi chú (nếu có)"
-                multiline
-                numberOfLines={3}
+                placeholder="Ghi chú thêm ..."
               />
             </View>
 
@@ -198,7 +202,7 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
               className="bg-primary py-3 rounded-lg mt-4"
             >
               <Text className="text-white text-center font-semibold">
-                Xác nhận đã đến
+                Xác nhận đóng phí
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -215,11 +219,10 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
         <View className="flex-1 bg-black/50 justify-center items-center">
           <View className="bg-white w-[90%] rounded-2xl p-4">
             <Text className="text-base font-bold mb-4 text-center">
-              Xác nhận là bạn đã đến
+              Xác nhận đóng phí
             </Text>
             <Text className="text-base font-bold mb-4 text-center">
-              Hãy đảm bảo rằng bạn đã đến đúng địa điểm , nếu bạn cố tình gian
-              lận chúng tôi sẽ có hình phạt thích đáng
+              Sau khi bạn gửi yêu cầu này đi chúng tôi sẽ tiến hành xác nhận bill và thông báo cho bạn sớm nhất
             </Text>
             <View className="flex-row justify-end space-x-4 mt-6 gap-3">
               <TouchableOpacity
@@ -257,4 +260,4 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
   );
 };
 
-export default CheckInModal;
+export default PayFeesModal;

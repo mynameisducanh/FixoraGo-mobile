@@ -24,6 +24,7 @@ import UserApi from "@/api/userApi";
 import TechnicianDetailModal from "../technicianDetailModal";
 import SkillFixerApi from "@/api/skillFixerApi";
 import { useRouter } from "expo-router";
+import PayFeesModal from "./PayFeesModal";
 
 const Overview = () => {
   const requestConfirmServiceApi = new RequestConfirmServiceApi();
@@ -32,6 +33,7 @@ const Overview = () => {
   const userApi = new UserApi();
   const skillFixerApi = new SkillFixerApi();
   const [showTechnicianModal, setShowTechnicianModal] = useState(false);
+  const [showPayFeesModal, setShowPayFeesModal] = useState(false);
 
   const [revenue, setRevenua] = useState();
   const [totalReview, setTotalReview] = useState();
@@ -53,14 +55,18 @@ const Overview = () => {
   };
 
   const handlePaymentPress = () => {
-    Alert.alert(
-      "Xác nhận đóng phí",
-      `Bạn có chắc chắn muốn đóng phí đượt này: ${revenue?.currentMonthFee}?`,
-      [
-        { text: "Hủy", style: "cancel" },
-        { text: "Đóng phí", onPress: () => console.log("Process payment") },
-      ]
-    );
+    setShowPayFeesModal(true);
+  };
+
+  const handlePayFeesSubmit = async (data: { images: any[]; note: string }) => {
+    try {
+      // Here you would typically handle the payment submission
+      // console.log("Payment submitted:", data);
+      // After successful submission, you might want to refresh the revenue data
+      await getDataRevenuaDashboash();
+    } catch (error) {
+      console.error("Error submitting payment:", error);
+    }
   };
 
   useEffect(() => {
@@ -232,6 +238,12 @@ const Overview = () => {
         bgColor="#fff"
         color="#000"
         experience={dataDetail2?.experience || 0}
+      />
+      <PayFeesModal
+        visible={showPayFeesModal}
+        onClose={() => setShowPayFeesModal(false)}
+        onSubmit={handlePayFeesSubmit}
+        feeAmount={revenue?.currentMonthFee || 0}
       />
     </View>
   );
