@@ -26,6 +26,11 @@ const menuItems: MenuItem[] = [
     path: "/security",
   },
   {
+    title: "Các bài đánh giá",
+    icon: "chatbox-ellipses-outline",
+    path: "/review/list",
+  },
+  {
     title: "Chính sách của chúng tôi",
     icon: "document-text-outline",
     path: "/(other)/policy",
@@ -34,11 +39,6 @@ const menuItems: MenuItem[] = [
     title: "Hỗ trợ",
     icon: "help-circle-outline",
     path: "/(other)/support",
-  },
-  {
-    title: "Cài đặt",
-    icon: "settings-outline",
-    path: "/settings",
   },
 ];
 

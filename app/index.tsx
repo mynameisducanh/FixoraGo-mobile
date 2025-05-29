@@ -47,11 +47,20 @@ export default function Page() {
 
       // Lúc này mới điều hướng
       if (user?.roles === "system_user") {
-        router.replace("/(user)");
+        router.replace({
+          pathname: "/(user)",
+          params: {},
+        });
       } else if (user?.roles === "system_fixer") {
-        router.replace("/(staff)");
+        router.replace({
+          pathname: "/(staff)",
+          params: {},
+        });
       } else {
-        router.replace("/(tabs)");
+        router.replace({
+          pathname: "/(tabs)",
+          params: {},
+        });
       }
     };
 

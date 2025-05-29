@@ -55,8 +55,12 @@ class RequestServiceApi extends Api {
     return this.request("delete", `/${id}`);
   }
 
-  async cancelRequest(id: string) {
+  async userCancelRequest(id: string) {
     return this.request("PATCH", `/user-cancel/${id}`);
+  }
+
+  async fixerCancelRequest(id: string) {
+    return this.request("PATCH", `/fixer-reject/${id}`);
   }
 
   async reportRequest(payload: { requestId: string; reasons: string[]; note: string }) {

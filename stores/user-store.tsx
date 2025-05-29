@@ -64,8 +64,6 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
           JSON.stringify(response.data)
         );
         setUser(response.data);
-        // handleRedirectUser(response.data);
-        router.push("/");
       }
     } catch (error) {
       console.log("no login");
@@ -83,7 +81,8 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
       const { refreshToken, accessToken } = res;
       await AsyncStorage.setItem(REFRESH_TOKEN, refreshToken);
       await AsyncStorage.setItem(ACCESS_TOKEN, accessToken);
-      fetchUserData(accessToken);
+      await fetchUserData(accessToken);
+      router.replace("/"); // Chuyển về trang index để xử lý điều hướng
     }
   };
 
@@ -94,28 +93,7 @@ export const UserStoreProviderProps: React.FC<UserStoreProviderProps> = ({
     await AsyncStorage.removeItem(ACCESS_TOKEN);
     // router.replace("/");
   };
-  const handleRedirectUser = (user: UserInterface) => {
-    if (user.emailVerified === 0) {
-      return;
-    }
-
-    if (user.roles === "system_user") {
-      router.push({
-        pathname: "/(user)",
-        params: { roles: "(user)" },
-      });
-    } else if (user.roles === "system_fixer") {
-      router.push({
-        pathname: "/(staff)",
-        params: { roles: "(staff)" },
-      });
-    } else {
-      router.push({
-        pathname: "/(tabs)",
-        params: { roles: "(tabs)" },
-      });
-    }
-  };
+ 
   const checkToken = async () => {
     try {
       const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN);

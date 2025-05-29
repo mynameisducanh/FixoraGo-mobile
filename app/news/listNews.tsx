@@ -7,13 +7,12 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import NewsCard from "@/components/news/newsCard";
-import { useRouter } from "expo-router";
+import BackButton from "@/components/buttonDefault/backButton";
 import NewsApi, { News } from "@/api/newsApi";
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const NewsRow = () => {
-  const router = useRouter();
+const ListNews = () => {
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const newsApi = new NewsApi();
@@ -37,28 +36,21 @@ const NewsRow = () => {
   }, []);
 
   return (
-    <View>
-      <View className="flex-row justify-between items-center px-4">
-        <View>
-          <Text className="font-bold text-lg">Tin tức</Text>
-          <Text className="text-gray-500 text-xs">
-            Tin tức mới của chúng tôi
-          </Text>
-        </View>
-        <TouchableOpacity onPress={() => router.push("/news/listNews")}>
-          <Text className="font-semibold text-textBlue">Xem tất cả</Text>
-        </TouchableOpacity>
-      </View>
+    <View className="bg-white pt-28">
+      <BackButton />
+
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 15 }}
-        className="overflow-visible py-5"
+        contentContainerStyle={{ paddingLeft: 25, paddingBottom: 50 }}
       >
+        <View className="flex-row justify-between items-center">
+          <View>
+            <Text className="font-bold text-lg mb-3">Danh sách tin tức</Text>
+          </View>
+        </View>
         {loading ? (
           // Shimmer loading placeholders
-          Array.from({ length: 3 }).map((_, index) => (
-            <View key={index} className="mr-6" style={{ width: 340 }}>
+          Array.from({ length: 5 }).map((_, index) => (
+            <View key={index} className="mb-6" style={{ width: '90%' }}>
               <ShimmerPlaceholder
                 LinearGradient={LinearGradient}
                 style={{
@@ -112,6 +104,4 @@ const NewsRow = () => {
   );
 };
 
-export default NewsRow;
-
-const styles = StyleSheet.create({});
+export default ListNews;

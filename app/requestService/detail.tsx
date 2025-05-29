@@ -43,6 +43,8 @@ import SkillFixerApi from "@/api/skillFixerApi";
 import FixerApi from "@/api/fixerApi";
 import CancelRequestModal from "@/components/CancelRequestModal";
 import ReportModal from "@/components/ReportModal";
+import FixerReviewsModal from "@/components/review/FixerReviewsModal";
+import EditRequestModal from "@/components/EditRequestModal";
 
 interface ActivityHistory {
   id: string;
@@ -147,6 +149,8 @@ const RequestDetail = () => {
   const [fixerCompleteData, setFixerCompleteData] = useState<any>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const fetchDataRequestDetail = async () => {
     try {
@@ -380,7 +384,12 @@ const RequestDetail = () => {
       }
       formData.append("note", note);
       formData.append("requestServiceId", idRequest as string);
-      const res = await requestServiceApi.cancelRequest(idRequest as string);
+      let res;
+      if (user?.roles === "system_user") {
+        res = await requestServiceApi.userCancelRequest(idRequest as string);
+      } else if (user?.roles === "system_fixer") {
+        res = await requestServiceApi.fixerCancelRequest(idRequest as string);
+      }
       const res2 = await ativityLogApi.createRes(formData);
       if (res) {
         router.push({
@@ -420,6 +429,31 @@ const RequestDetail = () => {
     } catch (error) {
       console.error(error);
       Alert.alert("Lỗi", "Có lỗi xảy ra khi gửi báo cáo");
+    }
+  };
+
+  const handleEditRequest = async (formData: FormData) => {
+    try {
+      const res = await requestServiceApi.updateRequest(
+        formData,
+        idRequest as string
+      );
+      if (res) {
+        router.push({
+          pathname: "/notification/success",
+          params: {
+            type: "success",
+            title: "Cập nhật thành công",
+            message: "Thông tin yêu cầu đã được cập nhật thành công.",
+            redirectTo: "/(user)/activate",
+            redirectParams: `/(user)/activate`,
+            subParams: `${idRequest}`
+          },
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi cập nhật thông tin");
     }
   };
 
@@ -623,21 +657,38 @@ const RequestDetail = () => {
                             color={statusInfo.color}
                           />
                         </TouchableOpacity>
-                        <TouchableOpacity className="">
+                        {user?.roles === "system_user" ? (
+                          <TouchableOpacity
+                            className=""
+                            onPress={() => setShowReviewsModal(true)}
+                          >
+                            <Ionicons
+                              name="star"
+                              size={24}
+                              color={statusInfo.color}
+                            />
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity className="">
+                            <Entypo
+                              name="phone"
+                              size={24}
+                              color={statusInfo.color}
+                            />
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                          className=""
+                          onPress={() => setShowReportModal(true)}
+                        >
                           <Entypo
-                            name="phone"
+                            name="flag"
                             size={24}
                             color={statusInfo.color}
                           />
                         </TouchableOpacity>
                       </>
                     )}
-                    <TouchableOpacity
-                      className=""
-                      onPress={() => setShowReportModal(true)}
-                    >
-                      <Entypo name="flag" size={24} color={statusInfo.color} />
-                    </TouchableOpacity>
                   </View>
                   <View className="flex-col">
                     {requestData?.approvedTime && (
@@ -646,7 +697,7 @@ const RequestDetail = () => {
                       </Text>
                     )}
 
-                     {requestData.deleteAt && (
+                    {requestData.deleteAt && (
                       <Text className="">
                         Ngày hủy: {formatDateTimeVN(requestData?.deleteAt)}
                       </Text>
@@ -668,6 +719,12 @@ const RequestDetail = () => {
         {/* Request Info Section */}
         <View style={{ width: wp(100) }} className="px-4 mb-3 mt-3">
           <Text className="text-lg font-semibold mb-3">Thông tin yêu cầu</Text>
+          {requestData.isUrgent === true && (
+            <Text className="text-red-500 font-semibold text-left">
+              Đây là yêu cầu cần gấp
+            </Text>
+          )}
+
           <View className="bg-gray-50 rounded-2xl p-4">
             <InfoRow label="Tên dịch vụ" value={requestData?.nameService} />
             <InfoRow label="Phân loại" value={requestData?.listDetailService} />
@@ -704,14 +761,11 @@ const RequestDetail = () => {
                   ellipsizeMode="tail"
                   className="text-gray-500 font-medium max-w-[35%] text-left"
                 >
-                  Tình trạng
+                  Tiền Tip
                 </Text>
 
-                <Text
-                  style={{ color: statusInfo.color }}
-                  className={`font-semibold max-w-[65%] text-right ${statusInfo.color}`}
-                >
-                  {statusInfo?.label}
+                <Text className={`font-semibold max-w-[65%] text-right`}>
+                  {requestData?.bouns || "0"} VNĐ
                 </Text>
               </View>
             )}
@@ -795,13 +849,28 @@ const RequestDetail = () => {
               )}
             {requestData?.status === "pending" &&
               user?.roles === "system_fixer" && (
+                <>
+                  <View className="items-center p-2">
+                    <TouchableOpacity
+                      onPress={handleShowConfirmModal}
+                      className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                    >
+                      <Text className="text-primary font-semibold text-center">
+                        Nhận yêu cầu
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            {requestData?.status === "pending" &&
+              user?.roles === "system_user" && (
                 <View className="items-center p-2">
                   <TouchableOpacity
-                    onPress={handleShowConfirmModal}
+                    onPress={() => setShowEditModal(true)}
                     className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
                   >
                     <Text className="text-primary font-semibold text-center">
-                      Nhận yêu cầu
+                      Chỉnh sửa
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1005,6 +1074,25 @@ const RequestDetail = () => {
         visible={showReportModal}
         onClose={() => setShowReportModal(false)}
         onSubmit={handleReportRequest}
+      />
+      {user?.roles === "system_user" && (
+        <FixerReviewsModal
+          visible={showReviewsModal}
+          onClose={() => setShowReviewsModal(false)}
+          fixerId={fixerData?.id}
+        />
+      )}
+      <EditRequestModal
+        id={requestData?.id}
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleEditRequest}
+        initialData={{
+          typeEquipment: requestData?.typeEquipment || "",
+          calender: requestData?.calender || "",
+          note: requestData?.note || "",
+          fileImage: requestData?.fileImage || "",
+        }}
       />
     </View>
   );
