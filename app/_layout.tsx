@@ -154,6 +154,13 @@ export default function RootLayout() {
                 headerShown: false,
               }}
             />
+            <Stack.Screen
+              name="paymentBill/ListBill"
+              options={{
+                headerTitle: "Danh sách hóa đơn thanh toán",
+                headerBackTitle: "Trở lại",
+              }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />

@@ -18,7 +18,7 @@ const menuItems: MenuItem[] = [
   {
     title: "Thông tin cá nhân",
     icon: "person-outline",
-    path: "/(staff)",
+    path: "/profile/detailProfile",
   },
   {
     title: "Bảo mật thông tin",
@@ -29,6 +29,11 @@ const menuItems: MenuItem[] = [
     title: "Các bài đánh giá",
     icon: "chatbox-ellipses-outline",
     path: "/review/list",
+  },
+  {
+    title: "Các hóa dơn nạp phí",
+    icon: "receipt-outline",
+    path: "/paymentBill/ListBill",
   },
   {
     title: "Chính sách của chúng tôi",

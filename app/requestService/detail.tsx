@@ -55,7 +55,7 @@ interface ActivityHistory {
 
 type StatusType =
   | "pending"
-  | "done"
+  | "completed"
   | "guarantee"
   | "rejected"
   | "approved"
@@ -80,7 +80,7 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
     icon: "time-outline",
     bgColor: "bg-yellow-50",
   },
-  done: {
+  completed: {
     label: "Hoàn thành",
     color: "#16a34a",
     icon: "checkmark-circle-outline",
@@ -648,7 +648,7 @@ const RequestDetail = () => {
                         color={statusInfo.color}
                       />
                     </TouchableOpacity>
-                    {requestData?.status !== "pending" && (
+                    {(requestData?.status === "approved" || requestData?.status === "guarantee" || requestData?.status === "completed") && (
                       <>
                         <TouchableOpacity className="">
                           <Entypo
