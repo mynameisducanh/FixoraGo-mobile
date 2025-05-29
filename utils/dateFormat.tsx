@@ -17,8 +17,6 @@ export const formatTimestamp = (timestamp) => {
   });
 };
 
-
-
 export const formatDateTimeVN = (
   value: string | number | Date | undefined
 ): string => {

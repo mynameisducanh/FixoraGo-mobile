@@ -18,3 +18,11 @@ export const getPriceSuggestions = (basePrice: string) => {
     price.toString()
   );
 };
+
+export const formatDecimalToWhole = (value: number | string) => {
+  if (!value) return "0";
+  const numericValue = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(numericValue)) return "0";
+  const wholeNumber = Math.floor(numericValue);
+  return new Intl.NumberFormat("vi-VN").format(wholeNumber);
+};

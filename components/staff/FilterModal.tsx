@@ -122,7 +122,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   const handleReset = () => {
     setSelectedDistricts([]);
-    setSelectedServices([]);
+    setSelectedServices(initialFilters?.services || []);
     setSelectedPriceRange("Tất cả");
     setSelectedStatus([]);
     setIsUrgent(false);
