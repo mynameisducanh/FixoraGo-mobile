@@ -136,10 +136,7 @@ const Login = () => {
 
             <TouchableOpacity
               onPress={() =>
-                showAlert(
-                  "Tính năng chưa hỗ trợ",
-                  "Vui lòng liên hệ quản trị viên."
-                )
+                router.push('/(auth)/forgetPassword')
               }
             >
               <Text className="text-sm text-blue-600 mt-2">Quên mật khẩu?</Text>

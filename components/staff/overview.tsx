@@ -6,7 +6,12 @@ import {
   Image,
   Alert,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -28,7 +33,11 @@ import PayFeesModal from "./PayFeesModal";
 import RevenueApi from "@/api/revenueApi";
 import { formatDecimalToWhole, getNumericPrice } from "@/utils/priceFormat";
 
-const Overview = () => {
+export interface OverviewRef {
+  reload: () => Promise<void>;
+}
+
+const Overview = forwardRef<OverviewRef>((props, ref) => {
   const requestConfirmServiceApi = new RequestConfirmServiceApi();
   const reviewApi = new ReviewApi();
   const fixerApi = new FixerApi();
@@ -89,8 +98,10 @@ const Overview = () => {
         user?.id as string
       );
       const res3 = await fixerApi.getByUserId(user?.id as string);
-      const res4 = await revenueApi.getOverview(user?.id as string + '_total')
-      console.log(res4)
+      const res4 = await revenueApi.getOverview(
+        (user?.id as string) + "_total"
+      );
+      
       if (res) {
         setRevenua(res);
       }
@@ -100,13 +111,17 @@ const Overview = () => {
       if (res3) {
         setDataDetail2(res3);
       }
-      if(res4){
-        setDataDetail3(res4)
+      if (res4) {
+        setDataDetail3(res4);
       }
     } catch (error) {
       console.log(error);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    reload: getDataRevenuaDashboash
+  }));
 
   useEffect(() => {
     getDataRevenuaDashboash();
@@ -251,6 +266,6 @@ const Overview = () => {
       />
     </View>
   );
-};
+});
 
 export default Overview;

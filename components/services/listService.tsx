@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -19,42 +19,51 @@ import IconServiceApi from "@/api/iconService";
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const ListService = () => {
-  const [animations, setAnimations] = useState({});
+export interface ListServiceRef {
+  reload: () => Promise<void>;
+}
+
+const ListService = forwardRef<ListServiceRef>((props, ref) => {
+  const [animations, setAnimations] = useState<Record<string, any>>({});
   const [activeCategory, setActiveCategory] = useState<string | null>("Điện");
   const [listIcons, setlistIcons] = useState<IconLottieInterface[]>([]);
   const [loading, setLoading] = useState(false);
   const api = new IconServiceApi();
   const router = useRouter();
+
+  const fetchAnimations = async () => {
+    try {
+      setLoading(true);
+      const res = await api.getAll();
+      setlistIcons(res);
+
+      const results = await Promise.allSettled(
+        res.map(async (cat: any) => {
+          const response = await fetch(cat.url);
+          if (!response.ok) throw new Error(`Failed to load ${cat.name}`);
+          const json = await response.json();
+          return { [cat.name]: json };
+        })
+      );
+
+      const fulfilledResults = results
+        .filter((r) => r.status === "fulfilled")
+        .map((r) => r.value);
+      const animations = Object.assign({}, ...fulfilledResults);
+
+      setAnimations(animations);
+    } catch (error) {
+      console.error("Lỗi khi tải icon động:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    reload: fetchAnimations
+  }));
+
   useEffect(() => {
-    const fetchAnimations = async () => {
-      try {
-        setLoading(true);
-        const res = await api.getAll();
-        setlistIcons(res);
-
-        const results = await Promise.allSettled(
-          res.map(async (cat: any) => {
-            const response = await fetch(cat.url);
-            if (!response.ok) throw new Error(`Failed to load ${cat.name}`);
-            const json = await response.json();
-            return { [cat.name]: json };
-          })
-        );
-
-        const fulfilledResults = results
-          .filter((r) => r.status === "fulfilled")
-          .map((r) => r.value);
-        const animations = Object.assign({}, ...fulfilledResults);
-
-        setAnimations(animations);
-      } catch (error) {
-        console.error("Lỗi khi tải icon động:", error);
-      }finally{
-        setLoading(false);
-      }
-    };
-
     fetchAnimations();
   }, []);
 
@@ -133,7 +142,7 @@ const ListService = () => {
       </ScrollView>
     </Animated.View>
   );
-};
+});
 
 export default ListService;
 
