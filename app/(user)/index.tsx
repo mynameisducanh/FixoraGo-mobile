@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useUserStore } from "@/stores/user-store";
 import { StatusBar } from "expo-status-bar";
 import {
@@ -17,7 +17,7 @@ import {
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Header from "@/components/default/header";
 import SearchBar from "@/components/default/searchBar";
-import ListService from "@/components/services/listService";
+import ListService, { ListServiceRef } from "@/components/services/listService";
 import NewsRow from "@/components/news/newsRow";
 import { useLocationStore } from "@/stores/location-store";
 import {
@@ -30,7 +30,7 @@ import { CustomMapView } from "@/components/MapView";
 const HomeUser = () => {
   const [showMap, setShowMap] = useState(false);
   const { latitude, longitude, errorMsg, loading } = useLocationStore();
-
+  const listServiceRef = useRef<ListServiceRef>(null);
   const handleGetCurrentLocation = async () => {
     try {
       // 1. Lấy vị trí hiện tại
@@ -91,7 +91,7 @@ const HomeUser = () => {
           <Header />
           <SearchBar />
           <View>
-            <ListService />
+          <ListService ref={listServiceRef} />
           </View>
           <View className="mt-5">
             <NewsRow />

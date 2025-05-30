@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Image,
   StyleSheet,
@@ -17,21 +17,25 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import ListService from "@/components/services/listService";
+import ListService, { ListServiceRef } from "@/components/services/listService";
 import NewsRow from "@/components/news/newsRow";
 import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
-
-  const onRefresh = React.useCallback(() => {
+  const listServiceRef = useRef<ListServiceRef>(null);
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
+    if (listServiceRef.current) {
+      await listServiceRef.current.reload();
+    }
     // Thêm logic refresh ở đây, ví dụ:
     // fetchData().then(() => setRefreshing(false));
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
+    // setTimeout(() => {
+    //   setRefreshing(false);
+    // }, 2000);
+    setRefreshing(false);
   }, []);
 
   return (
@@ -57,7 +61,7 @@ export default function HomeScreen() {
         <Header />
         <SearchBar />
         <View>
-          <ListService />
+          <ListService ref={listServiceRef} />
         </View>
         <View className="mt-5">
           <NewsRow />
