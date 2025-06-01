@@ -31,6 +31,11 @@ const menuItems: MenuItem[] = [
     path: "/review/list",
   },
   {
+    title: "Các bài báo cáo",
+    icon: "chatbox-ellipses-outline",
+    path: "/reports/ListReports",
+  },
+  {
     title: "Các hóa dơn nạp phí",
     icon: "receipt-outline",
     path: "/paymentBill/ListBill",
@@ -58,7 +63,7 @@ const Profile = () => {
     <View className="flex-1 bg-white">
       <View>
         <Image
-          style={{ height: hp(32), width: wp(100) }}
+          style={{ height: hp(25), width: wp(100) }}
           source={require("../../assets/images/hero-detail-test.jpg")}
         />
       </View>

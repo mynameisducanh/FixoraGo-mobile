@@ -31,6 +31,11 @@ const menuItems: MenuItem[] = [
     path: "/review/list",
   },
   {
+    title: "Các bài báo cáo",
+    icon: "chatbox-ellipses-outline",
+    path: "/reports/ListReports",
+  },
+  {
     title: "Chính sách của chúng tôi",
     icon: "document-text-outline",
     path: "/(other)/policy",
