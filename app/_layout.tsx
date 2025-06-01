@@ -161,6 +161,13 @@ export default function RootLayout() {
                 headerBackTitle: "Trở lại",
               }}
             />
+             <Stack.Screen
+              name="reports/ListReports"
+              options={{
+                headerTitle: "Danh sách báo cáo",
+                headerBackTitle: "Trở lại",
+              }}
+            />
             <Stack.Screen name="+not-found" />
           </Stack>
           <StatusBar style="auto" />
