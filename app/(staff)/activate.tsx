@@ -1,4 +1,12 @@
-import { Text, View, FlatList, TouchableOpacity, Image } from "react-native";
+import {
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import {
   widthPercentageToDP as wp,
@@ -11,12 +19,23 @@ import { statusMap } from "@/utils/function";
 import { Ionicons } from "@expo/vector-icons";
 import { useUserStore } from "@/stores/user-store";
 
+interface ServiceItem {
+  id: string;
+  nameService: string;
+  listDetailService: string;
+  createAt: string;
+  status: keyof typeof statusMap;
+  temp?: string;
+}
+
 const Activate = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
-  const [activeData, setActiveData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeData, setActiveData] = useState<ServiceItem[]>([]);
   const { user } = useUserStore();
-  const handleReorder = (item) => {
+
+  const handleReorder = (item: ServiceItem) => {
     router.push({
       pathname: "/requestService/detail",
       params: { idRequest: item.id },
@@ -25,7 +44,9 @@ const Activate = () => {
 
   const fetchDataActive = async () => {
     try {
-      const res = await requestService.getListServiceByFixerId(user?.id as string);
+      const res = await requestService.getListServiceByFixerId(
+        user?.id as string
+      );
       if (res) {
         setActiveData(res);
       }
@@ -33,19 +54,18 @@ const Activate = () => {
       console.log(error);
     }
   };
-  const statusInfo = statusMap[activeData?.status] || {
-    label: activeData?.status || "Không xác định",
-    color: "text-gray-500",
-    icon: "help-circle-outline",
-  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      await fetchDataActive();
-    };
-    fetchData();
+    fetchDataActive();
   }, []);
 
-  const renderItem = ({ item }) => {
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchDataActive();
+    setRefreshing(false);
+  }, []);
+
+  const renderItem = ({ item }: { item: ServiceItem }) => {
     const statusInfo = statusMap[item.status] || {
       label: item.status || "Không xác định",
       color: "text-gray-500",
@@ -72,7 +92,6 @@ const Activate = () => {
             <Text className="text-gray-500 mt-1">
               Ngày tạo : {formatTimestamp(item.createAt)}
             </Text>
-           
           </View>
           <View className="w-[30%]">
             <View className="items-center mb-6">
@@ -84,7 +103,7 @@ const Activate = () => {
                     ? "#eab308"
                     : statusInfo.color === "text-green-600"
                     ? "#22c55e"
-                     : statusInfo.color === "text-blue-500"
+                    : statusInfo.color === "text-blue-500"
                     ? "#3b82f6"
                     : statusInfo.color === "text-red-500"
                     ? "#ef4444"
@@ -94,11 +113,15 @@ const Activate = () => {
               <Text className={`mt-2 text-sm font-bold ${statusInfo.color}`}>
                 {statusInfo.label}
               </Text>
-               {item.temp && (
-              <Text numberOfLines={1} ellipsizeMode="tail" className="text-base text-blue-500">
-                {`Ex :${item.temp}`}
-              </Text>
-            )}
+              {item.temp && (
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  className="text-base text-blue-500"
+                >
+                  {`Ex :${item.temp}`}
+                </Text>
+              )}
             </View>
           </View>
         </View>
@@ -107,7 +130,21 @@ const Activate = () => {
   };
 
   return (
-    <View className="h-full bg-white">
+    <ScrollView
+      className="h-full bg-white"
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["#FFC107"]}
+          tintColor="#FFC107"
+          progressViewOffset={20}
+          progressBackgroundColor="#ffffff"
+          title="Đang tải..."
+          titleColor="#FFC107"
+        />
+      }
+    >
       <View className="">
         <Image
           style={{ height: hp(32), width: wp(100) }}
@@ -116,12 +153,9 @@ const Activate = () => {
       </View>
       <View className="px-5 -mt-12 pt-6 bg-background rounded-t-3xl">
         <Text className="text-xl font-bold mb-3">Hoạt động gần đây</Text>
-        <FlatList
-          data={activeData.slice(0, 3)}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-        />
+        <View>
+          {activeData.slice(0, 3).map((item) => renderItem({ item }))}
+        </View>
       </View>
       <TouchableOpacity className="w-full mt-4">
         <Text
@@ -135,7 +169,7 @@ const Activate = () => {
           Xem thêm lịch sử hoạt động
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 

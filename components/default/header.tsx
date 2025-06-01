@@ -55,7 +55,7 @@ const Header = () => {
           className="relative"
         >
           <FontAwesome name="bell-o" size={24} color="#FFC107" />
-          {hasUnreadNotifications && (
+          {(hasUnreadNotifications && user) && (
             <View className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
           )}
         </TouchableOpacity>

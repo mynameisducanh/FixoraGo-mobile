@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useUserStore } from "@/stores/user-store";
 import ActivityLogApi from "@/api/activityLogApi";
+import { formatDecimalToWhole } from "@/utils/priceFormat";
 
 interface PayFeesModalProps {
   visible: boolean;
@@ -40,14 +41,17 @@ const PayFeesModal: React.FC<PayFeesModalProps> = ({
 
   const selectImage = async (index: number) => {
     try {
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestCameraPermissionsAsync();
       if (!permissionResult.granted) {
         Alert.alert("Thông báo", "Bạn cần cấp quyền Camera để chụp ảnh!");
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        aspect: [16, 9],
         quality: 1,
       });
 
@@ -103,8 +107,9 @@ const PayFeesModal: React.FC<PayFeesModalProps> = ({
           type: firstImage.type || "image/jpeg",
         });
       }
+      formData.append("temp", "pending");
       const res = await activityLogApi.createRes(formData);
-      console.log(res)
+      console.log(res);
       if (res) {
         onSubmit({
           images: images.filter((img) => img !== undefined),
@@ -142,9 +147,11 @@ const PayFeesModal: React.FC<PayFeesModalProps> = ({
 
           <ScrollView className="space-y-4">
             <View className="p-2 rounded-lg bg-gray-50">
-              <Text className="text-gray-600 text-center mb-2">Số tiền cần đóng</Text>
+              <Text className="text-gray-600 text-center mb-2">
+                Số tiền cần đóng
+              </Text>
               <Text className="text-2xl font-bold text-center text-primary">
-                {feeAmount.toLocaleString('vi-VN')} VNĐ
+                {formatDecimalToWhole(feeAmount)} VNĐ
               </Text>
             </View>
 
@@ -188,12 +195,15 @@ const PayFeesModal: React.FC<PayFeesModalProps> = ({
             </View>
 
             <View>
-              <Text className="text-gray-700 mb-2">Ghi chú</Text>
+              <Text className="text-gray-700 mb-2">
+                Xác nhận số tiền bạn nhập
+              </Text>
               <TextInput
                 className="border border-gray-300 rounded-lg p-3"
                 value={note}
-                onChangeText={setNote}
-                placeholder="Ghi chú thêm ..."
+                onChangeText={(text) => setNote(text.replace(/[^0-9]/g, ""))}
+                placeholder="Xác nhận số tiền..."
+                keyboardType="numeric"
               />
             </View>
 
@@ -222,7 +232,9 @@ const PayFeesModal: React.FC<PayFeesModalProps> = ({
               Xác nhận đóng phí
             </Text>
             <Text className="text-base font-bold mb-4 text-center">
-              Sau khi bạn gửi yêu cầu này đi chúng tôi sẽ tiến hành xác nhận bill và thông báo cho bạn sớm nhất
+              Sau khi bạn gửi yêu cầu này đi chúng tôi sẽ tiến hành xác nhận và
+              thông báo cho bạn sớm nhất , bạn có thể theo dõi trạng thái ở "Yêu
+              cầu nộp phí"
             </Text>
             <View className="flex-row justify-end space-x-4 mt-6 gap-3">
               <TouchableOpacity

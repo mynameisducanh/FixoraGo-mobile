@@ -6,7 +6,12 @@ import {
   Image,
   Alert,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -25,12 +30,19 @@ import TechnicianDetailModal from "../technicianDetailModal";
 import SkillFixerApi from "@/api/skillFixerApi";
 import { useRouter } from "expo-router";
 import PayFeesModal from "./PayFeesModal";
+import RevenueApi from "@/api/revenueApi";
+import { formatDecimalToWhole, getNumericPrice } from "@/utils/priceFormat";
 
-const Overview = () => {
+export interface OverviewRef {
+  reload: () => Promise<void>;
+}
+
+const Overview = forwardRef<OverviewRef>((props, ref) => {
   const requestConfirmServiceApi = new RequestConfirmServiceApi();
   const reviewApi = new ReviewApi();
   const fixerApi = new FixerApi();
   const userApi = new UserApi();
+  const revenueApi = new RevenueApi();
   const skillFixerApi = new SkillFixerApi();
   const [showTechnicianModal, setShowTechnicianModal] = useState(false);
   const [showPayFeesModal, setShowPayFeesModal] = useState(false);
@@ -39,6 +51,7 @@ const Overview = () => {
   const [totalReview, setTotalReview] = useState();
   const [dataDetail1, setDataDetail1] = useState();
   const [dataDetail2, setDataDetail2] = useState();
+  const [dataDetail3, setDataDetail3] = useState();
   const [isLastDayOfMonth, setIsLastDayOfMonth] = useState(false);
   const [showPaymentWarning, setShowPaymentWarning] = useState(false);
   const [fixerSkills, setFixerSkills] = useState<string[]>([]);
@@ -85,6 +98,10 @@ const Overview = () => {
         user?.id as string
       );
       const res3 = await fixerApi.getByUserId(user?.id as string);
+      const res4 = await revenueApi.getOverview(
+        (user?.id as string) + "_total"
+      );
+      
       if (res) {
         setRevenua(res);
       }
@@ -94,10 +111,17 @@ const Overview = () => {
       if (res3) {
         setDataDetail2(res3);
       }
+      if (res4) {
+        setDataDetail3(res4);
+      }
     } catch (error) {
       console.log(error);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    reload: getDataRevenuaDashboash
+  }));
 
   useEffect(() => {
     getDataRevenuaDashboash();
@@ -166,7 +190,7 @@ const Overview = () => {
         </View>
         <View className="flex-col justify-end items-end">
           <Text className="text-blue-700 mt-1">
-            Tổng phí: {revenue?.currentMonthFee} VNĐ
+            Tổng phí: {formatDecimalToWhole(dataDetail3?.unpaidFees)} VNĐ
           </Text>
 
           <TouchableOpacity
@@ -177,30 +201,25 @@ const Overview = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <View className="mt-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+      {/* <View className="mt-2 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
         <View className="flex-row items-center">
-          {/* <MaterialCommunityIcons
-            name="alert-circle"
-            size={20}
-            color="#f59e0b"
-          /> */}
           <Text className="text-yellow-800 ml-2 flex-1">
-            Trong vòng 1 tháng không đóng phí lần nào, tài khoản sẽ bị khóa.
+            Trong vòng 2 tháng không đủ 50% lần nào, tài khoản sẽ bị khóa.
           </Text>
         </View>
-      </View>
+      </View> */}
 
       <Text className="font-semibold text-blue-700 mt-2">Tổng quan</Text>
       <View className="flex-row justify-between p-1">
         <View className="items-center">
           <Text className="text-lg font-bold text-gray-700">
-            {revenue?.totalRevenue}
+            {formatDecimalToWhole(dataDetail3?.totalRevenue)}
           </Text>
           <Text className="text-sm text-gray-500">Tổng doanh thu</Text>
         </View>
         <View className="items-center">
           <Text className="text-lg font-bold text-gray-700">
-            {revenue?.currentMonthRevenue}
+            {formatDecimalToWhole(revenue?.currentMonthRevenue)}
           </Text>
           <Text className="text-sm text-gray-500">Doanh thu tháng này</Text>
         </View>
@@ -243,10 +262,10 @@ const Overview = () => {
         visible={showPayFeesModal}
         onClose={() => setShowPayFeesModal(false)}
         onSubmit={handlePayFeesSubmit}
-        feeAmount={revenue?.currentMonthFee || 0}
+        feeAmount={dataDetail3?.unpaidFees || 0}
       />
     </View>
   );
-};
+});
 
 export default Overview;

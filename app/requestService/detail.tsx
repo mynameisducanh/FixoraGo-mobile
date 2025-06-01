@@ -55,7 +55,7 @@ interface ActivityHistory {
 
 type StatusType =
   | "pending"
-  | "done"
+  | "completed"
   | "guarantee"
   | "rejected"
   | "approved"
@@ -80,7 +80,7 @@ const statusMapTyped: Record<StatusType, StatusInfo> = {
     icon: "time-outline",
     bgColor: "bg-yellow-50",
   },
-  done: {
+  completed: {
     label: "Hoàn thành",
     color: "#16a34a",
     icon: "checkmark-circle-outline",
@@ -390,7 +390,7 @@ const RequestDetail = () => {
       } else if (user?.roles === "system_fixer") {
         res = await requestServiceApi.fixerCancelRequest(idRequest as string);
       }
-      const res2 = await ativityLogApi.createRes(formData);
+      await ativityLogApi.createRes(formData);
       if (res) {
         router.push({
           pathname: "/notification/success",
@@ -414,12 +414,22 @@ const RequestDetail = () => {
     note: string
   ) => {
     try {
-      const payload = {
-        requestId: idRequest as string,
-        reasons: selectedReasons,
-        note: note,
-      };
-      const res = await requestServiceApi.reportRequest(payload);
+      const formData = new FormData();
+      formData.append("note", selectedReasons.join(", ") + "," + note);
+      if (user?.roles === "system_user") {
+        formData.append("activityType", "user_report");
+        formData.append("userId", user.id);
+        formData.append("fixerId", requestData.fixerId);
+      }
+      if (user?.roles === "system_fixer") {
+        formData.append("activityType", "fixer_report");
+        formData.append("userId", requestData.userId);
+        formData.append("fixerId", user.id);
+      }
+      formData.append("temp", "pending");
+
+      formData.append("requestServiceId", idRequest as string);
+      const res = await ativityLogApi.createRes(formData);
       if (res) {
         Alert.alert(
           "Thành công",
@@ -447,7 +457,7 @@ const RequestDetail = () => {
             message: "Thông tin yêu cầu đã được cập nhật thành công.",
             redirectTo: "/(user)/activate",
             redirectParams: `/(user)/activate`,
-            subParams: `${idRequest}`
+            subParams: `${idRequest}`,
           },
         });
       }
@@ -648,7 +658,9 @@ const RequestDetail = () => {
                         color={statusInfo.color}
                       />
                     </TouchableOpacity>
-                    {requestData?.status !== "pending" && (
+                    {(requestData?.status === "approved" ||
+                      requestData?.status === "guarantee" ||
+                      requestData?.status === "completed") && (
                       <>
                         <TouchableOpacity className="">
                           <Entypo
@@ -677,18 +689,14 @@ const RequestDetail = () => {
                             />
                           </TouchableOpacity>
                         )}
-                        <TouchableOpacity
-                          className=""
-                          onPress={() => setShowReportModal(true)}
-                        >
-                          <Entypo
-                            name="flag"
-                            size={24}
-                            color={statusInfo.color}
-                          />
-                        </TouchableOpacity>
                       </>
                     )}
+                    <TouchableOpacity
+                      className=""
+                      onPress={() => setShowReportModal(true)}
+                    >
+                      <Entypo name="flag" size={24} color={statusInfo.color} />
+                    </TouchableOpacity>
                   </View>
                   <View className="flex-col">
                     {requestData?.approvedTime && (
@@ -804,7 +812,9 @@ const RequestDetail = () => {
               (requestData?.status === "approved" &&
                 user?.roles === "system_fixer") ||
               user?.roles === "system_user") &&
-              requestData?.status !== "deleted" && (
+              requestData?.status !== "deleted" &&
+              requestData?.status !== "guarantee" &&
+              requestData?.status !== "completed" && (
                 <View className="items-center p-2">
                   <TouchableOpacity
                     onPress={() => setShowCancelModal(true)}
@@ -834,7 +844,7 @@ const RequestDetail = () => {
               </View>
             )}
             {(requestData?.status === "approved" ||
-              requestData?.status === "guarantee") &&
+              requestData?.status === "guarantee" || requestData?.status === "completed") &&
               fixerChecked === true && (
                 <View className="items-center p-2">
                   <TouchableOpacity
@@ -909,7 +919,7 @@ const RequestDetail = () => {
                 </View>
               )}
             {(requestData?.status === "approved" ||
-              requestData?.status === "guarantee") &&
+              requestData?.status === "guarantee" || requestData?.status === "completed") &&
               confirmCompleted === true && (
                 <View className="items-center p-2">
                   <TouchableOpacity

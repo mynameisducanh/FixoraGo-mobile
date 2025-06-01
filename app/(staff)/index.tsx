@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -17,7 +18,7 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import Overview from "@/components/staff/overview";
+import Overview, { OverviewRef } from "@/components/staff/overview";
 import Categories from "@/components/staff/Categories";
 import RequestCard from "@/components/staff/RequestCard";
 import { useRouter } from "expo-router";
@@ -52,11 +53,14 @@ interface RequestData {
 const HomeStaff = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
+  const overviewRef = useRef<OverviewRef>(null);
+
   const [activeData, setActiveData] = useState<RequestData[]>([]);
   const { user } = useUserStore();
   const [approvedRequest, setApprovedRequest] = useState<RequestData>();
   const [showMap, setShowMap] = useState(false);
   const [dataAddress, setDataAddress] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     lat: number;
     lon: number;
@@ -122,9 +126,9 @@ const HomeStaff = () => {
           setActiveData([]);
           return;
         }
-        console.log(category)
+        console.log(category);
         if (category !== "newest") {
-          console.log("vào chọn ngắn nhất")
+          console.log("vào chọn ngắn nhất");
           // Get user's current location
           const location = await getCurrentLocation();
           setUserLocation(location);
@@ -136,7 +140,7 @@ const HomeStaff = () => {
                 const coordinates = await getCoordinatesFromAddress(
                   request.address
                 );
-                
+
                 // Get actual driving distance using Mapbox Directions API
                 const routeInfo = await getRouteInfo(
                   location.lat,
@@ -144,10 +148,12 @@ const HomeStaff = () => {
                   coordinates.lat,
                   coordinates.lon
                 );
-                
+
                 const distance = routeInfo.distance / 1000; // Convert to kilometers
-                console.log(`Actual driving distance for ${request.address}: ${distance}km`);
-                
+                console.log(
+                  `Actual driving distance for ${request.address}: ${distance}km`
+                );
+
                 return {
                   ...request,
                   distance,
@@ -167,15 +173,20 @@ const HomeStaff = () => {
 
           // Sort requests by distance
           const sortedRequests = requestsWithDistance.sort((a, b) => {
-            console.log(`Comparing distances: ${a.distance}km vs ${b.distance}km`);
+            console.log(
+              `Comparing distances: ${a.distance}km vs ${b.distance}km`
+            );
             return a.distance - b.distance;
           });
-          
-          console.log("Sorted distances:", sortedRequests.map(r => ({
-            address: r.address,
-            distance: r.distance
-          })));
-          
+
+          console.log(
+            "Sorted distances:",
+            sortedRequests.map((r) => ({
+              address: r.address,
+              distance: r.distance,
+            }))
+          );
+
           setActiveData(sortedRequests);
         } else {
           // For "newest" category, just use the API response as is
@@ -205,7 +216,19 @@ const HomeStaff = () => {
       console.error(error);
     }
   };
-
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await getApprovedServiceByFixerId();
+      if (overviewRef.current) {
+        await overviewRef.current.reload();
+      }
+    } catch (error) {
+      console.error("Error refreshing:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
   useEffect(() => {
     getApprovedServiceByFixerId();
   }, []);
@@ -217,8 +240,20 @@ const HomeStaff = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 80 }}
         className="space-y-4 pt-14"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#FFC107"]}
+            tintColor="#FFC107"
+            progressViewOffset={20}
+            progressBackgroundColor="#ffffff"
+            title="Đang tải..."
+            titleColor="#FFC107"
+          />
+        }
       >
-        <Overview />
+        <Overview  ref={overviewRef} />
 
         {approvedRequest ? (
           <View key="approved-request" className="px-4 mt-3">

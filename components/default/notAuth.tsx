@@ -58,14 +58,14 @@ const NotAuth = () => {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         className="bg-black w-[80%] py-3 rounded-full mt-4"
         onPress={() => {}}
       >
         <Text className="text-white text-center text-base font-semibold">
           Đăng nhập với Google
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };

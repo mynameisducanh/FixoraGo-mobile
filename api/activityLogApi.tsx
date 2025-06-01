@@ -15,6 +15,18 @@ class ActivityLogApi extends Api {
   async CheckFixerCheckIn(fixerId: string) {
     return this.request("GET", `/check-fixer-checkin/${fixerId}`);
   }
+
+  async GetAllBillByUserId(userId: string) {
+    return this.request("GET", `/all/staff-payfee/${userId}`);
+  }
+
+  async findAllReportByUserId(userId: string) {
+    return this.request("GET", `/all/user-report/${userId}`);
+  }
+
+  async findAllReportByFixerId(fixerId: string) {
+    return this.request("GET", `/all/staff-report/${fixerId}`);
+  }
 }
 
 export default ActivityLogApi;
