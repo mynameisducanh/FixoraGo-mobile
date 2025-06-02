@@ -133,6 +133,7 @@ const RequestDetail = () => {
   const [showReviewModal2, setShowReviewModal2] = useState(false);
   const [fixerChecked, setFixerChecked] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [userConfirmed, setUserConfirmed] = useState<any>(false);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([]);
   const [showTechnicianModal, setShowTechnicianModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -200,7 +201,11 @@ const RequestDetail = () => {
           if (resFixer) {
             setFixerData(resFixer);
           }
-          if (skillFixer) {
+          if (
+            skillFixer &&
+            Array.isArray(skillFixer) &&
+            skillFixer.length > 0
+          ) {
             const fixerSkillNames = skillFixer.map((skill: any) => skill.name);
             setFixerSkills(fixerSkillNames);
           }
@@ -266,10 +271,16 @@ const RequestDetail = () => {
         setFixerChecked(true);
       }
       const res2 = await reviewApi.checkUserReview(idRequest as string);
+      const res3 = await ativityLogApi.checkUserConfirmCheckin(
+        idRequest as string
+      );
       if (res2) {
         if (res2.hasReviewed === true) {
           setCheckUserReview(true);
         }
+      }
+      if (res3.hasCheckin === true) {
+        setUserConfirmed(true);
       }
     } catch (error) {
       console.log("checkFixerCheckIn", error);
@@ -294,7 +305,7 @@ const RequestDetail = () => {
   const handleSubmitProposeRepairModalProps = () => {
     reloadData();
   };
-  const handleSubmitCheckInModalProps = () => {
+  const handleSubmitCheckInModalProps = (data: any) => {
     fetchDataRequestDetail();
     checkFixerCheckIn();
     setShowCheckInModal(false);
@@ -662,7 +673,7 @@ const RequestDetail = () => {
                       requestData?.status === "guarantee" ||
                       requestData?.status === "completed") && (
                       <>
-                        <TouchableOpacity className="">
+                        <TouchableOpacity className=""  onPress={() => router.push("/messages")}>
                           <Entypo
                             name="message"
                             size={26}
@@ -844,8 +855,9 @@ const RequestDetail = () => {
               </View>
             )}
             {(requestData?.status === "approved" ||
-              requestData?.status === "guarantee" || requestData?.status === "completed") &&
-              fixerChecked === true && (
+              requestData?.status === "guarantee" ||
+              requestData?.status === "completed") &&
+              userConfirmed === true && (
                 <View className="items-center p-2">
                   <TouchableOpacity
                     onPress={handleShowProposeRepairModalProps}
@@ -902,8 +914,8 @@ const RequestDetail = () => {
                   </TouchableOpacity>
                 </View>
               )}
-            {fixerChecked === false &&
-              user?.roles === "system_fixer" &&
+            {user?.roles === "system_user" &&
+              fixerChecked === true &&
               requestData?.status === "approved" && (
                 <View className="items-center p-2">
                   <TouchableOpacity
@@ -919,7 +931,8 @@ const RequestDetail = () => {
                 </View>
               )}
             {(requestData?.status === "approved" ||
-              requestData?.status === "guarantee" || requestData?.status === "completed") &&
+              requestData?.status === "guarantee" ||
+              requestData?.status === "completed") &&
               confirmCompleted === true && (
                 <View className="items-center p-2">
                   <TouchableOpacity

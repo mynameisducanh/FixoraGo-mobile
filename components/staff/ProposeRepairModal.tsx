@@ -471,7 +471,9 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
               </TouchableOpacity>
             </View>
 
-            {!showForm && <Text className="mb-2">Các đề xuất của bạn :</Text>}
+            {!showForm && (
+              <Text className="mb-2">Các đề xuất của nhân viên :</Text>
+            )}
             {!showForm ? (
               <View className="space-y-4">
                 {repairHistory.map((repair, index) => (
@@ -534,7 +536,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                     )}
                     {checkAccpet === "Accepted" && (
                       <Text className="mt-2">
-                        Note : Người dùng đã chấp nhận yêu cầu của bạn
+                        Note : Khách hàng đã chấp nhận yêu cầu này
                       </Text>
                     )}
                     {checkAccpet !== "Accepted" && (
@@ -573,7 +575,8 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                         Note :Bạn đã chấp nhận yêu cầu này
                       </Text>
                     )}
-                    {checkAccpet !== "Accepted" && (
+                    {checkAccpet !== "Accepted" &&
+                    repairHistory.length > 0 ? (
                       <TouchableOpacity
                         disabled={checkAccpet === "Accepted"}
                         onPress={handleFinalUserConfirm}
@@ -583,6 +586,8 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                           Chấp nhận yêu cầu
                         </Text>
                       </TouchableOpacity>
+                    ) : (
+                      <Text className="mt-2">Hiện chưa có yêu cầu nào</Text>
                     )}
                   </View>
                 )}
