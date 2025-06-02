@@ -137,21 +137,22 @@ const TechnicianDetailModal = ({
                   value={technician.address}
                   color={color}
                 />
-                
+
                 <InfoItem
                   icon="call"
                   title="Số điện thoại"
                   value={technician.phonenumber}
                   color={color}
                 />
-
-                <InfoItem
-                  icon="hammer"
-                  title="Kĩ năng chính"
-                  value={technician.authdata}
-                  color={color}
-                  iconType="MaterialCommunityIcons"
-                />
+                {technician.authdata && (
+                  <InfoItem
+                    icon="hammer"
+                    title="Kĩ năng chính"
+                    value={technician.authdata}
+                    color={color}
+                    iconType="MaterialCommunityIcons"
+                  />
+                )}
 
                 {/* Skills */}
                 <View className="mb-4 mt-2">

@@ -139,7 +139,7 @@ const Overview = forwardRef<OverviewRef>((props, ref) => {
       if (res2) {
         setDataDetail2(res2);
       }
-      if (skillFixer && Array.isArray(skillFixer)) {
+      if (skillFixer && Array.isArray(skillFixer) && skillFixer.length > 0 ) {
         const fixerSkillNames = skillFixer.map((skill: any) => skill.name);
         setFixerSkills(fixerSkillNames);
       } else {
