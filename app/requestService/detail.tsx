@@ -338,7 +338,13 @@ const RequestDetail = () => {
         userId: user?.id,
         type: "userReviewService",
       };
-      await reviewApi.createReview(payLoad);
+      const res = await reviewApi.createReview(payLoad);
+      if(res){
+         Alert.alert(
+          "Thông báo",
+          "Đánh giá thành công , Cảm ơn đánh giá của bạn"
+        );
+      }
     } catch (error) {
       console.log(error);
     }

@@ -235,7 +235,7 @@ const FixerReviewsModal = ({
             ) : (
               <>
                 <Text className="text-xl font-semibold text-gray-900">
-                  Đánh giá
+                  Đánh giá của nhân viên
                 </Text>
                 <TouchableOpacity onPress={onClose}>
                   <Ionicons name="close" size={24} color="#4b5563" />
