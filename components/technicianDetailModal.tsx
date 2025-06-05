@@ -7,6 +7,8 @@ import {
   Image,
   ScrollView,
   Dimensions,
+  Linking,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
@@ -56,6 +58,23 @@ const TechnicianDetailModal = ({
   const handleShowReviews = () => {
     console.log("Opening reviews modal for fixer:", technician.id);
     setShowReviewsModal(true);
+  };
+
+  const handleCall = async () => {
+    try {
+      const phoneNumber = technician.phonenumber.replace(/\s+/g, '');
+      const url = `tel:${phoneNumber}`;
+      const canOpen = await Linking.canOpenURL(url);
+      
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Lỗi', 'Không thể mở ứng dụng gọi điện thoại');
+      }
+    } catch (error) {
+      console.error('Error making phone call:', error);
+      Alert.alert('Lỗi', 'Không thể thực hiện cuộc gọi');
+    }
   };
 
   return (
@@ -115,18 +134,18 @@ const TechnicianDetailModal = ({
                   </View>
                   <Text className="text-gray-600 text-sm">Nhắn tin</Text>
                 </TouchableOpacity>
-                <TouchableOpacity className="items-center">
+                <TouchableOpacity className="items-center" onPress={handleCall}>
                   <View className={` p-3 rounded-full mb-1 ${bgColor}`}>
                     <Entypo name="phone" size={24} color={color} />
                   </View>
                   <Text className="text-gray-600 text-sm">Gọi điện</Text>
                 </TouchableOpacity>
-                <TouchableOpacity className="items-center">
+                {/* <TouchableOpacity className="items-center">
                   <View className={` p-3 rounded-full mb-1 ${bgColor}`}>
                     <Entypo name="flag" size={24} color={color} />
                   </View>
                   <Text className="text-gray-600 text-sm">Báo cáo</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
 
               {/* Detailed Information */}

@@ -105,7 +105,7 @@ const VerifyService = () => {
 
     // Giới hạn trên là ngày hiện tại + 10 ngày
     const maxDate = new Date(now);
-    maxDate.setDate(now.getDate() + 50);
+    maxDate.setDate(now.getDate() + 50);//sửa thành 10 khi build
     console.log(
       "first",
       (selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
