@@ -11,12 +11,9 @@ const FooterDetailService = ({ unit, serviceId, typeService, isActive }) => {
   const router = useRouter();
   const { user } = useUserStore();
   const [checkActive, setCheckActive] = useState(false);
-  console.log(user);
-  console.log(typeService);
   const CheckActive = () => {
     if (isActive && user) {
       setCheckActive(true);
-      console.log("true");
     } else {
       setCheckActive(false);
     }

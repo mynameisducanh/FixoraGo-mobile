@@ -25,7 +25,6 @@ const ForgetPassword = () => {
     try {
       setLoading(true);
       const res = await authApi.resetPass({ username });
-      console.log(res);
       if (res.statusCode === 200) {
         // Alert.alert('Thành công', 'Mã OTP đã được gửi đến email của bạn')
         setEmailData(res.email);
@@ -48,7 +47,6 @@ const ForgetPassword = () => {
     try {
       setLoading(true);
       const res = await authApi.confirmOTPReset({ otp, email: emailData });
-      console.log(res);
       if (res.statusCode === 200) {
         setTokenData(res.token);
         setStep(3);
@@ -77,7 +75,6 @@ const ForgetPassword = () => {
         password: newPassword,
         token: tokenData,
       });
-      console.log(res)
       if (res === true) {
         Alert.alert("Thành công", "Mật khẩu đã được đặt lại");
         router.replace("/login");

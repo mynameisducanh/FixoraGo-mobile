@@ -127,7 +127,6 @@ const VerifyService = () => {
     }
 
     // Nếu hợp lệ
-    console.log(date, "  ");
     setSelectedDate(date);
     hideDatePicker();
     checkUrgentAvailability(date, selectedTime);
@@ -137,7 +136,6 @@ const VerifyService = () => {
     const selected = new Date(time);
     const selectedHour = selected.getHours();
     const now = new Date();
-    console.log(checkDate);
     if (selectedHour < 8 || selectedHour > 20) {
       Alert.alert(
         "Thông báo",
@@ -309,7 +307,6 @@ const VerifyService = () => {
         }
       );
       if (res) {
-        console.log("Upload thành công", res.data);
         router.push("/service/requestSuccess");
       }
     } catch (err) {

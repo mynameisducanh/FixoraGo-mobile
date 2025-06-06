@@ -81,7 +81,6 @@ const ListPost = () => {
   });
 
   const onCatChanged = async (category: string) => {
-    console.log(category);
     setCurrentCategory(category);
     await fetchDataActive(category);
   };
@@ -94,7 +93,6 @@ const ListPost = () => {
     isUrgent: boolean;
     bonusAmount: string;
   }) => {
-    console.log("Applying filters:", filters);
     setActiveFilters(filters);
     await fetchDataActive(currentCategory, filters);
   };
@@ -113,18 +111,13 @@ const ListPost = () => {
           priceRange: filters.priceRange,
           isUrgent: filters.isUrgent,
         };
-        console.log("Filter params:", filterParams);
         const res = await requestService.getAllPendingOrRejected(filterParams);
-        console.log("API Response:", res);
 
         if (!res || !Array.isArray(res)) {
-          console.log("Invalid response format:", res);
           setActiveData([]);
           return;
         }
-        console.log(category)
         if (category !== "newest") {
-          console.log("vào chọn ngắn nhất")
           // Get user's current location
           const location = await getCurrentLocation();
           setUserLocation(location);
@@ -146,7 +139,6 @@ const ListPost = () => {
                 );
                 
                 const distance = routeInfo.distance / 1000; // Convert to kilometers
-                console.log(`Actual driving distance for ${request.address}: ${distance}km`);
                 
                 return {
                   ...request,
@@ -167,14 +159,10 @@ const ListPost = () => {
 
           // Sort requests by distance
           const sortedRequests = requestsWithDistance.sort((a, b) => {
-            console.log(`Comparing distances: ${a.distance}km vs ${b.distance}km`);
             return a.distance - b.distance;
           });
           
-          console.log("Sorted distances:", sortedRequests.map(r => ({
-            address: r.address,
-            distance: r.distance
-          })));
+         
           
           setActiveData(sortedRequests);
         } else {

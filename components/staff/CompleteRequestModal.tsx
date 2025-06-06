@@ -23,6 +23,7 @@ interface CompleteRequestModalProps {
   onClose: () => void;
   onSuccess: () => void;
   requestId: string;
+  price?:string;
   fixerData?: {
     id: string;
     name: string;
@@ -52,15 +53,23 @@ const CompleteRequestModal: React.FC<CompleteRequestModalProps> = ({
   const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
+  const [price, setPrice] = useState("");
   const [warrantyDays, setWarrantyDays] = useState<number>(10);
   const requestConfirmServiceApi = new RequestConfirmServiceApi();
-
   useEffect(() => {
     if (fixerData?.temp) {
       setWarrantyDays(Number(fixerData.temp));
     }
+    fetchData()
   }, [fixerData]);
-
+  const fetchData = async () => {
+    const response2 = await requestConfirmServiceApi.getByRequestId(requestId, {
+      type: "total",
+    });
+    if (response2) {
+      setPrice(response2[0].price);
+    }
+  };
   const selectImage = async () => {
     try {
       const permissionResult =
@@ -110,6 +119,7 @@ const CompleteRequestModal: React.FC<CompleteRequestModalProps> = ({
         formData.append("note", note);
         formData.append("name", "Xác nhận đã hoàn thành của nhân viên");
         formData.append("type", "completed");
+        formData.append("price", price);
         formData.append("userId", user.id);
         formData.append("requestServiceId", requestId);
         formData.append("temp", warrantyDays.toString());
@@ -321,21 +331,19 @@ const CompleteRequestModal: React.FC<CompleteRequestModalProps> = ({
                       </TouchableOpacity>
                     )}
 
-                    {user.roles === "system_user" &&
-                      fixerData?.id &&
-                      fixerData.userAccept && (
-                        <TouchableOpacity
-                          onPress={handleComplete}
-                          className="bg-primary py-3 px-6 rounded-lg"
-                          disabled={loading}
-                        >
-                          {loading ? (
-                            <ActivityIndicator color="white" />
-                          ) : (
-                            <Text className="text-white">Tôi xác nhận</Text>
-                          )}
-                        </TouchableOpacity>
-                      )}
+                    {user.roles === "system_user" && (
+                      <TouchableOpacity
+                        onPress={handleComplete}
+                        className="bg-primary py-3 px-6 rounded-lg"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <ActivityIndicator color="white" />
+                        ) : (
+                          <Text className="text-white">Tôi xác nhận</Text>
+                        )}
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               )}

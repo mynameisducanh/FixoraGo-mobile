@@ -132,6 +132,8 @@ const RequestDetail = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showReviewModal2, setShowReviewModal2] = useState(false);
   const [fixerChecked, setFixerChecked] = useState(false);
+  const [fixerPropose, setFixerPropose] = useState(false);
+  const [userPropose, setUserPropose] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [userConfirmed, setUserConfirmed] = useState<any>(false);
   const [activityHistory, setActivityHistory] = useState<ActivityHistory[]>([]);
@@ -189,7 +191,6 @@ const RequestDetail = () => {
       if (requestData.userId) {
         const resUser = await userApi.getByUserId(requestData.userId);
         if (resUser) {
-          console.log(resUser);
           setUserData(resUser);
         }
         if (requestData?.fixerId) {
@@ -271,6 +272,13 @@ const RequestDetail = () => {
         setFixerChecked(true);
       }
       const res2 = await reviewApi.checkUserReview(idRequest as string);
+      const res4 = await requestConfirmServiceApi.checkFixerPropose(
+        idRequest as string
+      );
+      if (res4) {
+        setFixerPropose(res4.hasTotalType);
+        setUserPropose(res4.isAccepted);
+      }
       const res3 = await ativityLogApi.checkUserConfirmCheckin(
         idRequest as string
       );
@@ -339,8 +347,8 @@ const RequestDetail = () => {
         type: "userReviewService",
       };
       const res = await reviewApi.createReview(payLoad);
-      if(res){
-         Alert.alert(
+      if (res) {
+        Alert.alert(
           "Thông báo",
           "Đánh giá thành công , Cảm ơn đánh giá của bạn"
         );
@@ -415,7 +423,7 @@ const RequestDetail = () => {
             type: "success",
             title: "Hủy yêu cầu thành công",
             message: "Yêu cầu của bạn đã được hủy thành công.",
-            redirectTo: "/(staff)",
+            redirectTo: user?.roles === "system_fixer" ? "/(staff)" : "/(user)",
             buttonText: "Xem danh sách yêu cầu",
           },
         });
@@ -679,7 +687,10 @@ const RequestDetail = () => {
                       requestData?.status === "guarantee" ||
                       requestData?.status === "completed") && (
                       <>
-                        <TouchableOpacity className=""  onPress={() => router.push("/messages")}>
+                        <TouchableOpacity
+                          className=""
+                          onPress={() => router.push("/messages")}
+                        >
                           <Entypo
                             name="message"
                             size={26}
@@ -827,8 +838,7 @@ const RequestDetail = () => {
             {((requestData?.status === "rejected" &&
               user?.roles === "system_user") ||
               (requestData?.status === "approved" &&
-                user?.roles === "system_fixer") ||
-              user?.roles === "system_user") &&
+                user?.roles === "system_fixer")) &&
               requestData?.status !== "deleted" &&
               requestData?.status !== "guarantee" &&
               requestData?.status !== "completed" && (
@@ -870,7 +880,11 @@ const RequestDetail = () => {
                     className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
                   >
                     <Text className="text-primary font-semibold text-center">
-                      Đề xuất sửa
+                      {user?.roles === "system_fixer" && (
+                        <>{fixerPropose ? "Xem đề xuất sửa" : "Đề xuất sửa"}</>
+                      )}
+
+                      {user?.roles === "system_user" && "Xem đề xuất sửa"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -908,7 +922,8 @@ const RequestDetail = () => {
             {requestData?.status === "approved" &&
               user?.roles === "system_fixer" &&
               fixerChecked === true &&
-              confirmCompleted !== true && (
+              confirmCompleted !== true &&
+              userPropose === true && (
                 <View className="items-center p-2">
                   <TouchableOpacity
                     onPress={handleShowCompleteModal}
@@ -920,22 +935,36 @@ const RequestDetail = () => {
                   </TouchableOpacity>
                 </View>
               )}
-            {user?.roles === "system_user" &&
-              fixerChecked === true &&
-              requestData?.status === "approved" && (
-                <View className="items-center p-2">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowCheckInModal(true);
-                    }}
-                    className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
-                  >
+            {((user?.roles === "system_user" && fixerChecked === true) ||
+              (user?.roles === "system_fixer" &&
+                requestData?.status === "approved")) && (
+              <View className="items-center p-2">
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowCheckInModal(true);
+                  }}
+                  className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                >
+                  {fixerChecked && user?.roles === "system_fixer" && (
+                    <Text className="text-primary font-semibold text-center">
+                      Xem thông tin check-in
+                    </Text>
+                  )}
+                  {!fixerChecked && (
                     <Text className="text-primary font-semibold text-center">
                       Check-In
                     </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+                  )}
+                  {fixerChecked && user?.roles === "system_user" && (
+                    <Text className="text-primary font-semibold text-center">
+                      Thông tin check-in của nhân viên
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+          <View className="flex-row justify-center">
             {(requestData?.status === "approved" ||
               requestData?.status === "guarantee" ||
               requestData?.status === "completed") &&
@@ -945,11 +974,19 @@ const RequestDetail = () => {
                     onPress={() => setShowCompleteModal2(true)}
                     className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
                   >
-                    <Text className="text-primary font-semibold text-center">
-                      {requestData?.status === "guarantee"
-                        ? "Xem lại xác nhận hoàn thành"
-                        : "Xác nhận hoàn thành"}
-                    </Text>
+                    {user?.roles === "system_user" ? (
+                      <Text className="text-primary font-semibold text-center">
+                        {requestData?.status === "guarantee"
+                          ? "Xem xác nhận hoàn thành"
+                          : "Xem xác nhận hoàn thành của nhân viên"}
+                      </Text>
+                    ) : (
+                      <Text className="text-primary font-semibold text-center">
+                        {requestData?.status === "guarantee"
+                          ? "Xem xác nhận hoàn thành"
+                          : "Xem lại xác nhận hoàn thành"}
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               )}
@@ -1086,6 +1123,7 @@ const RequestDetail = () => {
         onClose={() => setShowCompleteModal(false)}
         onSuccess={handleCompleteRequest}
         requestId={requestData?.id}
+        price={fixerCompleteData?.[0].price}
       />
       <CompleteRequestModal
         visible={showCompleteModal2}
