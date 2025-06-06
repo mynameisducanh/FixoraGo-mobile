@@ -109,7 +109,6 @@ const PayFeesModal: React.FC<PayFeesModalProps> = ({
       }
       formData.append("temp", "pending");
       const res = await activityLogApi.createRes(formData);
-      console.log(res);
       if (res) {
         onSubmit({
           images: images.filter((img) => img !== undefined),

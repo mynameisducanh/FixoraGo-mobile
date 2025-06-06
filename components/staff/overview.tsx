@@ -217,12 +217,12 @@ const Overview = forwardRef<OverviewRef>((props, ref) => {
           </Text>
           <Text className="text-sm text-gray-500">Tổng doanh thu</Text>
         </View>
-        <View className="items-center">
+        {/* <View className="items-center">
           <Text className="text-lg font-bold text-gray-700">
             {formatDecimalToWhole(revenue?.currentMonthRevenue)}
           </Text>
           <Text className="text-sm text-gray-500">Doanh thu tháng này</Text>
-        </View>
+        </View> */}
         <TouchableOpacity
           className="items-center"
           onPress={() => router.push("/review/list")}
