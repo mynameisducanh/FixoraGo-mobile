@@ -46,7 +46,7 @@ const NewsCard = ({ item }: NewsCardProps) => {
         <View className="pt-1">
           <Text
             className="w-full font-bold pt-2"
-            numberOfLines={1}
+            numberOfLines={2}
             ellipsizeMode="tail"
           >
             {item.title}

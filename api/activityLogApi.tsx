@@ -16,6 +16,10 @@ class ActivityLogApi extends Api {
     return this.request("GET", `/check-fixer-checkin/${fixerId}`);
   }
 
+  async checkUserConfirmCheckin(fixerId: string) {
+    return this.request("GET", `/check-user-confirm-checkin/${fixerId}`);
+  }
+
   async GetAllBillByUserId(userId: string) {
     return this.request("GET", `/all/staff-payfee/${userId}`);
   }
@@ -26,6 +30,14 @@ class ActivityLogApi extends Api {
 
   async findAllReportByFixerId(fixerId: string) {
     return this.request("GET", `/all/staff-report/${fixerId}`);
+  }
+
+  async getByRequestIdStaffCheckIn(requestId: string) {
+    return this.request("GET", `/request-service/${requestId}/staff-checkin`);
+  }
+
+  async userConfirmCheckIn(id: string, temp: string) {
+    return this.request("patch", `/update-temp-timestamp/${id}`, { temp });
   }
 }
 

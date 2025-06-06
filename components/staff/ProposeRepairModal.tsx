@@ -155,7 +155,6 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
       const res = await requestConfirmServiceApi.userAccept(
         idReuqestConfirmTotal
       );
-      console.log(res);
       if (res.statusCode === 500) {
         Alert.alert("Thông báo", "Hiện chưa có yêu cầu nào");
         setShowSummaryModal(false);
@@ -471,7 +470,9 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
               </TouchableOpacity>
             </View>
 
-            {!showForm && <Text className="mb-2">Các đề xuất của bạn :</Text>}
+            {!showForm && (
+              <Text className="mb-2">Các đề xuất của nhân viên :</Text>
+            )}
             {!showForm ? (
               <View className="space-y-4">
                 {repairHistory.map((repair, index) => (
@@ -489,26 +490,27 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                           Giá: {repair.price} VNĐ
                         </Text>
                       </View>
-                      {checkAccpet !== "Accepted" && (
-                        <TouchableOpacity
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            handleDelete(index);
-                          }}
-                          className="bg-red-500 p-2 rounded-lg"
-                          disabled={deleteLoading === index}
-                        >
-                          {deleteLoading === index ? (
-                            <ActivityIndicator color="white" size="small" />
-                          ) : (
-                            <Ionicons
-                              name="trash-outline"
-                              size={20}
-                              color="white"
-                            />
-                          )}
-                        </TouchableOpacity>
-                      )}
+                      {checkAccpet !== "Accepted" &&
+                        user?.roles === "system_fixer" && (
+                          <TouchableOpacity
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleDelete(index);
+                            }}
+                            className="bg-red-500 p-2 rounded-lg"
+                            disabled={deleteLoading === index}
+                          >
+                            {deleteLoading === index ? (
+                              <ActivityIndicator color="white" size="small" />
+                            ) : (
+                              <Ionicons
+                                name="trash-outline"
+                                size={20}
+                                color="white"
+                              />
+                            )}
+                          </TouchableOpacity>
+                        )}
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -534,7 +536,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                     )}
                     {checkAccpet === "Accepted" && (
                       <Text className="mt-2">
-                        Note : Người dùng đã chấp nhận yêu cầu của bạn
+                        Note : Khách hàng đã chấp nhận yêu cầu này
                       </Text>
                     )}
                     {checkAccpet !== "Accepted" && (
@@ -573,7 +575,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                         Note :Bạn đã chấp nhận yêu cầu này
                       </Text>
                     )}
-                    {checkAccpet !== "Accepted" && (
+                    {checkAccpet !== "Accepted" && repairHistory.length > 0 && (
                       <TouchableOpacity
                         disabled={checkAccpet === "Accepted"}
                         onPress={handleFinalUserConfirm}
@@ -583,6 +585,11 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                           Chấp nhận yêu cầu
                         </Text>
                       </TouchableOpacity>
+                    )}
+                    {checkAccpet !== "Accepted" && repairHistory.length <= 0 && (
+                      <Text className="mt-2">
+                        Hiện chưa có yêu cầu nào
+                      </Text>
                     )}
                   </View>
                 )}
@@ -614,7 +621,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                       <Text className="text-gray-700 ml-3">Sửa chữa</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      disabled={checkAccpet === "Accepted"}
+                      disabled={
+                        checkAccpet === "Accepted" ||
+                        user?.roles === "system_user"
+                      }
                       onPress={() => setType("replace")}
                       className="flex-1 flex-row items-center space-x-2 bg-gray-100 p-3 rounded-lg"
                     >
@@ -639,7 +649,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                   <TextInput
                     className="border border-gray-300 rounded-lg p-3"
                     value={name}
-                    editable={checkAccpet !== "Accepted"}
+                    editable={
+                      checkAccpet !== "Accepted" &&
+                      user?.roles !== "system_user"
+                    }
                     onChangeText={setName}
                     placeholder="Nhập tên sửa chữa"
                   />
@@ -654,7 +667,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                         return (
                           <View key={index} className="relative">
                             <TouchableOpacity
-                              disabled={checkAccpet === "Accepted"}
+                              disabled={
+                                checkAccpet === "Accepted" ||
+                                user?.roles === "system_user"
+                              }
                               onPress={() => selectImage(index)}
                               className="border-dotted border w-20 h-20 border-gray-300 justify-center items-center rounded-lg overflow-hidden"
                             >
@@ -696,7 +712,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                         className="border border-gray-300 rounded-lg p-3 w-full"
                         value={price}
                         onChangeText={handlePriceChange}
-                        editable={checkAccpet !== "Accepted"}
+                        editable={
+                          checkAccpet !== "Accepted" &&
+                          user?.roles !== "system_user"
+                        }
                         placeholder="Nhập giá tiền"
                         keyboardType="numeric"
                       />
@@ -721,7 +740,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                         onChangeText={setNote}
                         placeholder="Nhập ghi chú (Không bắt buộc"
                         multiline
-                        editable={checkAccpet !== "Accepted"}
+                        editable={
+                          checkAccpet !== "Accepted" &&
+                          user?.roles !== "system_user"
+                        }
                         numberOfLines={3}
                       />
                     </View>

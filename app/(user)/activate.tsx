@@ -17,7 +17,6 @@ const Activate = () => {
   const [activeData, setActiveData] = useState([]);
   const { user } = useUserStore();
   const handleReorder = (item) => {
-    console.log("đã chọn ", item.id);
     router.push({
       pathname: "/requestService/detail",
       params: { idRequest: item.id },

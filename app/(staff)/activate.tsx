@@ -154,7 +154,11 @@ const Activate = () => {
       <View className="px-5 -mt-12 pt-6 bg-background rounded-t-3xl">
         <Text className="text-xl font-bold mb-3">Hoạt động gần đây</Text>
         <View>
-          {activeData.slice(0, 3).map((item) => renderItem({ item }))}
+          {activeData.slice(0, 3).map((item) => (
+            <View key={item.id}>
+              {renderItem({ item })}
+            </View>
+          ))}
         </View>
       </View>
       <TouchableOpacity className="w-full mt-4">

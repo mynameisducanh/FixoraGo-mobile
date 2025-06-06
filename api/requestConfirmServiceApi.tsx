@@ -23,6 +23,9 @@ class RequestConfirmServiceApi extends Api {
   async userAccept(id: string) {
     return this.request("Patch", `/accept/${id}`);
   }
+  async checkFixerPropose(requestId: string) {
+    return this.request("get", `/propose/check/${requestId}`);
+  }
   async checkFixerCompleted(requestId: string) {
     return this.request("get", `/check-fixer-completed/${requestId}`);
   }
