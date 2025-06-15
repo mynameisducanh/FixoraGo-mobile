@@ -9,6 +9,7 @@ import {
   Image,
   Dimensions,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -154,6 +155,7 @@ const RequestDetail = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchDataRequestDetail = async () => {
     try {
@@ -495,7 +497,12 @@ const RequestDetail = () => {
   useEffect(() => {
     fetchDataRequestDetail();
   }, []);
-
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    console.log("onRefresh");
+    await fetchDataRequestDetail();
+    setRefreshing(false);
+  }, []);
   if (loading) {
     return <LoadingOverlay />;
   }
@@ -524,6 +531,18 @@ const RequestDetail = () => {
           flexGrow: 1,
           paddingBottom: hp(5),
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#FFC107"]}
+            tintColor="#FFC107"
+            progressViewOffset={20}
+            progressBackgroundColor="#ffffff"
+            title="Đang tải..."
+            titleColor="#FFC107"
+          />
+        }
         className="flex-1 pt-24 "
       >
         <View className="h-40 px-4 py-4 mb-2 ">
@@ -873,7 +892,9 @@ const RequestDetail = () => {
             {(requestData?.status === "approved" ||
               requestData?.status === "guarantee" ||
               requestData?.status === "completed") &&
-              userConfirmed === true && (
+              fixerChecked === true &&
+              (user?.roles === "system_fixer" ||
+                (user?.roles === "system_user" && fixerPropose)) && (
                 <View className="items-center p-2">
                   <TouchableOpacity
                     onPress={handleShowProposeRepairModalProps}

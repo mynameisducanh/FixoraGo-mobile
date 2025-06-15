@@ -100,11 +100,11 @@ const DetailProfile = () => {
         <View className="flex-row justify-between">
           <View className="flex-row items-center border border-gray-300 rounded-full w-[60%] h-14 p-3 mt-3">
             <Feather name="phone" size={20} color="#888" />
-            <Text className="ml-3">{userData?.phonenumber}</Text>
+            <Text className="ml-3">{userData?.phonenumber || "Trống"}</Text>
           </View>
           <View className="flex-row items-center border border-gray-300 rounded-full w-1/3 h-14 p-3 mt-3">
             <Ionicons name="person-outline" size={20} color="#888" />
-            <Text className="ml-3">{userData?.gioitinh}</Text>
+            <Text className="ml-3">{userData?.gioitinh || "Trống"}</Text>
           </View>
         </View>
 

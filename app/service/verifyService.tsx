@@ -461,21 +461,7 @@ const VerifyService = () => {
             </View>
             <Text className="py-2 font-bold text-lg">Xác nhận lịch hẹn</Text>
             <View className="flex-row gap-1">
-              <TouchableOpacity
-                className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-1/3 "
-                onPress={showTimePicker}
-              >
-                <Text numberOfLines={1} className="">
-                  {selectedTime ? `${formatTime(selectedTime)}` : "Chọn giờ"}
-                </Text>
-                <LottieView
-                  source={require("@/assets/icons/clock-icon.json")}
-                  autoPlay={false}
-                  loop={false}
-                  style={{ width: 20, height: 20 }}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
+            <TouchableOpacity
                 className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-2/3"
                 onPress={showDatePicker}
               >
@@ -491,6 +477,21 @@ const VerifyService = () => {
                   style={{ width: 20, height: 20 }}
                 />
               </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-1/3 "
+                onPress={showTimePicker}
+              >
+                <Text numberOfLines={1} className="">
+                  {selectedTime ? `${formatTime(selectedTime)}` : "Chọn giờ"}
+                </Text>
+                <LottieView
+                  source={require("@/assets/icons/clock-icon.json")}
+                  autoPlay={false}
+                  loop={false}
+                  style={{ width: 20, height: 20 }}
+                />
+              </TouchableOpacity>
+             
             </View>
             <View className="flex-row gap-3 items-center mt-2">
               <View className="flex-1">

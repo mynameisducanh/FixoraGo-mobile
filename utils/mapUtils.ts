@@ -236,8 +236,10 @@ export const getAddressFromCoordinates = async (
       const context = feature.context || [];
 
       const fullPlaceName = data.features[0].place_name_vi;
-      const parts = fullPlaceName.split(",").map((part) => part.trim());
-      const street = parts.slice(0, 2).join(", ");
+      const parts = fullPlaceName.split(",").map((part: any) => part.trim());
+      const street = removeAlleyNumbers(parts.slice(0, 2).join(", "));
+      // Sử dụng hàm trong xử lý địa chỉ
+
       // Tên đường từ text_vi
       // const street = feature.place_name_vi || "";
 
@@ -308,4 +310,61 @@ export const fetchDataStepByStep = async (
     console.error("Lỗi khi lấy chỉ dẫn chi tiết:", error);
     throw new Error(`Lỗi khi lấy chỉ dẫn chi tiết: ${error.message}`);
   }
+};
+
+const removeAlleyNumbers = (address: string): string => {
+  // Danh sách các từ khóa cần loại bỏ
+  const alleyKeywords = [
+    "kiệt",
+    "hẻm",
+    "ngõ",
+    "ngách",
+    "lô",
+    "lầu",
+    "tầng",
+    "phòng",
+    "khu",
+    "block",
+    "tòa",
+    "căn",
+    "số",
+    "đường",
+    "phố",
+  ];
+
+  // Tách địa chỉ thành các phần
+  const parts = address.split(",").map((part) => part.trim());
+
+  // Xử lý từng phần của địa chỉ
+  const processedParts = parts.map((part) => {
+    // Tách phần thành các từ
+    const words = part.split(" ");
+
+    // Lọc bỏ các từ khóa và số đi kèm
+    const filteredWords = words.filter((word, index) => {
+      const lowerWord = word.toLowerCase();
+
+      // Kiểm tra nếu từ hiện tại là từ khóa
+      if (alleyKeywords.includes(lowerWord)) {
+        return false;
+      }
+
+      // Kiểm tra nếu từ trước đó là từ khóa và từ hiện tại là số
+      if (
+        index > 0 &&
+        alleyKeywords.includes(words[index - 1].toLowerCase()) &&
+        !isNaN(Number(word))
+      ) {
+        return false;
+      }
+
+      // Giữ lại các từ khác
+      return true;
+    });
+
+    return filteredWords.join(" ");
+  });
+
+  // Loại bỏ các phần rỗng và nối lại
+  return processedParts.filter((part) => part.trim() !== "").join(", ");
 };
