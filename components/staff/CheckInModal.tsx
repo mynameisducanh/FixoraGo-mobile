@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   Alert,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -64,7 +65,9 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
 
   const fetchFixerData = async () => {
     try {
-      const activityLog = await ativityLogApi.getByRequestIdStaffCheckIn(requestId);
+      const activityLog = await ativityLogApi.getByRequestIdStaffCheckIn(
+        requestId
+      );
       if (activityLog && activityLog.fixerId) {
         const resFixer = await userApi.getByUserId(activityLog.fixerId);
         const skillFixer = await skillFixerApi.getByUserId(activityLog.fixerId);
@@ -77,7 +80,9 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
           const fixerSkillNames = skillFixer.map((skill: any) => skill.name);
           setFixerSkills(fixerSkillNames);
         }
-        const average = await reviewApi.getReviewAverageByFixerId(activityLog.fixerId);
+        const average = await reviewApi.getReviewAverageByFixerId(
+          activityLog.fixerId
+        );
         if (average) {
           setFixerRating(average.average);
           setFixerTotalReviews(average.count);
@@ -152,14 +157,23 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
         formData.append("activityType", "staff_checkin");
         const firstImage = images.find((img) => img !== undefined);
         if (firstImage) {
+          const imageUri =
+            Platform.OS === "android"
+              ? firstImage.uri
+              : firstImage.uri.replace("file://", "");
+
+          const filename = firstImage.uri.split("/").pop() || "image.jpg";
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : "image/jpeg";
+
           formData.append("file", {
-            uri: firstImage.uri,
-            type: "image/jpeg",
-            name: "image.jpg",
+            uri: imageUri,
+            name: filename,
+            type: type,
           } as any);
         }
         formData.append("note", note);
-        formData.append("temp", "pending");
+        formData.append("temp", "user_confirmed");
         formData.append("requestServiceId", requestId);
         const res = await ativityLogApi.createRes(formData);
         if (res) {
@@ -175,7 +189,10 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
         }
       } else {
         // For system_user, handle confirmation
-        const res = await ativityLogApi.userConfirmCheckIn(activityLogData.id, "user_confirmed");
+        const res = await ativityLogApi.userConfirmCheckIn(
+          activityLogData.id,
+          "user_confirmed"
+        );
         if (res) {
           onSubmit({
             images: [],
@@ -187,6 +204,7 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
       }
     } catch (error) {
       console.log(error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi gửi thông tin");
     } finally {
       setIsLoading(false);
     }
@@ -198,10 +216,12 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
       if (res.hasCheckin === true) {
         setFixerChecked(true);
         // Fetch the check-in data
-        const checkInData = await ativityLogApi.getByRequestIdStaffCheckIn(requestId);
+        const checkInData = await ativityLogApi.getByRequestIdStaffCheckIn(
+          requestId
+        );
         if (checkInData) {
           setActivityLogData(checkInData);
-          if(checkInData.temp === "user_confirmed"){
+          if (checkInData.temp === "user_confirmed") {
             setUserConfirmed(true);
           }
         }
@@ -241,7 +261,7 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
                 <View className="bg-yellow-50 p-3 rounded-lg">
                   <Text className="text-yellow-800 text-center font-medium">
                     {activityLogData?.temp === "user_confirmed"
-                      ? "Khách hàng đã xác nhận"
+                      ? "Đây là hình ảnh check-in của bạn"
                       : "Đang chờ khách hàng xác nhận"}
                   </Text>
                 </View>
@@ -261,7 +281,9 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
                   <View>
                     <Text className="text-gray-700 mb-2">Ghi chú đã gửi</Text>
                     <View className="bg-gray-50 p-3 rounded-lg">
-                      <Text className="text-gray-700">{activityLogData.note}</Text>
+                      <Text className="text-gray-700">
+                        {activityLogData.note}
+                      </Text>
                     </View>
                   </View>
                 )}
@@ -301,7 +323,11 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
                                   onPress={() => removeImage(index)}
                                   className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
                                 >
-                                  <Ionicons name="close" size={12} color="white" />
+                                  <Ionicons
+                                    name="close"
+                                    size={12}
+                                    color="white"
+                                  />
                                 </TouchableOpacity>
                               )}
                             </View>
@@ -309,8 +335,8 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
                         })}
                       </View>
                       <Text className="text-gray-500 text-sm mt-2">
-                        Vui lòng chụp ảnh rõ nét và đảm bảo có thể xác định địa điểm
-                        rõ ràng
+                        Vui lòng chụp ảnh rõ nét và đảm bảo có thể xác định địa
+                        điểm rõ ràng
                       </Text>
                     </View>
 
@@ -368,44 +394,55 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
                           </Text>
                         </TouchableOpacity>
                         <View>
-                  <Text className="text-gray-700 my-3">Hình ảnh nhân viên check in</Text>
-                  {activityLogData?.imageUrl && (
-                    <Image
-                      source={{ uri: activityLogData.imageUrl }}
-                      className="w-full h-48 rounded-lg"
-                      resizeMode="cover"
-                    />
-                  )}
-                </View>
+                          <Text className="text-gray-700 my-3">
+                            Hình ảnh nhân viên check in
+                          </Text>
+                          {activityLogData?.imageUrl && (
+                            <Image
+                              source={{ uri: activityLogData.imageUrl }}
+                              className="w-full h-48 rounded-lg"
+                              resizeMode="cover"
+                            />
+                          )}
+                        </View>
 
-                {activityLogData?.note && (
-                  <View>
-                    <Text className="text-gray-700 mb-2">Ghi chú đã gửi</Text>
-                    <View className="bg-gray-50 p-3 rounded-lg">
-                      <Text className="text-gray-700">{activityLogData.note}</Text>
-                    </View>
-                  </View>
-                )}
+                        {activityLogData?.note && (
+                          <View>
+                            <Text className="text-gray-700 mb-2">
+                              Ghi chú đã gửi
+                            </Text>
+                            <View className="bg-gray-50 p-3 rounded-lg">
+                              <Text className="text-gray-700">
+                                {activityLogData.note}
+                              </Text>
+                            </View>
+                          </View>
+                        )}
                       </View>
                     )}
                   </>
                 )}
               </>
             )}
-            {user?.roles === "system_user" && userConfirmed === true && (<Text className="mt-3">Bạn đã xác nhận là nhân viên đã tới</Text>)}
-            {user?.roles === "system_fixer" && userConfirmed === true && (<Text className="mt-3">Người dùng đã xác nhận là bạn đã tới</Text>)}
-            {(!fixerChecked || user?.roles === "system_user") && userConfirmed === false && (
-              <TouchableOpacity
-                onPress={handleSubmit}
-                className="bg-primary py-3 rounded-lg mt-4"
-              >
-                <Text className="text-white text-center font-semibold">
-                  {user?.roles === "system_fixer"
-                    ? "Xác nhận đã đến"
-                    : "Xác nhận nhân viên đã đến"}
-                </Text>
-              </TouchableOpacity>
+            {/* {user?.roles === "system_user" && userConfirmed === true && (
+              <Text className="mt-3">Bạn đã xác nhận là nhân viên đã tới</Text>
             )}
+            {user?.roles === "system_fixer" && userConfirmed === true && (
+              <Text className="mt-3">Người dùng đã xác nhận là bạn đã tới</Text>
+            )} */}
+            {(user?.roles === "system_fixer") &&
+              userConfirmed === false && (
+                <TouchableOpacity
+                  onPress={handleSubmit}
+                  className="bg-primary py-3 rounded-lg mt-4"
+                >
+                  <Text className="text-white text-center font-semibold">
+                    {user?.roles === "system_fixer"
+                      ? "Xác nhận đã đến"
+                      : "Xác nhận nhân viên đã đến"}
+                  </Text>
+                </TouchableOpacity>
+              )}
           </ScrollView>
         </View>
       </View>

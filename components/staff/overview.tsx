@@ -190,7 +190,7 @@ const Overview = forwardRef<OverviewRef>((props, ref) => {
         </View>
         <View className="flex-col justify-end items-end">
           <Text className="text-blue-700 mt-1">
-            Tổng phí: {formatDecimalToWhole(dataDetail3?.unpaidFees)} VNĐ
+            {/* Tổng phí: {formatDecimalToWhole(dataDetail3?.unpaidFees)} VNĐ */}
           </Text>
 
           <TouchableOpacity

@@ -61,6 +61,7 @@ const Activate = () => {
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
+    console.log("onRefresh");
     await fetchDataActive();
     setRefreshing(false);
   }, []);
@@ -131,7 +132,7 @@ const Activate = () => {
 
   return (
     <ScrollView
-      className="h-full bg-white"
+      className="h-full bg-white flex-1"
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -145,13 +146,13 @@ const Activate = () => {
         />
       }
     >
-      <View className="">
+      {/* <View className="">
         <Image
           style={{ height: hp(32), width: wp(100) }}
           source={require("../../assets/images/hero-detail-test.jpg")}
         />
-      </View>
-      <View className="px-5 -mt-12 pt-6 bg-background rounded-t-3xl">
+      </View> */}
+      <View className="px-5 -mt-12 pt-6 bg-background mt-6">
         <Text className="text-xl font-bold mb-3">Hoạt động gần đây</Text>
         <View>
           {activeData.slice(0, 3).map((item) => (

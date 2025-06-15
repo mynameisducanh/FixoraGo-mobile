@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
+  Dimensions,
+  StatusBar,
 } from "react-native";
 import { io, Socket } from "socket.io-client";
 import Constants from "expo-constants";
@@ -52,6 +55,7 @@ const ChatDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [dataSender, setDataSender] = useState<any>(null);
   const [roomStatus, setRoomStatus] = useState<string>("active");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const fetchDataUser = async (id: string) => {
     try {
@@ -139,6 +143,27 @@ const ChatDetail = () => {
     };
   }, [id]);
 
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
+
   const handleSendMessage = () => {
     if (!message.trim()) return;
     if (!id || typeof id !== "string") return alert("Chưa có room!");
@@ -156,12 +181,9 @@ const ChatDetail = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-gray-50"
-      style={{ paddingTop: insets.top, paddingBottom: 100 }}
-    >
-      <View className="flex-1 mb-3">
+    <View style={{ flex: 1, backgroundColor: "#f9fafb" }}>
+      <StatusBar barStyle="dark-content" />
+      <View style={{ paddingTop: insets.top }}>
         <View className="bg-white p-4 flex-row items-center border-b border-gray-200">
           <TouchableOpacity onPress={() => router.back()} className="mr-4">
             <Text className="text-blue-500">←</Text>
@@ -170,11 +192,19 @@ const ChatDetail = () => {
             {dataSender?.fullName || dataSender?.username || "Đang tải..."}
           </Text>
         </View>
+      </View>
 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? -10 : 0}
+      >
         <ScrollView
           ref={scrollRef}
           className="flex-1 p-4"
           contentContainerStyle={{ paddingBottom: 20 }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {isLoading ? (
             <View className="flex-1 justify-center items-center">
@@ -219,7 +249,9 @@ const ChatDetail = () => {
         ) : (
           <View
             className="p-4 bg-white border-t border-gray-200"
-            style={{ paddingBottom: insets.bottom + 16 }}
+            style={{
+              paddingBottom: Platform.OS === "ios" ? insets.bottom + 16 : 16,
+            }}
           >
             <View className="flex-row">
               <TextInput
@@ -239,8 +271,8 @@ const ChatDetail = () => {
             </View>
           </View>
         )}
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
