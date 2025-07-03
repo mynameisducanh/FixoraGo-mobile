@@ -125,6 +125,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
           }
           if (response && Array.isArray(response)) {
             // Transform the response data to match RepairItem interface
+            console.log(response);
             const transformedData = response.map((item) => ({
               id: item.id,
               type: item.type,
@@ -136,10 +137,11 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                     width: 0,
                     height: 0,
                   }))
-                : [],
+                : [item.image],
               price: item.price,
               note: item.note,
             }));
+            console.log(transformedData);
             setRepairHistory(transformedData);
           }
         } catch (error) {
@@ -329,11 +331,21 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
         formData.append("type", newRepair.type);
         formData.append("price", newRepair.price);
         formData.append("note", newRepair.note);
+
         newRepair.images.forEach((image, index) => {
-          formData.append(`file`, {
-            uri: image.uri,
-            name: image.uri.split("/").pop() || `image${index}.jpg`,
-            type: image.type || "image/jpeg",
+          const imageUri =
+            Platform.OS === "android"
+              ? image.uri
+              : image.uri.replace("file://", "");
+
+          const filename = image.uri.split("/").pop() || `image${index}.jpg`;
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : "image/jpeg";
+
+          formData.append("file", {
+            uri: imageUri,
+            name: filename,
+            type: type,
           } as any);
         });
       } else {
@@ -347,16 +359,24 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
         formData.append("requestServiceId", requestServiceId);
 
         newRepair.images.forEach((image, index) => {
-          formData.append(`file`, {
-            uri: image.uri,
-            name: image.uri.split("/").pop() || `image${index}.jpg`,
-            type: image.type || "image/jpeg",
+          const imageUri =
+            Platform.OS === "android"
+              ? image.uri
+              : image.uri.replace("file://", "");
+
+          const filename = image.uri.split("/").pop() || `image${index}.jpg`;
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : "image/jpeg";
+
+          formData.append("file", {
+            uri: imageUri,
+            name: filename,
+            type: type,
           } as any);
         });
       }
 
       if (editingIndex !== null) {
-        // Update existing repair
         const repair = repairHistory[editingIndex];
         if (!repair.id) {
           Alert.alert("Lỗi", "Không thể cập nhật đề xuất sửa chữa này");
@@ -374,7 +394,6 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
           });
         }
       } else {
-        // Create new repair
         const res = await requestConfirmServiceApi.createRequest(formData);
         if (res && res.id) {
           setRepairHistory((prev) => [...prev, { ...newRepair, id: res.id }]);
@@ -586,11 +605,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                         </Text>
                       </TouchableOpacity>
                     )}
-                    {checkAccpet !== "Accepted" && repairHistory.length <= 0 && (
-                      <Text className="mt-2">
-                        Hiện chưa có yêu cầu nào
-                      </Text>
-                    )}
+                    {checkAccpet !== "Accepted" &&
+                      repairHistory.length <= 0 && (
+                        <Text className="mt-2">Hiện chưa có yêu cầu nào</Text>
+                      )}
                   </View>
                 )}
               </View>
@@ -664,6 +682,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                     <View className="flex-row gap-3">
                       {[0].map((index) => {
                         const img = images[index];
+                        console.log(img);
                         return (
                           <View key={index} className="relative">
                             <TouchableOpacity
@@ -676,7 +695,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                             >
                               {img ? (
                                 <Image
-                                  source={{ uri: img.uri }}
+                                  source={{
+                                    uri:
+                                      typeof img === "string" ? img : img?.uri,
+                                  }}
                                   className="w-full h-full"
                                 />
                               ) : (
@@ -839,7 +861,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
 
               <TouchableOpacity
                 onPress={handleConfirm}
-                className="bg-primary py-3 px-6 rounded-lg"
+                className="bg-primary py-3 px-6 rounded-lg ml-2"
               >
                 {loading ? (
                   <ActivityIndicator color="white" />

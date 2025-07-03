@@ -36,7 +36,7 @@ const ListNews = () => {
   }, []);
 
   return (
-    <View className="bg-white pt-28">
+    <View className="bg-white pt-28 flex-1">
       <BackButton />
 
       <ScrollView

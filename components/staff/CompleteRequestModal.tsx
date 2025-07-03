@@ -23,7 +23,7 @@ interface CompleteRequestModalProps {
   onClose: () => void;
   onSuccess: () => void;
   requestId: string;
-  price?:string;
+  price?: string;
   fixerData?: {
     id: string;
     name: string;
@@ -60,7 +60,7 @@ const CompleteRequestModal: React.FC<CompleteRequestModalProps> = ({
     if (fixerData?.temp) {
       setWarrantyDays(Number(fixerData.temp));
     }
-    fetchData()
+    fetchData();
   }, [fixerData]);
   const fetchData = async () => {
     const response2 = await requestConfirmServiceApi.getByRequestId(requestId, {
@@ -81,14 +81,28 @@ const CompleteRequestModal: React.FC<CompleteRequestModalProps> = ({
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 1,
+        quality: 0.8,
+        allowsEditing: true,
+        aspect: [4, 3],
+        exif: false,
       });
 
-      if (!result.canceled) {
-        setImage(result.assets[0]);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedAsset = result.assets[0];
+        // Xử lý URI cho Android
+        const imageUri =
+          Platform.OS === "android"
+            ? selectedAsset.uri
+            : selectedAsset.uri.replace("file://", "");
+
+        setImage({
+          ...selectedAsset,
+          uri: imageUri,
+        });
       }
     } catch (error) {
       console.error(error);
+      Alert.alert("Lỗi", "Không thể chụp ảnh. Vui lòng thử lại!");
     }
   };
 
@@ -111,11 +125,15 @@ const CompleteRequestModal: React.FC<CompleteRequestModalProps> = ({
       try {
         setLoading(true);
         const formData = new FormData();
-        formData.append("file", {
-          uri: image?.uri,
+
+        // Xử lý file ảnh cho cả Android và iOS
+        const imageFile = {
+          uri: Platform.OS === "android" ? image.uri : image.uri,
           type: "image/jpeg",
           name: "completion.jpg",
-        } as any);
+        };
+
+        formData.append("file", imageFile as any);
         formData.append("note", note);
         formData.append("name", "Xác nhận đã hoàn thành của nhân viên");
         formData.append("type", "completed");
@@ -187,12 +205,13 @@ const CompleteRequestModal: React.FC<CompleteRequestModalProps> = ({
       <View className="relative my-4">
         <TouchableOpacity
           onPress={selectImage}
-          className="border-dotted border-2 border-gray-300 h-40 rounded-lg justify-center items-center"
+          className="border-dotted border-2 border-gray-300 h-40 rounded-lg justify-center items-center overflow-hidden"
         >
           {image ? (
             <Image
               source={{ uri: image.uri }}
-              className="w-full h-full rounded-lg"
+              className="w-full h-full"
+              resizeMode="cover"
             />
           ) : (
             <View className="items-center">

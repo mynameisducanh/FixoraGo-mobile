@@ -1,4 +1,4 @@
-import { Text, View, FlatList, TouchableOpacity, Image } from "react-native";
+import { Text, View, FlatList,ScrollView, TouchableOpacity, Image, RefreshControl } from "react-native";
 import React, { useEffect, useState } from "react";
 import {
   widthPercentageToDP as wp,
@@ -14,6 +14,7 @@ import { useUserStore } from "@/stores/user-store";
 const Activate = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
+  const [refreshing, setRefreshing] = useState(false);
   const [activeData, setActiveData] = useState([]);
   const { user } = useUserStore();
   const handleReorder = (item) => {
@@ -33,7 +34,13 @@ const Activate = () => {
       console.log(error);
     }
   };
- 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    console.log("onRefresh");
+    await fetchDataActive();
+    setRefreshing(false);
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       await fetchDataActive();
@@ -103,21 +110,36 @@ const Activate = () => {
   };
 
   return (
-    <View className="h-full bg-white">
-      <View className="">
+    <ScrollView
+      className="h-full bg-white flex-1"
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["#FFC107"]}
+          tintColor="#FFC107"
+          progressViewOffset={20}
+          progressBackgroundColor="#ffffff"
+          title="Đang tải..."
+          titleColor="#FFC107"
+        />
+      }
+    >
+      {/* <View className="">
         <Image
           style={{ height: hp(32), width: wp(100) }}
           source={require("../../assets/images/hero-detail-test.jpg")}
         />
-      </View>
-      <View className="px-5 -mt-12 pt-6 bg-background rounded-t-3xl">
+      </View> */}
+      <View className="px-5 -mt-12 pt-6 bg-background mt-8">
         <Text className="text-xl font-bold mb-3">Hoạt động gần đây</Text>
-        <FlatList
-          data={activeData.slice(0, 3)}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-        />
+        <View>
+          {activeData.slice(0, 5).map((item) => (
+            <View key={item.id}>
+              {renderItem({ item })}
+            </View>
+          ))}
+        </View>
       </View>
       <TouchableOpacity className="w-full mt-4">
         <Text
@@ -131,7 +153,7 @@ const Activate = () => {
           Xem thêm lịch sử hoạt động
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 

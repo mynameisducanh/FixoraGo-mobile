@@ -168,9 +168,7 @@ const HomeStaff = () => {
            
             return a.distance - b.distance;
           });
-
-         
-
+        
           setActiveData(sortedRequests);
         } else {
           // For "newest" category, just use the API response as is
@@ -194,6 +192,7 @@ const HomeStaff = () => {
         setApprovedRequest(res.data);
         return;
       } else {
+        setApprovedRequest(undefined);
         fetchDataActive();
       }
     } catch (error) {
@@ -202,6 +201,7 @@ const HomeStaff = () => {
   };
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
+    console.log("onRefresh");
     try {
       await getApprovedServiceByFixerId();
       if (overviewRef.current) {
@@ -223,7 +223,7 @@ const HomeStaff = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 80 }}
-        className="space-y-4 pt-14"
+        className="space-y-4 pt-10"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
