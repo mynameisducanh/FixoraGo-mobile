@@ -9,7 +9,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import {
   getCoordinatesFromAddress,
   getCurrentLocation,
@@ -18,7 +18,7 @@ import {
 } from "@/utils/mapUtils";
 import { MAP_CONFIG } from "@/constants/config";
 import { Button } from "react-native-paper";
-import * as Speech from 'expo-speech';
+import * as Speech from "expo-speech";
 
 interface Step {
   id: string;
@@ -72,6 +72,15 @@ export const CustomMapView: React.FC<MapViewProps> = ({
   const [steps, setSteps] = useState<Step[]>([]);
   const [showDirections, setShowDirections] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
+
+  // Đảm bảo sử dụng provider mặc định
+  useEffect(() => {
+    // Force default provider to avoid Google Maps API key issues
+    if (visible) {
+      setError(null);
+      setLoading(true);
+    }
+  }, [visible]);
 
   // Lấy vị trí hiện tại
   const getCurrentPosition = async () => {
@@ -148,8 +157,9 @@ export const CustomMapView: React.FC<MapViewProps> = ({
 
         // Cập nhật tọa độ tuyến đường
         setRouteCoordinates(route.geometry.coordinates);
-    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-      await delay(2000);
+        const delay = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, ms));
+        await delay(2000);
 
         // Cập nhật thông tin tuyến đường
         setRouteInfo({
@@ -245,7 +255,6 @@ export const CustomMapView: React.FC<MapViewProps> = ({
             <MapView
               ref={mapRef}
               style={styles.map}
-              provider={PROVIDER_GOOGLE}
               showsUserLocation
               showsMyLocationButton
               initialRegion={
@@ -263,11 +272,19 @@ export const CustomMapView: React.FC<MapViewProps> = ({
                 if (currentLocation && destination) {
                   mapRef.current?.fitToCoordinates(
                     [
-                      { latitude: currentLocation.lat, longitude: currentLocation.lon },
+                      {
+                        latitude: currentLocation.lat,
+                        longitude: currentLocation.lon,
+                      },
                       { latitude: destination.lat, longitude: destination.lon },
                     ],
                     {
-                      edgePadding: { top: 250, right: 150, bottom: 200, left: 150 },
+                      edgePadding: {
+                        top: 250,
+                        right: 150,
+                        bottom: 200,
+                        left: 150,
+                      },
                       animated: true,
                     }
                   );
@@ -332,8 +349,8 @@ export const CustomMapView: React.FC<MapViewProps> = ({
               <Text style={styles.routeText}>
                 Thời gian dự tính: {Math.round(routeInfo.duration / 60)} phút
               </Text>
-              <Button 
-                mode="contained" 
+              <Button
+                mode="contained"
                 onPress={handleGetDirections}
                 style={styles.directionsButton}
                 loading={loading}
@@ -348,8 +365,10 @@ export const CustomMapView: React.FC<MapViewProps> = ({
           {showDirections && (
             <View style={styles.directionsPanel}>
               <View style={styles.directionsHeader}>
-                <Text style={styles.directionsTitle}>Chỉ dẫn chi tiết đường đi</Text>
-                <TouchableOpacity 
+                <Text style={styles.directionsTitle}>
+                  Chỉ dẫn chi tiết đường đi
+                </Text>
+                <TouchableOpacity
                   onPress={() => setShowDirections(false)}
                   style={styles.closeDirectionsButton}
                 >
@@ -370,6 +389,12 @@ export const CustomMapView: React.FC<MapViewProps> = ({
           {error && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity
+                onPress={() => setError(null)}
+                style={styles.retryButton}
+              >
+                <Text style={styles.retryButtonText}>Thử lại</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -485,18 +510,18 @@ const styles = StyleSheet.create({
   },
   directionsButton: {
     marginTop: 10,
-    backgroundColor: '#2196F3',
+    backgroundColor: "#2196F3",
   },
   directionsPanel: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '50%',
-    shadowColor: '#000',
+    maxHeight: "50%",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: -2,
@@ -506,34 +531,44 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   directionsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   directionsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   closeDirectionsButton: {
     padding: 5,
   },
   steps: {
-    maxHeight: '100%',
+    maxHeight: "100%",
   },
   step: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   stepText: {
     flex: 1,
     marginRight: 10,
   },
+  retryButton: {
+    marginTop: 10,
+    backgroundColor: "#2196F3",
+    padding: 10,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
-

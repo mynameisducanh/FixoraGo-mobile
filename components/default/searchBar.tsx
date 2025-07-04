@@ -56,12 +56,12 @@ const SearchBar = () => {
 
   return (
     <View className="flex-1">
-      <View className="mx-4 flex-row items-center rounded-full bg-black/5 p-[6px]">
+      <View className="mx-4 flex-row items-center rounded-full bg-black/5 p-[4px] border-2 border-slate-500">
         <TextInput
           placeholder="Tìm kiếm gì đó đi..."
           placeholderTextColor={"gray"}
           style={{ fontSize: hp(1.7) }}
-          className="flex-1 text-base mb-1 pl-3 tracking-wider"
+          className="flex-1 text-base mb-1 pl-3 tracking-wider "
           value={searchQuery}
           onChangeText={handleSearch}
         />

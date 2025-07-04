@@ -46,6 +46,7 @@ import CancelRequestModal from "@/components/CancelRequestModal";
 import ReportModal from "@/components/ReportModal";
 import FixerReviewsModal from "@/components/review/FixerReviewsModal";
 import EditRequestModal from "@/components/EditRequestModal";
+import ArrivalConfirmationModal from "@/components/staff/CommingSoon";
 
 interface ActivityHistory {
   id: string;
@@ -156,7 +157,8 @@ const RequestDetail = () => {
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [fixerGoing, setFixerGoing] = useState();
   const fetchDataRequestDetail = async () => {
     try {
       setLoading(true);
@@ -201,6 +203,13 @@ const RequestDetail = () => {
             requestData.fixerId
           );
           const fixerData = await fixerApi.getByUserId(requestData.fixerId);
+          const fixerGoing = await ativityLogApi.CheckFixerGoing(
+            requestData.id
+          );
+          console.log(fixerGoing);
+          if (fixerGoing.hasStaffGoing) {
+            setFixerGoing(fixerGoing.note);
+          }
           if (resFixer) {
             setFixerData(resFixer);
           }
@@ -241,7 +250,23 @@ const RequestDetail = () => {
       console.log(error);
     }
   };
-
+  const handleConfirm = async (timeOption: string) => {
+    console.log("Đã chọn thời gian:", timeOption);
+    try {
+      const formData = new FormData();
+      formData.append("note", timeOption);
+      formData.append("activityType", "staff_going");
+      formData.append("requestServiceId", idRequest as string);
+      const res = await ativityLogApi.createRes(formData);
+      console.log(res);
+      if (res) {
+        Alert.alert("Thành công", "Đã gửi thông báo thành công");
+        reloadData();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const handleFixerApproved = async () => {
     try {
       const payload = {
@@ -270,6 +295,7 @@ const RequestDetail = () => {
   const checkFixerCheckIn = async () => {
     try {
       const res = await ativityLogApi.CheckFixerCheckIn(idRequest as string);
+      console.log(res);
       if (res.hasCheckin === true) {
         setFixerChecked(true);
       }
@@ -316,8 +342,7 @@ const RequestDetail = () => {
     reloadData();
   };
   const handleSubmitCheckInModalProps = (data: any) => {
-    fetchDataRequestDetail();
-    checkFixerCheckIn();
+    reloadData();
     setShowCheckInModal(false);
   };
   const handleSubmitServiceReview = (review: ReviewData) => {
@@ -335,6 +360,10 @@ const RequestDetail = () => {
         type: "userReviewFixer",
       };
       const res = await reviewApi.createReview(payLoad);
+      if (res) {
+        // Reload data để cập nhật trạng thái review
+        reloadData();
+      }
     } catch (error) {
       console.log(error);
     }
@@ -354,6 +383,8 @@ const RequestDetail = () => {
           "Thông báo",
           "Đánh giá thành công , Cảm ơn đánh giá của bạn"
         );
+        // Reload data để cập nhật trạng thái review
+        reloadData();
       }
     } catch (error) {
       console.log(error);
@@ -369,8 +400,22 @@ const RequestDetail = () => {
   };
 
   const reloadData = async () => {
-    await fetchDataRequestDetail();
-    await checkFixerCheckIn();
+    try {
+      // Reset các state quan trọng trước khi fetch lại
+      setFixerChecked(false);
+      setFixerPropose(false);
+      setUserPropose(false);
+      setUserConfirmed(false);
+      setCheckUserReview(false);
+      setConfirmCompleted(false);
+      setFixerGoing(undefined);
+
+      await fetchDataRequestDetail();
+      // Không cần gọi fetchUserData riêng vì nó đã được gọi trong fetchDataRequestDetail
+      await checkFixerCheckIn();
+    } catch (error) {
+      console.error("Error reloading data:", error);
+    }
   };
 
   const handleShowCompleteModal = () => {
@@ -394,6 +439,14 @@ const RequestDetail = () => {
     selectedReasons: string[],
     note: string
   ) => {
+    if (fixerGoing) {
+      Alert.alert(
+        "Thông báo",
+        "Bạn không thể hủy yêu cầu khi nhân viên đã xác nhận sẽ đến trong khoảng thời gian nhất định."
+      );
+      reloadData();
+      return;
+    }
     try {
       const payload = {
         requestId: idRequest,
@@ -500,9 +553,20 @@ const RequestDetail = () => {
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     console.log("onRefresh");
-    await fetchDataRequestDetail();
-    setRefreshing(false);
-  }, []);
+    try {
+      // Gọi đầy đủ các hàm cần thiết để refresh hoàn toàn
+      await fetchDataRequestDetail();
+      // Không cần gọi fetchUserData riêng vì nó đã được gọi trong fetchDataRequestDetail
+      await checkFixerCheckIn();
+
+      // Thêm delay nhỏ để đảm bảo UI được cập nhật
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error("Error during refresh:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [idRequest, user?.id]); // Thêm dependencies cần thiết
   if (loading) {
     return <LoadingOverlay />;
   }
@@ -529,7 +593,7 @@ const RequestDetail = () => {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          paddingBottom: hp(5),
+          paddingBottom: hp(15),
         }}
         refreshControl={
           <RefreshControl
@@ -624,9 +688,9 @@ const RequestDetail = () => {
 
                 <View className="flex-row items-center justify-between">
                   {user?.roles === "system_fixer" ? (
-                    <View className="flex-row items-center">
-                      {userData &&
-                        (userData.avatarurl ? (
+                    userData ? (
+                      <View className="flex-row items-center">
+                        {userData.avatarurl ? (
                           <Image
                             source={{
                               uri: userData.avatarurl,
@@ -636,27 +700,29 @@ const RequestDetail = () => {
                           />
                         ) : (
                           <Avatar size={48} username={userData?.username} />
-                        ))}
-                      <View>
-                        <Text className="font-semibold text-gray-900 ml-3">
-                          {userData?.fullName || userData?.username}
-                        </Text>
+                        )}
+                        <View>
+                          <Text className="font-semibold text-gray-900 ml-3">
+                            {userData?.fullName || userData?.username}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  ) : (
+                    ) : (
+                      <Text>Trống</Text>
+                    )
+                  ) : fixerData ? (
                     <View className="flex-row items-center">
-                      {fixerData &&
-                        (fixerData.avatarurl ? (
-                          <Image
-                            source={{
-                              uri: fixerData.avatarurl,
-                            }}
-                            className="w-12 h-12 rounded-full"
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <Avatar size={48} username={fixerData?.username} />
-                        ))}
+                      {fixerData.avatarurl ? (
+                        <Image
+                          source={{
+                            uri: fixerData.avatarurl,
+                          }}
+                          className="w-12 h-12 rounded-full"
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <Avatar size={48} username={fixerData?.username} />
+                      )}
                       <View>
                         <Text className="font-semibold text-gray-900 ml-3">
                           {fixerData?.fullName || fixerData?.username}
@@ -669,6 +735,8 @@ const RequestDetail = () => {
                         </View>
                       </View>
                     </View>
+                  ) : (
+                    <Text>Yêu cầu này chưa có nhân viên nhận</Text>
                   )}
 
                   <View
@@ -692,16 +760,19 @@ const RequestDetail = () => {
                 </View>
                 <View className="flex-row justify-between items-center">
                   <View className="flex-row justify-start mt-3 space-x-4 gap-3 items-center">
-                    <TouchableOpacity
-                      className=""
-                      onPress={() => setShowTechnicianModal(true)}
-                    >
-                      <MaterialCommunityIcons
-                        name="card-account-details-star"
-                        size={24}
-                        color={statusInfo.color}
-                      />
-                    </TouchableOpacity>
+                    {(fixerData && user?.roles === "system_fixer") || user?.roles ==="system_user" && (
+                      <TouchableOpacity
+                        className=""
+                        onPress={() => setShowTechnicianModal(true)}
+                      >
+                        <MaterialCommunityIcons
+                          name="card-account-details-star"
+                          size={24}
+                          color={statusInfo.color}
+                        />
+                      </TouchableOpacity>
+                    )}
+
                     {(requestData?.status === "approved" ||
                       requestData?.status === "guarantee" ||
                       requestData?.status === "completed") && (
@@ -738,16 +809,22 @@ const RequestDetail = () => {
                         )}
                       </>
                     )}
-                    <TouchableOpacity
-                      className=""
-                      onPress={() => setShowReportModal(true)}
-                    >
-                      <Entypo name="flag" size={24} color={statusInfo.color} />
-                    </TouchableOpacity>
+                    {fixerData && user?.roles === "system_fixer" || user?.roles ==="system_user" && (
+                      <TouchableOpacity
+                        className=""
+                        onPress={() => setShowReportModal(true)}
+                      >
+                        <Entypo
+                          name="flag"
+                          size={24}
+                          color={statusInfo.color}
+                        />
+                      </TouchableOpacity>
+                    )}
                   </View>
                   <View className="flex-col">
                     {requestData?.approvedTime && (
-                      <Text className="mt-4">
+                      <Text className="mt-3">
                         Ngày nhận: {formatDateTimeVN(requestData?.approvedTime)}
                       </Text>
                     )}
@@ -775,11 +852,16 @@ const RequestDetail = () => {
         <View style={{ width: wp(100) }} className="px-4 mb-3 mt-3">
           <Text className="text-lg font-semibold mb-3">Thông tin yêu cầu</Text>
           {requestData.isUrgent === true && (
-            <Text className="text-red-500 font-semibold text-left">
+            <Text className="text-red-500 font-semibold text-left mb-3">
               Đây là yêu cầu cần gấp
             </Text>
           )}
-
+          {fixerGoing && !fixerChecked && (
+            <Text className="text-green-500 font-semibold text-left mb-3">
+              Nhân viên sẽ tới trong khoảng {fixerGoing} phút nữa , vui lòng chú
+              ý điện thoại
+            </Text>
+          )}
           <View className="bg-gray-50 rounded-2xl p-4">
             <InfoRow label="Tên dịch vụ" value={requestData?.nameService} />
             <InfoRow label="Phân loại" value={requestData?.listDetailService} />
@@ -848,16 +930,19 @@ const RequestDetail = () => {
                 {statusInfo?.label}
               </Text>
             </View>
-            <InfoRow label="Mã yêu cầu" value={requestData?.id} />
+            <InfoRow label="Mã yêu cầu" value={requestData?.id?.slice(0, 13)} />
           </View>
         </View>
 
         <View style={{ width: wp(100) }} className="flex-col gap-1">
           <View className="flex-row justify-center">
-            {((requestData?.status === "rejected" &&
-              user?.roles === "system_user") ||
+            {(((requestData?.status === "pending" ||
+              requestData?.status === "approved") &&
+              user?.roles === "system_user" &&
+              !fixerGoing) ||
               (requestData?.status === "approved" &&
-                user?.roles === "system_fixer")) &&
+                user?.roles === "system_fixer") ||
+              fixerChecked) &&
               requestData?.status !== "deleted" &&
               requestData?.status !== "guarantee" &&
               requestData?.status !== "completed" && (
@@ -925,6 +1010,22 @@ const RequestDetail = () => {
                   </View>
                 </>
               )}
+            {requestData?.status === "approved" &&
+              user?.roles === "system_fixer" &&
+              !fixerGoing && (
+                <>
+                  <View className="items-center p-2">
+                    <TouchableOpacity
+                      onPress={() => setModalVisible(true)}
+                      className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                    >
+                      <Text className="text-primary font-semibold text-center">
+                        Tôi đang tới
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
             {requestData?.status === "pending" &&
               user?.roles === "system_user" && (
                 <View className="items-center p-2">
@@ -958,32 +1059,33 @@ const RequestDetail = () => {
               )}
             {((user?.roles === "system_user" && fixerChecked === true) ||
               (user?.roles === "system_fixer" &&
-                requestData?.status === "approved")) && (
-              <View className="items-center p-2">
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowCheckInModal(true);
-                  }}
-                  className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
-                >
-                  {fixerChecked && user?.roles === "system_fixer" && (
-                    <Text className="text-primary font-semibold text-center">
-                      Xem thông tin check-in
-                    </Text>
-                  )}
-                  {!fixerChecked && (
-                    <Text className="text-primary font-semibold text-center">
-                      Check-In
-                    </Text>
-                  )}
-                  {fixerChecked && user?.roles === "system_user" && (
-                    <Text className="text-primary font-semibold text-center">
-                      Thông tin check-in của nhân viên
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
+                requestData?.status === "approved")) &&
+              fixerGoing && (
+                <View className="items-center p-2">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowCheckInModal(true);
+                    }}
+                    className="px-6 py-2 rounded-xl border border-primary active:opacity-70"
+                  >
+                    {fixerChecked && user?.roles === "system_fixer" && (
+                      <Text className="text-primary font-semibold text-center">
+                        Xem thông tin check-in
+                      </Text>
+                    )}
+                    {!fixerChecked && (
+                      <Text className="text-primary font-semibold text-center">
+                        Check-In
+                      </Text>
+                    )}
+                    {fixerChecked && user?.roles === "system_user" && (
+                      <Text className="text-primary font-semibold text-center">
+                        Thông tin check-in của nhân viên
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
           </View>
           <View className="flex-row justify-center">
             {(requestData?.status === "approved" ||
@@ -1080,6 +1182,11 @@ const RequestDetail = () => {
           </View>
         </View>
       </Modal>
+      <ArrivalConfirmationModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onConfirm={handleConfirm}
+      />
       <TechnicianDetailModal
         visible={showTechnicianModal}
         onClose={() => setShowTechnicianModal(false)}

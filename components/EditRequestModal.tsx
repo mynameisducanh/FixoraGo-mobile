@@ -45,7 +45,9 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
   const [selectedValue, setSelectedValue] = useState("");
   const [note, setNote] = useState("");
   const [oldImages, setOldImages] = useState<string[]>([]);
-  const [newImages, setNewImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  const [newImages, setNewImages] = useState<ImagePicker.ImagePickerAsset[]>(
+    []
+  );
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -131,6 +133,27 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
     }
 
     setSelectedDate(date);
+
+    // Reset selected time when date changes to ensure validation
+    if (selectedTime) {
+      const currentTime = new Date();
+      const twoHoursFromNow = new Date(
+        currentTime.getTime() + 2 * 60 * 60 * 1000
+      );
+
+      // If selected time is now invalid for the new date, reset it
+      if (
+        selected.getDate() === currentTime.getDate() &&
+        selectedTime < twoHoursFromNow
+      ) {
+        setSelectedTime(null);
+        Alert.alert(
+          "Thông báo",
+          "Thời gian đã chọn không hợp lệ cho ngày mới. Vui lòng chọn lại giờ."
+        );
+      }
+    }
+
     setDatePickerVisibility(false);
   };
 
@@ -173,7 +196,9 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
     }
 
     if (selectedDate && selectedTime) {
-      const newCalendar = `${formatTime(selectedTime)},${formatDateWithDay(selectedDate)}`;
+      const newCalendar = `${formatTime(selectedTime)},${formatDateWithDay(
+        selectedDate
+      )}`;
       if (newCalendar !== initialData.calender) {
         formData.append("calender", newCalendar);
         hasChanges = true;
@@ -186,7 +211,7 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
     }
 
     // Chỉ thêm ảnh nếu có ảnh mới
-    const hasNewImages = newImages.some(img => img !== undefined);
+    const hasNewImages = newImages.some((img) => img !== undefined);
     if (hasNewImages) {
       newImages
         .filter((img) => img !== undefined)
@@ -222,7 +247,7 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-black/50">
+      <View className="flex-1 bg-black/50 ">
         <View className="flex-1 mt-20 bg-white rounded-t-3xl">
           <View className="p-4 border-b border-gray-200">
             <View className="flex-row justify-between items-center">
@@ -241,15 +266,21 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
               <View className="bg-gray-50 p-4 rounded-lg space-y-3">
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Thời gian lắp đặt/mua:</Text>
-                  <Text className="font-medium">{initialData.typeEquipment || "Chưa có thông tin"}</Text>
+                  <Text className="font-medium">
+                    {initialData.typeEquipment || "Chưa có thông tin"}
+                  </Text>
                 </View>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Lịch hẹn:</Text>
-                  <Text className="font-medium">{initialData.calender || "Chưa có thông tin"}</Text>
+                  <Text className="font-medium">
+                    {initialData.calender || "Chưa có thông tin"}
+                  </Text>
                 </View>
                 <View className="flex-row justify-between">
                   <Text className="text-gray-600">Ghi chú:</Text>
-                  <Text className="font-medium flex-1 text-right ml-2">{initialData.note || "Chưa có thông tin"}</Text>
+                  <Text className="font-medium flex-1 text-right ml-2">
+                    {initialData.note || "Chưa có thông tin"}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -267,21 +298,7 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
 
             <View className="mb-4">
               <Text className="text-gray-700 font-medium mb-2">Lịch hẹn</Text>
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-1/3"
-                  onPress={() => setTimePickerVisibility(true)}
-                >
-                  <Text numberOfLines={1}>
-                    {selectedTime ? formatTime(selectedTime) : "Chọn giờ"}
-                  </Text>
-                  <LottieView
-                    source={require("@/assets/icons/clock-icon.json")}
-                    autoPlay={false}
-                    loop={false}
-                    style={{ width: 20, height: 20 }}
-                  />
-                </TouchableOpacity>
+              <View className="flex-row gap-1">
                 <TouchableOpacity
                   className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-2/3"
                   onPress={() => setDatePickerVisibility(true)}
@@ -298,7 +315,38 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
                     style={{ width: 20, height: 20 }}
                   />
                 </TouchableOpacity>
+                <TouchableOpacity
+                  className={`flex-row justify-between items-center border rounded-lg p-4 w-1/3 ${
+                    selectedDate
+                      ? "border-primary bg-gray-100"
+                      : "border-gray-300 bg-gray-200"
+                  }`}
+                  onPress={() => selectedDate && setTimePickerVisibility(true)}
+                  disabled={!selectedDate}
+                >
+                  <Text
+                    numberOfLines={1}
+                    className={selectedDate ? "text-gray-800" : "text-gray-500"}
+                  >
+                    {selectedTime ? formatTime(selectedTime) : "Chọn giờ"}
+                  </Text>
+                  <LottieView
+                    source={require("@/assets/icons/clock-icon.json")}
+                    autoPlay={false}
+                    loop={false}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      opacity: selectedDate ? 1 : 0.5,
+                    }}
+                  />
+                </TouchableOpacity>
               </View>
+              {!selectedDate && (
+                <Text className="text-gray-500 text-sm mt-1">
+                  Vui lòng chọn ngày trước khi chọn giờ
+                </Text>
+              )}
             </View>
 
             <View className="mb-4">
@@ -377,7 +425,7 @@ const EditRequestModal: React.FC<EditRequestModalProps> = ({
             </View>
           </ScrollView>
 
-          <View className="p-4 border-t border-gray-200">
+          <View className="p-4 border-t border-gray-200 pb-12">
             <TouchableOpacity
               className="bg-primary py-3 rounded-lg"
               onPress={handleSubmit}

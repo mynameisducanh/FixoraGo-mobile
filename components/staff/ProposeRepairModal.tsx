@@ -517,7 +517,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                               handleDelete(index);
                             }}
                             className="bg-red-500 p-2 rounded-lg"
-                            disabled={deleteLoading === index}
+                            disabled={deleteLoading === index }
                           >
                             {deleteLoading === index ? (
                               <ActivityIndicator color="white" size="small" />
@@ -709,7 +709,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                                 />
                               )}
                             </TouchableOpacity>
-                            {img && (
+                            {img && user?.roles !== "system_user" && (
                               <TouchableOpacity
                                 disabled={checkAccpet === "Accepted"}
                                 onPress={() => removeImage(index)}
@@ -741,7 +741,7 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                         placeholder="Nhập giá tiền"
                         keyboardType="numeric"
                       />
-                      {checkAccpet !== "Accepted" && (
+                      {checkAccpet !== "Accepted" && user?.roles !== "system_user" && (
                         <PriceSuggestions
                           basePrice={getNumericPrice(price).toString()}
                           onSelect={(suggestedPrice) => {
@@ -787,10 +787,10 @@ const ProposeRepairModal: React.FC<ProposeRepairModalProps> = ({
                     disabled={loading}
                   >
                     <Text className="text-gray-700 text-center font-semibold">
-                      {checkAccpet === "Accepted" ? "Quay lại" : "Hủy"}
+                      {checkAccpet === "Accepted" ? "Quay lại" : "Quay lại"}
                     </Text>
                   </TouchableOpacity>
-                  {checkAccpet !== "Accepted" && (
+                  {checkAccpet !== "Accepted" && user?.roles !== "system_user" && (
                     <TouchableOpacity
                       onPress={handleSubmit}
                       className={`flex-1 py-3 rounded-lg ${
