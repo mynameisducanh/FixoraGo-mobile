@@ -1,10 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import NotificationApi from '@/api/notificationApi';
-import { formatDateTimeVN } from '@/utils/dateFormat';
-import { useNavigation } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
+import NotificationApi from "@/api/notificationApi";
+import { formatDateTimeVN } from "@/utils/dateFormat";
+import { useNavigation } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 interface Notification {
   id: string;
@@ -15,6 +24,7 @@ interface Notification {
   content: string;
   imageUrl: string;
   actionUrl: string;
+  metadata: string;
   createAt: string;
   readAt: string | null;
 }
@@ -22,9 +32,10 @@ interface Notification {
 const NotificationPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const notificationApi = new NotificationApi();
   const navigation = useNavigation();
-
+  const router = useRouter();
   const fetchNotifications = async () => {
     try {
       setLoading(true);
@@ -33,10 +44,16 @@ const NotificationPage = () => {
         setNotifications(response.data);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchNotifications();
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -44,27 +61,42 @@ const NotificationPage = () => {
   }, []);
 
   const renderNotificationItem = ({ item }: { item: Notification }) => (
-    <TouchableOpacity 
-      className={`p-4 border-b border-gray-200 ${item.status === 'UNREAD' ? 'bg-blue-50' : ''}`}
-      onPress={() => {
+    <TouchableOpacity
+      className={`p-4 border-b border-gray-200 ${
+        item.status === "UNREAD" ? "bg-blue-50" : ""
+      }`}
+      onPress={async () => {
         // Handle notification press
+        const res = await notificationApi.markReadNotification(item.id);
         if (item.actionUrl) {
           // Navigate to action URL
+          if (item.metadata) {
+            router.push({
+              pathname: `${item.actionUrl}`,
+              params: { idRequest: item.metadata },
+            });
+          } else {
+            router.push({
+              pathname: `${item.actionUrl}`,
+            });
+          }
         }
       }}
     >
       <View className="flex-row items-start">
         <View className="flex-1">
-          <Text className="text-lg font-semibold text-gray-800">{item.title}</Text>
+          <Text className="text-lg font-semibold text-gray-800">
+            {item.title}
+          </Text>
           <Text className="text-sm text-gray-600 mt-1">{item.content}</Text>
           <View className="flex-row items-center mt-2">
             <FontAwesome name="clock-o" size={12} color="#666" />
             <Text className="text-xs text-gray-500 ml-1">
               {formatDateTimeVN(item.createAt)}
             </Text>
-            {item.status === 'UNREAD' && (
+            {item.status === "UNREAD" && (
               <View className="ml-2 bg-blue-500 rounded-full px-2 py-0.5">
-                <Text className="text-xs text-white">Mới</Text>
+                <Text className="text-xs text-white">Chưa đọc</Text>
               </View>
             )}
           </View>
@@ -106,10 +138,13 @@ const NotificationPage = () => {
           renderItem={renderNotificationItem}
           keyExtractor={(item) => item.id}
           className="flex-1"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       )}
     </View>
   );
 };
 
-export default NotificationPage; 
+export default NotificationPage;

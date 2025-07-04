@@ -12,8 +12,12 @@ class ActivityLogApi extends Api {
     });
   }
 
-  async CheckFixerCheckIn(fixerId: string) {
-    return this.request("GET", `/check-fixer-checkin/${fixerId}`);
+  async CheckFixerCheckIn(reuquestServiceId: string) {
+    return this.request("GET", `/check-fixer-checkin/${reuquestServiceId}`);
+  }
+  
+  async CheckFixerGoing(reuquestServiceId: string) {
+    return this.request("GET", `/check-fixer-going/${reuquestServiceId}`);
   }
 
   async checkUserConfirmCheckin(fixerId: string) {

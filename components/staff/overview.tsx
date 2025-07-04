@@ -195,7 +195,8 @@ const Overview = forwardRef<OverviewRef>((props, ref) => {
 
           <TouchableOpacity
             onPress={handlePaymentPress}
-            className="mt-2  rounded-md py-2 px-3 self-end bg-blue-600"
+            disabled={true}
+            className="mt-2  rounded-md py-2 px-3 self-end bg-gray-600"
           >
             <Text className="text-white font-semibold">Đóng phí</Text>
           </TouchableOpacity>

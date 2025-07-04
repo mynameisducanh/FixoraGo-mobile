@@ -114,11 +114,11 @@ const ReviewList = () => {
             />
           ) : (
             <View className="mr-3">
-              <Avatar size={40} username={review.senderUsername} />
+              <Avatar size={40} username={review.senderUsername || "#"} />
             </View>
           )}
           <Text className="text-gray-900 font-medium">
-            {review.senderFullName || review.senderUsername}
+            {review.senderFullName || review.senderUsername || "Đánh giá dịch vụ"}
           </Text>
         </TouchableOpacity>
         <Text className="text-gray-500 text-sm">

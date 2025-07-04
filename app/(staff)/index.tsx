@@ -6,6 +6,7 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -18,6 +19,8 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import { io, Socket } from "socket.io-client";
+import Constants from "expo-constants";
 import Overview, { OverviewRef } from "@/components/staff/overview";
 import Categories from "@/components/staff/Categories";
 import RequestCard from "@/components/staff/RequestCard";
@@ -54,6 +57,7 @@ const HomeStaff = () => {
   const router = useRouter();
   const requestService = new RequestServiceApi();
   const overviewRef = useRef<OverviewRef>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const [activeData, setActiveData] = useState<RequestData[]>([]);
   const { user } = useUserStore();
@@ -68,6 +72,8 @@ const HomeStaff = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentCategory, setCurrentCategory] = useState("nearest");
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [socketRefreshing, setSocketRefreshing] = useState(false);
+  const [showSocketNotifications, setShowSocketNotifications] = useState(true);
   const [activeFilters, setActiveFilters] = useState<{
     districts: string[];
     services: string[];
@@ -84,8 +90,43 @@ const HomeStaff = () => {
     bonusAmount: "",
   });
 
+  // Socket setup for real-time updates
+  useEffect(() => {
+    if (socketRef.current) return;
+
+    const socket = io(Constants.expoConfig?.extra?.SOCKET_URL, {
+      transports: ["websocket"],
+      query: {
+        userId: user?.id,
+        role: user?.roles,
+      },
+    });
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("Socket connected in HomeStaff");
+    });
+
+    // Listen for new request service created
+    socket.on("requestServiceCreated", (data) => {
+      // console.log("New request service created:", data);
+      // Trigger refresh when new request is created
+      setSocketRefreshing(true);
+      onRefresh();
+
+      // Show notification to user about new request (if enabled)
+      if (showSocketNotifications) {
+
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user?.id, user?.roles]);
+
   const onCatChanged = async (category: string) => {
-    console.log(category);
     setCurrentCategory(category);
     await fetchDataActive(category);
   };
@@ -144,7 +185,6 @@ const HomeStaff = () => {
                 );
 
                 const distance = routeInfo.distance / 1000; // Convert to kilometers
-               
 
                 return {
                   ...request,
@@ -165,10 +205,9 @@ const HomeStaff = () => {
 
           // Sort requests by distance
           const sortedRequests = requestsWithDistance.sort((a, b) => {
-           
             return a.distance - b.distance;
           });
-        
+
           setActiveData(sortedRequests);
         } else {
           // For "newest" category, just use the API response as is
@@ -211,6 +250,7 @@ const HomeStaff = () => {
       console.error("Error refreshing:", error);
     } finally {
       setRefreshing(false);
+      setSocketRefreshing(false);
     }
   }, []);
   useEffect(() => {
@@ -237,7 +277,7 @@ const HomeStaff = () => {
           />
         }
       >
-        <Overview  ref={overviewRef} />
+        <Overview ref={overviewRef} />
 
         {approvedRequest ? (
           <View key="approved-request" className="px-4 mt-3">
@@ -269,10 +309,37 @@ const HomeStaff = () => {
         ) : (
           <View key="request-list" className="px-4 mt-3">
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-xl font-bold text-gray-900">
-                Danh sách yêu cầu
-              </Text>
+              <View className="flex-row items-center">
+                <Text className="text-xl font-bold text-gray-900">
+                  Danh sách yêu cầu
+                </Text>
+                {socketRefreshing && (
+                  <View className="ml-2 bg-blue-100 px-2 py-1 rounded-full">
+                    <Text className="text-xs text-blue-600">
+                      Đang cập nhật...
+                    </Text>
+                  </View>
+                )}
+              </View>
               <View className="flex-row gap-2">
+                {/* <TouchableOpacity
+                  onPress={() =>
+                    setShowSocketNotifications(!showSocketNotifications)
+                  }
+                  className={`p-3 items-center rounded-full ${
+                    showSocketNotifications ? "bg-green-50" : "bg-gray-50"
+                  }`}
+                >
+                  <Ionicons
+                    name={
+                      showSocketNotifications
+                        ? "notifications"
+                        : "notifications-off"
+                    }
+                    size={20}
+                    color={showSocketNotifications ? "#22c55e" : "#6b7280"}
+                  />
+                </TouchableOpacity> */}
                 <TouchableOpacity
                   onPress={() => setShowFilterModal(true)}
                   className="bg-blue-50 p-3 items-center rounded-full"

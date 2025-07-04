@@ -7,6 +7,7 @@ import {
   TextInput,
   Image,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
@@ -126,6 +127,7 @@ const EditProfile = () => {
     }
 
     if (formData.avatar?.startsWith("file")) {
+       
       data.append("avatar", {
         uri: formData.avatar,
         name: "avatar.jpg",
