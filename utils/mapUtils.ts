@@ -4,7 +4,7 @@ import { MAPBOX_ACCESS_TOKEN } from "@/constants/config";
 // Chuyển địa chỉ thành tọa độ
 export const getCoordinatesFromAddress = async (address: string) => {
   try {
-    console.log("Searching address:", address);
+    // console.log("Searching address:", address);
 
     // Chuẩn hóa địa chỉ
     const normalizedAddress = address

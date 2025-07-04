@@ -49,6 +49,12 @@ interface Location {
   code: string;
   name: string;
 }
+
+interface CustomImageAsset extends Omit<ImagePicker.ImagePickerAsset, "type"> {
+  name?: string;
+  mimeType?: string;
+}
+
 const MONEY_BONUS = [
   "10.000",
   "20.000",
@@ -64,8 +70,8 @@ const VerifyService = () => {
   const [selectedValue, setSelectedValue] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<Date | null>(null);
   const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
   const [selectedPriceRange, setSelectedPriceRange] = useState("");
@@ -92,7 +98,7 @@ const VerifyService = () => {
   const [priceService, setPrice] = useState<PricesServiceInterface>();
   const [listDetailService, setListDetailService] =
     useState<ListDetailServiceInterface>();
-  const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
+  const [images, setImages] = useState<CustomImageAsset[]>([]);
   const [otherDevice, setOtherDevice] = useState("");
   const [checkDate, setCheckDate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -105,16 +111,25 @@ const VerifyService = () => {
 
     // Giới hạn trên là ngày hiện tại + 10 ngày
     const maxDate = new Date(now);
-    maxDate.setDate(now.getDate() + 50);//sửa thành 10 khi build
+    maxDate.setDate(now.getDate() + 50); //sửa thành 10 khi build
     console.log(
       "first",
       (selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     );
 
+    // Kiểm tra xem có phải ngày hôm nay không
+    const isToday =
+      selected.getDate() === new Date().getDate() &&
+      selected.getMonth() === new Date().getMonth() &&
+      selected.getFullYear() === new Date().getFullYear();
+
     if ((selected.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) > 1) {
       console.log("first");
       setCheckDate(true);
+    } else {
+      setCheckDate(false);
     }
+
     // So sánh
     if (selected < now) {
       Alert.alert("Thông báo", "Không được chọn ngày trong quá khứ.");
@@ -126,7 +141,27 @@ const VerifyService = () => {
       return;
     }
 
-    // Nếu hợp lệ
+    // Reset selected time when date changes to ensure validation
+    if (selectedTime) {
+      const currentTime = new Date();
+      const twoHoursFromNow = new Date(
+        currentTime.getTime() + 2 * 60 * 60 * 1000
+      );
+
+      // If selected time is now invalid for the new date, reset it
+      if (isToday && selectedTime.getTime() < twoHoursFromNow.getTime()) {
+        setSelectedTime(null);
+        setSelectedDate(null);
+        console.log("Vào");
+        Alert.alert(
+          "Thông báo",
+          "Thời gian đã chọn không hợp lệ cho ngày mới. Vui lòng chọn lại giờ."
+        );
+        return; // Thêm return để không tiếp tục xử lý
+      }
+    }
+
+    // Nếu hợp lệ, set ngày mới
     setSelectedDate(date);
     hideDatePicker();
     checkUrgentAvailability(date, selectedTime);
@@ -136,6 +171,7 @@ const VerifyService = () => {
     const selected = new Date(time);
     const selectedHour = selected.getHours();
     const now = new Date();
+
     if (selectedHour < 8 || selectedHour > 20) {
       Alert.alert(
         "Thông báo",
@@ -143,12 +179,20 @@ const VerifyService = () => {
       );
       return;
     }
-    if (!checkDate) {
+
+    // Kiểm tra xem ngày đã chọn có phải hôm nay không
+    const isToday =
+      selectedDate &&
+      selectedDate.getDate() === new Date().getDate() &&
+      selectedDate.getMonth() === new Date().getMonth() &&
+      selectedDate.getFullYear() === new Date().getFullYear();
+
+    if (isToday) {
       // Thời gian hiện tại + 1 tiếng
       const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
       // So sánh
-      if (selected < oneHourFromNow) {
+      if (selected.getTime() < oneHourFromNow.getTime()) {
         Alert.alert(
           "Thông báo",
           "Vui lòng chọn thời gian cách hiện tại ít nhất 1 tiếng."
@@ -173,14 +217,14 @@ const VerifyService = () => {
 
     const selectedDateTime = new Date(date);
     selectedDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
-    
+
     const now = new Date();
     const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
     // Kiểm tra nếu thời gian hẹn cách hiện tại dưới 2 tiếng
     const isAvailable = selectedDateTime <= twoHoursFromNow;
     setIsUrgentAvailable(isAvailable);
-    
+
     // Nếu không khả dụng, tắt chế độ urgent
     if (!isAvailable) {
       setIsUrgent(false);
@@ -205,7 +249,7 @@ const VerifyService = () => {
         const newImage = {
           ...result.assets[0],
           name: `image.${result.assets[0].uri.split(".").pop()}`,
-          type: `image/${result.assets[0].uri.split(".").pop()}`,
+          mimeType: `image/${result.assets[0].uri.split(".").pop()}`,
         };
 
         setImages((prev) => {
@@ -289,11 +333,12 @@ const VerifyService = () => {
     images
       .filter((img) => img !== undefined)
       .forEach((image, index) => {
-        formData.append("file", {
+        const fileData = {
           uri: image.uri,
           name: image.name || `photo_${index}.jpg`,
-          type: image.type || "image/jpeg",
-        });
+          type: image.mimeType || "image/jpeg",
+        } as any;
+        formData.append("file", fileData);
       });
     try {
       // const res = await requestServiceApi.createRequestService(formData);
@@ -364,14 +409,15 @@ const VerifyService = () => {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView className="px-4 pt-3 pb-5 bg-white ">
-            {listDetailService?.name === "Khác" && (
+            {priceService?.name === "Khác" && (
               <View>
                 <Text className="pb-2 font-bold text-lg">
-                  Thiết bị cần được hỗ trợ của bạn là gì ?
+                  Thiết bị cần được hỗ trợ của bạn là gì ?{" "}
+                  <Text style={{ color: "red" }}>*</Text>
                 </Text>
                 <TextInput
-                  className="border border-gray-300 rounded-lg p-2 mb-2"
-                  placeholder="Nhập thiết bị cần hỗ trợ (bắt buộc)"
+                  className="border border-gray-300 rounded-lg p-3 mb-2"
+                  placeholder="Nhập thiết bị cần hỗ trợ"
                   value={otherDevice}
                   onChangeText={(text) => setOtherDevice(text)}
                 />
@@ -459,9 +505,11 @@ const VerifyService = () => {
                 </View>
               )}
             </View>
-            <Text className="py-2 font-bold text-lg">Xác nhận lịch hẹn</Text>
+            <Text className="py-2 font-bold text-lg">
+              Xác nhận lịch hẹn(Vui lòng chọn ngày trước)<Text style={{ color: "red" }}>*</Text>
+            </Text>
             <View className="flex-row gap-1">
-            <TouchableOpacity
+              <TouchableOpacity
                 className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-2/3"
                 onPress={showDatePicker}
               >
@@ -478,7 +526,12 @@ const VerifyService = () => {
                 />
               </TouchableOpacity>
               <TouchableOpacity
-                className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-1/3 "
+                className={`flex-row justify-between items-center border rounded-lg p-4 w-1/3 ${
+                  selectedDate
+                    ? "border-primary bg-gray-100"
+                    : "border-gray-300 bg-gray-200"
+                }`}
+                disabled={!selectedDate}
                 onPress={showTimePicker}
               >
                 <Text numberOfLines={1} className="">
@@ -491,7 +544,6 @@ const VerifyService = () => {
                   style={{ width: 20, height: 20 }}
                 />
               </TouchableOpacity>
-             
             </View>
             <View className="flex-row gap-3 items-center mt-2">
               <View className="flex-1">
@@ -548,7 +600,7 @@ const VerifyService = () => {
                 ))}
               </View>
             </View>
-            <Text className="py-2 font-bold text-lg">Xác nhận địa chỉ</Text>
+            <Text className="py-2 font-bold text-lg">Xác nhận địa chỉ <Text style={{ color: "red" }}>*</Text></Text>
             <View className="">
               <TouchableOpacity
                 className="flex-row justify-between items-center border border-primary rounded-lg p-4 bg-gray-100 w-full"
@@ -647,8 +699,7 @@ const VerifyService = () => {
                     <View className="flex-row justify-between">
                       <Text className="text-gray-600">Tiền bo:</Text>
                       <Text className="font-medium">
-                        {selectedPriceRange ? `${selectedPriceRange}` : "0"}{" "}
-                        VNĐ
+                        {selectedPriceRange ? `${selectedPriceRange}` : "0"} VNĐ
                       </Text>
                     </View>
                     <View className="flex-row justify-between">

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
 import React, { useEffect, useState } from "react";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import {
@@ -7,10 +7,15 @@ import {
 } from "react-native-responsive-screen";
 import { useRouter } from "expo-router";
 import { useUserStore } from "@/stores/user-store";
+import UserApi from "@/api/userApi";
 const FooterDetailService = ({ unit, serviceId, typeService, isActive }) => {
   const router = useRouter();
   const { user } = useUserStore();
+  const userApi = new UserApi();
+  const [userData, setUserData] = useState();
   const [checkActive, setCheckActive] = useState(false);
+  const [limit, setLimit] = useState(false);
+ 
   const CheckActive = () => {
     if (isActive && user) {
       setCheckActive(true);
@@ -20,6 +25,24 @@ const FooterDetailService = ({ unit, serviceId, typeService, isActive }) => {
   };
   useEffect(() => {
     CheckActive();
+    const featchDataUser = async () => {
+      if(user?.id){
+ try {
+        const response = await userApi.getByUserId(user?.id as string);
+        console.log("1",response);
+        if (response) {
+          setUserData(response);
+          if (response?.lastcheckin && response.lastcheckin >= 3) {
+            console.log(response.lastcheckin);
+            setLimit(true);
+            setCheckActive(false);
+          }
+        }
+      } catch (error) {}
+      }
+    };
+    featchDataUser()
+    
   }, [isActive, user]);
   return (
     <View
@@ -37,7 +60,7 @@ const FooterDetailService = ({ unit, serviceId, typeService, isActive }) => {
           }}
           className="flex justify-center items-center bg-primary rounded-md"
           onPress={() => {
-            if (checkActive) {
+            if (checkActive && !limit) {
               router.push({
                 pathname: "/service/verifyService",
                 params: {
@@ -46,6 +69,12 @@ const FooterDetailService = ({ unit, serviceId, typeService, isActive }) => {
                   typeServiceId: typeService,
                 },
               });
+            } else if (limit && !checkActive) {
+              Alert.alert(
+                "Thông báo",
+                "Bạn đã đạt đến số yêu cầu tối đa có thể tạo. Vui lòng hoàn thành các yêu cầu hiện tại hoặc hủy bỏ một số yêu cầu trước khi tạo yêu cầu mới"
+              );
+              return;
             } else {
               router.push({
                 pathname: "/(tabs)/profile",
